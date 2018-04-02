@@ -31,6 +31,8 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
+#include <QDomDocument>
+
 #include <QStandardPaths>
 #include <QDebug>
 
@@ -52,6 +54,11 @@ Virtlyst::Virtlyst(QObject *parent) : Application(parent)
 
 Virtlyst::~Virtlyst()
 {
+    auto it = m_connections.constBegin();
+    while (it != m_connections.constEnd()) {
+        virConnectClose(it.value());
+        ++it;
+    }
 }
 
 bool Virtlyst::init()
@@ -111,7 +118,26 @@ bool Virtlyst::postFork()
         return false;
     }
 
+    virConnectPtr conn = virConnectOpen("qemu:///system");
+    if (conn == NULL) {
+        fprintf(stderr, "Failed to open connection to qemu:///system\n");
+        return false;
+    }
+    m_connections.insert(QStringLiteral("1"), conn);
+
     qDebug() << "Database ready" << db.connectionName();
+
+    return true;
+}
+
+QHash<QString, virConnectPtr> Virtlyst::connections()
+{
+    return m_connections;
+}
+
+virConnectPtr Virtlyst::connection(const QString &id)
+{
+    return m_connections.value(id);
 }
 
 QString Virtlyst::prettyKibiBytes(quint64 kibiBytes)
@@ -132,6 +158,49 @@ QString Virtlyst::prettyKibiBytes(quint64 kibiBytes)
     }
     ret = QString::number(count, 'g', 3) + QLatin1String(suffixes[s]);
     return ret;
+}
+
+bool Virtlyst::changeSettings(virDomainPtr domain, const QString &description, quint64 cur_memory, quint64 memory, uint cur_vcpu, uint vcpu)
+{
+    char *xml = virDomainGetXMLDesc(domain, VIR_DOMAIN_XML_SECURE);
+    const QString xmlString = QString::fromUtf8(xml);
+    free(xml);
+
+    QDomDocument doc;
+    QString errorString;
+    if (!doc.setContent(xmlString, &errorString)) {
+        qCritical() << "error" << doc.isNull() << doc.toString();
+
+        return false;
+    }
+
+    qCritical() << doc.isNull() << doc.toString();
+
+
+    QDomElement docElem = doc.documentElement();
+    QDomElement memoryElem = docElem.firstChildElement(QStringLiteral("memory"));
+
+    qCritical() << memoryElem.nodeValue();
+
+    memoryElem.setNodeValue(QString::number(memory));
+    qCritical() << memoryElem.nodeValue();
+
+    qCritical() << doc.isNull() << doc.toString();
+
+
+//    virDomainPtr dom = virDomainDefineXML(conn, doc.toString(0).toUtf8().constData());
+//    virDomainFree(dom);
+
+    QDomNode n = docElem.firstChild();
+    while(!n.isNull()) {
+        QDomElement e = n.toElement(); // try to convert the node to an element.
+        if(!e.isNull()) {
+            qCritical() << qPrintable(e.tagName()); // the node really is an element.
+        }
+        n = n.nextSibling();
+    }
+
+    return true;
 }
 
 bool Virtlyst::createDB()

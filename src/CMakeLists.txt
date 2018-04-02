@@ -19,6 +19,7 @@ target_link_libraries(Virtlyst
     Qt5::Core
     Qt5::Network
     Qt5::Sql
+    Qt5::Xml
     ${LIBVIRT_LIBRARIES}
 )
 

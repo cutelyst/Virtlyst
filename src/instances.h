@@ -21,14 +21,18 @@
 
 using namespace Cutelyst;
 
+class Virtlyst;
 class Instances : public Controller
 {
     Q_OBJECT
 public:
-    explicit Instances(QObject *parent = 0);
+    explicit Instances(Virtlyst *parent = 0);
 
     C_ATTR(index, :Path :AutoArgs)
     void index(Context *c, const QString &hostId);
+
+private:
+    Virtlyst *m_virtlyst;
 };
 
 #endif // INSTANCES_H

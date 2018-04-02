@@ -21,11 +21,12 @@
 
 using namespace Cutelyst;
 
+class Virtlyst;
 class Info : public Controller
 {
     Q_OBJECT
 public:
-    explicit Info(QObject *parent = 0);
+    explicit Info(Virtlyst *parent = 0);
 
     C_ATTR(insts_status, :Local :AutoArgs)
     void insts_status(Context *c, const QString &hostId);
@@ -33,7 +34,8 @@ public:
     C_ATTR(instusage, :Local :AutoArgs)
     void instusage(Context *c, const QString &hostId, const QString &name);
 
-private Q_SLOTS:
+private:
+    Virtlyst *m_virtlyst;
 };
 
 #endif // INFO_H

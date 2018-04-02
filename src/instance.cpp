@@ -23,8 +23,9 @@
 
 using namespace Cutelyst;
 
-Instance::Instance(QObject *parent)
+Instance::Instance(Virtlyst *parent)
     : Controller(parent)
+    , m_virtlyst(parent)
 {
 }
 
@@ -35,7 +36,7 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
     c->setStash(QStringLiteral("host_id"), hostId);
     c->setStash(QStringLiteral("time_refresh"), 8000);
 
-    virConnectPtr conn = virConnectOpen("qemu:///system");
+    virConnectPtr conn = m_virtlyst->connection(hostId);
     if (conn == NULL) {
         fprintf(stderr, "Failed to open connection to qemu:///system\n");
         return;
@@ -43,7 +44,6 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
 
     virDomainPtr domain = virDomainLookupByName(conn, name.toUtf8().constData());
     if (!domain) {
-        virConnectClose(conn);
         errors.append(QStringLiteral("Domain not found: no domain with matching name '%1'").arg(name));
         c->setStash(QStringLiteral("errors"), errors);
         return;
@@ -123,13 +123,33 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
             }
             redir = true;
         } else if (params.contains(QStringLiteral("change_settings"))) {
-//            const QString name = params.value(QStringLiteral("name"));
+            const QString description = params.value(QStringLiteral("description"));
+
+            ulong memory;
+            const QString memory_custom = params.value(QStringLiteral("memory_custom"));
+            if (memory_custom.isEmpty()) {
+                memory = params.value(QStringLiteral("memory")).toULong();
+            } else {
+                memory = memory_custom.toULong();
+            }
+
+            ulong cur_memory;
+            const QString cur_memory_custom = params.value(QStringLiteral("cur_memory_custom"));
+            if (memory_custom.isEmpty()) {
+                cur_memory = params.value(QStringLiteral("cur_memory")).toULong();
+            } else {
+                cur_memory = cur_memory_custom.toULong();
+            }
+
+            ulong vcpu = params.value(QStringLiteral("vcpu")).toUInt();
+            ulong cur_vcpu = params.value(QStringLiteral("cur_vcpu")).toUInt();
+
+            Virtlyst::changeSettings(domain, description, cur_memory, memory, cur_vcpu, vcpu);
             redir = true;
         }
 
         if (redir) {
             virDomainFree(domain);
-            virConnectClose(conn);
             c->response()->redirect(c->uriFor(CActionFor("index"), QStringList{ hostId, name }));
             return;
         }
@@ -197,6 +217,4 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
     free(xml);
 
     c->setStash(QStringLiteral("errors"), errors);
-
-    virConnectClose(conn);
 }

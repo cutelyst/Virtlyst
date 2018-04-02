@@ -21,14 +21,18 @@
 
 using namespace Cutelyst;
 
+class Virtlyst;
 class Infrastructure : public Controller
 {
     Q_OBJECT
 public:
-    explicit Infrastructure(QObject *parent = nullptr);
+    explicit Infrastructure(Virtlyst *parent = nullptr);
 
     C_ATTR(index, :Path :AutoArgs)
     void index(Context *c);
+
+private:
+    Virtlyst *m_virtlyst;
 };
 
 #endif // INFRASTRUCTURE_H

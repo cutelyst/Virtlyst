@@ -23,14 +23,15 @@
 
 using namespace Cutelyst;
 
-Instances::Instances(QObject *parent)
+Instances::Instances(Virtlyst *parent)
     : Controller(parent)
+    , m_virtlyst(parent)
 {
 }
 
 void Instances::index(Context *c, const QString &hostId)
 {
-    virConnectPtr conn = virConnectOpen("qemu:///system");
+    virConnectPtr conn = m_virtlyst->connection(hostId);
     if (conn == NULL) {
         fprintf(stderr, "Failed to open connection to qemu:///system\n");
         return;
@@ -67,7 +68,6 @@ void Instances::index(Context *c, const QString &hostId)
             virDomainFree(domain);
 
             if (redir) {
-                virConnectClose(conn);
                 c->response()->redirect(c->uriFor(CActionFor("index"), QStringList{ hostId }));
                 return;
             }
@@ -118,8 +118,6 @@ void Instances::index(Context *c, const QString &hostId)
         free(domains);
         c->setStash(QStringLiteral("instances"), vms);
     }
-
-    virConnectClose(conn);
 
     c->setStash(QStringLiteral("template"), QStringLiteral("instances.html"));
 }

@@ -25,8 +25,9 @@
 
 using namespace Cutelyst;
 
-Info::Info(QObject *parent)
+Info::Info(Virtlyst *parent)
     : Controller(parent)
+    , m_virtlyst(parent)
 {
 }
 
@@ -34,7 +35,7 @@ void Info::insts_status(Context *c, const QString &hostId)
 {
     c->setStash(QStringLiteral("host_id"), hostId);
 
-    virConnectPtr conn = virConnectOpen("qemu:///system");
+    virConnectPtr conn = m_virtlyst->connection(hostId);
     if (conn == NULL) {
         fprintf(stderr, "Failed to open connection to qemu:///system\n");
         return;
@@ -84,8 +85,6 @@ void Info::insts_status(Context *c, const QString &hostId)
         free(domains);
         c->setStash(QStringLiteral("instances"), vms);
     }
-
-    virConnectClose(conn);
 
     c->response()->setJsonArrayBody(vms);
 }
