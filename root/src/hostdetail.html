@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}{% i18n "Overview" %}{% endblock %}
+{% block content %}
+    {% include 'sidebar.html' %}
+    <div class="main col-xs-12 col-sm-9">
+        {% if errors %}
+            {% for error in errors %}
+                <div class="alert alert-danger">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                    {{ error }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <h4>{% i18n "Basic details" %}</h4>
+        <table class="table table-hover table-nolines">
+            <tbody>
+                <tr>
+                    <td>{% i18n "Connection" %}</td>
+                    <td>{{ uri_conn }}</td>
+                </tr>
+                <tr>
+                    <td>{% i18n "Hostname" %}</td>
+                    <td>{{ hostname }}</td>
+                </tr>
+                <tr>
+                    <td>{% i18n "Hypervisor" %}</td>
+                    <td>{{ hypervisor }}</td>
+                </tr>
+                <tr>
+                    <td>{% i18n "Memory" %}</td>
+                    <td>{{ host_memory|filesizeformat }}</td>
+                </tr>
+                <tr>
+                    <td>{% i18n "Logical CPUs" %}</td>
+                    <td>{{ logical_cpu }}</td>
+                </tr>
+                <tr>
+                    <td>{% i18n "Processor" %}</td>
+                    <td>{{ model_cpu }}</td>
+                </tr>
+                <tr>
+                    <td>{% i18n "Architecture" %}</td>
+                    <td>{{ host_arch }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h4>{% i18n "Performance" %}</h4>
+        <p>{% i18n "CPU usage" %}</p>
+        <canvas id="cpuChart" width="700" height="200"></canvas>
+        <p>{% i18n "Memory usage" %}</p>
+        <canvas id="memoryChart" width="700" height="200"></canvas>
+    </div>
+    {% include 'sidebar_close.html' %}
+{% endblock %}
+{% block script %}
+    <script src="{% static "js/Chart.min.js" %}"></script>
+    <script>
+        var cpu_ctx = $("#cpuChart").get(0).getContext("2d");
+        var cpuChart = new Chart(cpu_ctx);
+        var cpu_options = {
+            animation: false,
+            pointDotRadius: 2,
+            scaleLabel: "<%=value%> %",
+            scaleOverride: true,
+            scaleSteps: 10,
+            scaleStepWidth: 10,
+            scaleStartValue: 0,
+            responsive: true
+        };
+
+        var mem_ctx = $("#memoryChart").get(0).getContext("2d");
+        var memChart = new Chart(mem_ctx);
+        var mem_options = {
+            animation: false,
+            pointDotRadius: 2,
+            scaleLabel: "<%=value%> Mb",
+            responsive: true
+        };
+
+        function hostusage() {
+            $.getJSON('{% url 'hostusage' host_id %}', function (data) {
+                cpuChart.Line(data['cpu'], cpu_options);
+                memChart.Line(data['memory'], mem_options);
+            });
+        }
+        $(function () {
+            window.setInterval('hostusage()', {{ time_refresh }});
+        });
+    </script>
+{% endblock %}

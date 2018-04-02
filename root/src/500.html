@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{% i18n "500" %}{% endblock %}
+{% block content %}
+    <div class="row">
+        <div class="col-xs-12" id="error">
+            <h1>Oops!</h1>
+
+            <p class="lead">{% i18n "500 Internal Server Error" %}</p>
+
+            <p>{% i18n "The server encountered an internal error or misconfiguration and was unable to complete you request." %}</p>
+            <a class="btn btn-medium btn-success" href="javascript:history.back()">&larr; Back</a>
+        </div>
+    </div>
+{% endblock %}

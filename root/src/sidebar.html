@@ -1,0 +1,38 @@
+<!--{ load tags_active %}-->
+<div class="row">
+    <div class="col-xs-12">
+        <div class="page-header">
+            <a href="/create/{{ host_id }}" class="btn btn-sm btn-success pull-right">{% i18n "New Instance" %}</a>
+            <h1><a href="/overview/{{ host_id }}">{{ compute.name }}</a></h1>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="sidebar col-xs-12 col-sm-3">
+        <ul>
+            <li>
+                <a href="/instances/{{ host_id }}"
+                   class="list { active request "^/instance" %}">{% i18n "Instances" %}</a>
+            </li>
+            <li>
+                <a href="/storages/{{ host_id }}"
+                   class="list { active request "^/storage" %}">{% i18n "Storages" %}</a>
+            </li>
+            <li>
+                <a href="/networks/{{ host_id }}"
+                   class="list { active request "^/network" %}">{% i18n "Networks" %}</a>
+            </li>
+            <li>
+                <a href="/interfaces/{{ host_id }}"
+                   class="list { active request "^/interface" %}">{% i18n "Interfaces" %}</a>
+            </li>
+            <li>
+                <a href="/secrets/{{ host_id }}"
+                   class="list { active request "^/secrets" %}">{% i18n "Secrets" %}</a>
+            </li>
+            <li>
+                <a href="/overview/{{ host_id }}"
+                   class="list { active request "^/host" %}">{% i18n "Overview" %}</a>
+            </li>
+        </ul>
+    </div>

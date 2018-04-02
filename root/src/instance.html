@@ -1,0 +1,960 @@
+{% extends "base.html" %}
+{% block title %}{% i18n "VMs" %} - {{ host.name }}{% endblock %}
+{% block content %}
+    {% include 'sidebar.html' %}
+    <div class="main col-xs-12 col-sm-9">
+    {% if errors %}
+        {% for error in errors %}
+            <div class="alert alert-danger">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                {{ error }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    <table class="table">
+        <thead>
+        <tr class="active">
+            <th>{% i18n "Name" %}</th>
+            <th>{% i18n "Status" %}</th>
+            <th>{% i18n "VCPUs" %}</th>
+            <th>{% i18n "Memory" %}</th>
+            <th>{% i18n "Description" %}</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>{{ host.name }}</td>
+            <td>{% if host.status %}
+                <span id="status" class={% if host.status == 5 %}
+                    {% if has_managed_save_image == 1 %}
+                        "label label-warning">{% i18n "Saved" %}
+                    {% else %}
+                        "label label-danger">{% i18n "Shutoff" %}
+                    {% endif %}
+                {% endif %}
+                {% if host.status == 1 %}"label label-success">{% i18n "Running" %}{% endif %}
+                {% if host.status == 3 %}"label label-warning">{% i18n "Suspend" %}{% endif %}
+                            </span>
+            {% else %}
+                {% i18n "None" %}
+            {% endif %}
+            </td>
+            <td>{% if host.cur_vcpu %}{{ host.cur_vcpu }}{% else %}{{ host.vcpu }}{% endif %}</td>
+            <td>{{ host.memory_pretty }}</td>
+            <td>{{ host.description }}</td>
+        <tr>
+        </tbody>
+    </table>
+    <hr>
+    <ul id="btnsection" class="nav nav-tabs">
+        <li class="active">
+            <a class="inst-btn" href="#power" data-toggle="tab">
+                <span class="glyphicon glyphicon-off"></span><br>{% i18n "Power" %}
+            </a>
+        </li>
+        <li><a class="inst-btn" href="#access" data-toggle="tab">
+            <span class="glyphicon glyphicon-briefcase"></span><br>{% i18n "Access" %}
+        </a>
+        </li>
+        <li><a class="inst-btn" href="#snapshots" data-toggle="tab">
+            <span class="glyphicon glyphicon-camera"></span><br>{% i18n "Snapshots" %}
+        </a>
+        </li>
+        <li><a class="inst-btn" href="#graph" data-toggle="tab">
+            <span class="glyphicon glyphicon-signal"></span><br>{% i18n "Statistics" %}
+        </a>
+        </li>
+        <li><a class="inst-btn" href="#settings" data-toggle="tab">
+            <span class="glyphicon glyphicon-wrench"></span><br>{% i18n "Settings" %}
+        </a>
+        </li>
+        <li><a class="inst-btn" href="#migrate" data-toggle="tab">
+            <span class="glyphicon glyphicon-cloud-download"></span><br>{% i18n "Migrate" %}
+        </a>
+        </li>
+        <li><a class="inst-btn" href="#delete" data-toggle="tab">
+            <span class="glyphicon glyphicon-trash"></span><br>{% i18n "Destroy" %}
+        </a>
+        </li>
+    </ul>
+    <div class="tab-content">
+    <div class="tab-pane active" id="power" style="margin-top: 20px">
+        <ul class="nav nav-tabs nav-btn-act">
+            <li class="active"><a href="#shutdown" data-toggle="tab">{% if host.status == 5 %}{% i18n "Start" %}{% else %}{% i18n "Shutdown" %}{% endif %}</a></li>
+            {% if host.status != 5 %}
+            <li><a href="#forceshutdown" data-toggle="tab">{% i18n "Force Shutdown" %}</a></li>
+            <li><a href="#suspend" data-toggle="tab">{% i18n "Suspend" %}</a></li>
+            {% endif %}
+            {% if status != 5 or has_managed_save_image == 1 %}
+            <li><a href="#managedsave" data-toggle="tab">{% i18n "Save" %}</a></li>
+            {% endif %}
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane tab-inst active" id="shutdown">
+                {% if host.status == 5 %}
+                <p>{% i18n "Click on Start button to start this instance." %}</p>
+                {% else %}
+                <p>{% i18n "This action sends an ACPI shutdown signal to the instance." %}</p>
+                {% endif %}
+
+                <form action="" method="post" role="form">{{ csrf_token }}
+                    {% if host.status == 5 %}
+                        <button type="submit" name="start"
+                                class="btn btn-lg btn-primary pull-right">{% i18n "Start" %}</button>
+                    {% endif %}
+                    {% if host.status == 1 %}
+                        <button data-id="shutoff" type="submit" name="power" value="shutdown"
+                                class="btn btn-lg btn-primary pull-right">{% i18n "Shutdown" %}</button>
+                    {% endif %}
+                    {% if host.status == 3 %}
+                        <button class="btn btn-lg btn-primary pull-right disabled">{% i18n "Shutdown" %}</button>
+                    {% endif %}
+                </form>
+                <div class="clearfix"></div>
+            </div>
+            {% if host.status != 5 %}
+            <div class="tab-pane tab-inst" id="forceshutdown">
+                <p>{% i18n "This action forcibly powers off the instance and may cause data corruption." %}</p>
+
+                <form action="" method="post" role="form">{{ csrf_token }}
+                    {% if host.status == 1 %}
+                        <button data-id="shutoff" type="submit" name="power" value="destroy"
+                                class="btn btn-lg btn-primary pull-right">{% i18n "Force Shutdown" %}</button>
+                    {% endif %}
+                    {% if host.status == 3 %}
+                        <button class="btn btn-lg btn-primary pull-right disabled">{% i18n "Force Shutdown" %}</button>
+                    {% endif %}
+                </form>
+                <div class="clearfix"></div>
+            </div>
+            <div class="tab-pane tab-inst" id="suspend">
+                <p>{% i18n "This action suspends or restores the instance." %}</p>
+
+                <form action="" method="post" role="form">{{ csrf_token }}
+                    {% if host.status == 1 %}
+                        <button data-id="shutoff" type="submit" name="suspend"
+                                class="btn btn-lg btn-primary pull-right">{% i18n "Suspend" %}</button>
+                    {% endif %}
+                    {% if host.status == 3 %}
+                        <button type="submit" name="resume"
+                                class="btn btn-lg btn-primary pull-right">{% i18n "Resume" %}</button>
+                    {% endif %}
+                </form>
+                <div class="clearfix"></div>
+            </div>
+            {% endif %}
+            {% if status != 5 or has_managed_save_image == 1 %}
+            <div class="tab-pane tab-inst" id="managedsave">
+                <p>{% i18n "This action saves the state of the instance." %}</p>
+
+                <form action="" method="post" role="form">{{ csrf_token }}
+                    {% if host.status == 5 %}
+                        <button data-id="shutoff" type="submit" name="start"
+                                class="btn btn-lg btn-primary pull-right">{% i18n "Start" %}</button>
+                        {% if has_managed_save_image == 1 %}
+                            <div class="clearfix" style="height:60px;"></div>
+                            <button type="submit" name="deletesaveimage"
+                                    class="btn btn-lg btn-primary pull-right">{% i18n "Delete Save Image" %}</button>
+                        {% endif %}
+                    {% endif %}
+                    {% if host.status == 1 %}
+                        <button type="submit" name="power" value="managedsave"
+                                class="btn btn-lg btn-primary pull-right">{% i18n "Save" %}</button>
+                    {% endif %}
+                    {% if host.status == 3 %}
+                        <button class="btn btn-lg btn-primary pull-right disabled">{% i18n "Save" %}</button>
+                    {% endif %}
+                </form>
+                <div class="clearfix"></div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="tab-pane" id="access" style="margin-top: 20px">
+        <ul class="nav nav-tabs nav-btn-act">
+            <li class="active"><a href="#console" data-toggle="tab">{% i18n "Console" %}</a></li>
+            <li><a href="#console_type" data-toggle="tab">{% i18n "Console Type" %}</a></li>
+            <li><a href="#console_pass" data-toggle="tab">{% i18n "Console Password" %}</a></li>
+            <li><a href="#console_keymap" data-toggle="tab">{% i18n "Console Keymap" %}</a></li>
+            {% if telnet_port %}
+                <li><a href="#telnet_console" data-toggle="tab">{% i18n "Telnet Console" %}</a></li>
+            {% endif %}
+
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane tab-inst active" id="console">
+                <p>{% i18n "This action opens a new window with a connection to the console of the instance." %}</p>
+                {% if host.status == 5 %}
+                    <button class="btn btn-primary btn-lg pull-right disabled">{% i18n "Console" %}</button>
+                {% else %}
+                    <a href="#" class="btn btn-primary btn-lg pull-right" title="Console port: {{ console_port }}"
+                       onclick="open_console()">{% i18n "Console" %}</a>
+                {% endif %}
+                <div class="clearfix"></div>
+            </div>
+            <div class="tab-pane tab-inst" id="telnet_console">
+                <p>{% i18n "This action open new window with console Telnet connection to your instance." %}</p>
+                {% if host.status == 5 %}
+                    <button class="btn btn-primary btn-lg pull-right disabled">{% i18n "Console" %}</button>
+                {% else %}
+                    <a href="telnet://{{ compute.hostname }}:{{ telnet_port }}"
+                       class="btn btn-primary btn-lg pull-right"
+                       title="Telnet Port: {{ telnet_port }}">{% i18n "Console" %}</a>
+                {% endif %}
+                <div class="clearfix"></div>
+            </div>
+            <div class="tab-pane tab-inst" id="console_type">
+                <p>{% i18n "To set console's type, shutdown the instance." %}</p>
+
+                <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
+                    <div class="form-group" id="console_type_selection">
+                        <label for="console_select_type" class="col-sm-2 control-label">{% i18n "Type" %}</label>
+
+                        <div class="col-sm-6">
+                            <select id="console_select_type" class="form-control" name="console_type">
+                                <option value="" style="font-weight: bold">{% i18n "please choose" %}</option>
+                                {% for ctype in console_types %}
+                                    <option value="{{ ctype }}">{{ ctype }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    {% if host.status == 5 %}
+                        <button type="submit" class="btn btn-primary btn-lg pull-right"
+                                name="set_console_type">{% i18n "Set console type" %}</button>
+                    {% else %}
+                        <button class="btn btn-primary btn-lg pull-right disabled"
+                                name="set_console_type">{% i18n "Set console type" %}</button>
+                    {% endif %}
+                </form>
+                <div class="clearfix"></div>
+            </div>
+            <div class="tab-pane tab-inst" id="console_pass">
+                <p>{% i18n "To create console password, shutdown the instance." %}</p>
+
+                <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-10">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" name="auto_pass" value="true"
+                                           id="console_passwd_gen">{% i18n "Generate" %}
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" name="clear_pass" value="true"
+                                           id="console_passwd_clear">{% i18n "Clear" %}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" id="console_passwd_manual">
+                        <label for="inputPassword1" class="col-sm-2 control-label">{% i18n "Password" %}</label>
+
+                        <div class="col-sm-6">
+                            <input id="console_show_pass" type="password" class="form-control" name="console_passwd"
+                                   {% if console_passwd %}
+                                        value="{{ console_passwd }}"
+                                   {% else %}
+                                        placeholder="{% i18n "Password" %}"
+                                   {% endif %} maxlength="14">
+                        </div>
+                        {% if console_passwd %}
+                            <a href="#" name="console_show" class="btn btn-primary btn-md"
+                                onclick="show_console()">{% i18n "Show" %}</a>
+                        {% endif %}
+                    </div>
+                    {% if host.status == 5 %}
+                        <button type="submit" class="btn btn-primary btn-lg pull-right"
+                                name="set_console_passwd">{% i18n "Set Password" %}</button>
+                    {% else %}
+                        <button class="btn btn-primary btn-lg pull-right disabled"
+                                name="set_console_passwd">{% i18n "Set Password" %}</button>
+                    {% endif %}
+                </form>
+                <div class="clearfix"></div>
+            </div>
+            <div class="tab-pane tab-inst" id="console_keymap">
+                <p>{% i18n "To set console's keymap, shutdown the instance." %}</p>
+
+                <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-10">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" name="clear_keymap" value="true"
+                                           id="console_keymap_clear">{% i18n "Clear" %}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" id="console_keymap_selection">
+                        <label for="console_select_keymap" class="col-sm-2 control-label">{% i18n "Keymap" %}</label>
+
+                        <div class="col-sm-6">
+                            <select id="console_select_keymap" class="form-control" name="console_keymap">
+                                <option value="" style="font-weight: bold">{% i18n "please choose" %}</option>
+                                {% for keymap in keymaps %}
+                                    <option value="{{ keymap }}">{{ keymap }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    {% if host.status == 5 %}
+                        <button type="submit" class="btn btn-primary btn-lg pull-right"
+                                name="set_console_keymap">{% i18n "Set Keymap" %}</button>
+                    {% else %}
+                        <button class="btn btn-primary btn-lg pull-right disabled"
+                                name="set_console_keymap">{% i18n "Set Keymap" %}</button>
+                    {% endif %}
+                </form>
+                <div class="clearfix"></div>
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane" id="settings" style="margin-top: 20px">
+    <ul class="nav nav-tabs nav-btn-act" style="margin-top: 20px">
+        <li class="active"><a href="#instancesettings" data-toggle="tab">{% i18n "VCPU's and Memory" %}</a></li>
+        <li><a href="#instancemedia" data-toggle="tab">{% i18n "Media" %}</a></li>
+        <li><a href="#instancedevice" data-toggle="tab">{% i18n "Disks and Networks" %}</a></li>
+        <li><a href="#instanceclone" data-toggle="tab">{% i18n "Clone" %}</a></li>
+        <li><a href="#instancexml" data-toggle="tab">{% i18n "XML" %}</a></li>
+    </ul>
+    <div class="tab-content">
+    <div class="tab-pane tab-inst active" id="instancesettings">
+        <p style="font-weight:bold;">{% i18n "Description and Autostart" %}</p>
+
+        <form class="form-horizontal" action="" method="post" role="form">{{ csrf_token }}
+            <div class="form-group">
+                <label class="col-sm-4 control-label" style="font-weight:normal;"> {% i18n "Autostart" %}</label>
+
+                <div class="col-sm-4">
+                    {% if host.autostart == 0 %}
+                        <input type="submit" class="btn btn-md btn-default" name="set_autostart"
+                               value="{% i18n "Enable" %}">
+                    {% else %}
+                        <input type="submit" class="btn btn-md btn-default" name="unset_autostart"
+                               value="{% i18n "Disable" %}">
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+        <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
+            <div class="form-group">
+                <label class="col-sm-4 control-label" style="font-weight:normal;">{% i18n "Description" %}</label>
+
+                <div class="col-sm-4">
+                    <input type="text" class="form-control" name="description" value="{{ host.description }}"/>
+                </div>
+            </div>
+            <p style="font-weight:bold;">{% i18n "Logical host CPUs:" %} {{ vcpu_host }}</p>
+
+            <div class="form-group">
+                <label class="col-sm-4 control-label"
+                       style="font-weight:normal;"> {% i18n "Current allocation" %}</label>
+
+                <div class="col-sm-4">
+                    <select name="cur_vcpu" class="form-control">
+                        {% for cpu in vcpu_range %}
+                            {% if host.cur_vcpu %}
+                                <option value="{{ cpu }}" {% if cpu == host.cur_vcpu %}selected{% endif %}>{{ cpu }}</option>
+                            {% else %}
+                                <option value="{{ cpu }}" {% if cpu == host.vcpu %}selected{% endif %}>{{ cpu }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-4 control-label"
+                       style="font-weight:normal;">{% i18n "Maximum allocation" %}</label>
+
+                <div class="col-sm-4">
+                    <select name="vcpu" class="form-control">
+                        {% for cpu in vcpu_range %}
+                            <option value="{{ cpu }}" {% if cpu == host.vcpu %}selected{% endif %}>{{ cpu }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <p style="font-weight:bold;">{% i18n "Total host memory:" %} {{ memory_host }}<!--|filesizeformat--></p>
+
+            <div class="form-group">
+                <label class="col-sm-4 control-label"
+                       style="font-weight:normal;">{% i18n "Current allocation" %} ({% i18n "MiB" %})</label>
+
+                <div class="col-sm-4 js-custom__container">
+                    <select name="cur_memory" class="form-control js-custom__toggle">
+                        {% for mem in memory_range %}
+                            <option value="{{ mem }}"
+                                    {% if mem == host.cur_memory %}selected{% endif %}>{{ mem }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="text" name="cur_memory_custom" class="form-control js-custom__toggle" style="display: none" />
+                    <small><input type="checkbox" class="js-custom__checkbox" /> {% i18n "Custom value" %}</small>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-4 control-label"
+                       style="font-weight:normal;">{% i18n "Maximum allocation" %} ({% i18n "MiB" %})</label>
+
+                <div class="col-sm-4 js-custom__container">
+                    <select name="memory" class="form-control js-custom__toggle">
+                        {% for mem in memory_range %}
+                            <option value="{{ mem }}"
+                                    {% if mem == host.memory %}selected{% endif %}>{{ mem }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="text" name="memory_custom" class="form-control js-custom__toggle" style="display: none" />
+                    <small><input type="checkbox" class="js-custom__checkbox" /> {% i18n "Custom value" %}</small>
+                </div>
+            </div>
+            {% if host.status == 5 %}
+                <button type="submit" class="btn btn-lg btn-primary pull-right"
+                        name="change_settings">{% i18n "Change" %}</button>
+            {% else %}
+                <button class="btn btn-lg btn-primary pull-right disabled">{% i18n "Change" %}</button>
+            {% endif %}
+        </form>
+        <div class="clearfix"></div>
+    </div>
+    <div class="tab-pane tab-inst" id="instancemedia">
+        <form class="form-horizontal" action="" method="post" role="form">{{ csrf_token }}
+            {% for cd in media %}
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">{% i18n "CDROM" %} {{ forloop.counter }}</label>
+                    {% if not cd.image %}
+                        <div class="col-sm-6">
+                            <select name="media" class="form-control">
+                                {% if media_iso %}
+                                    {% for iso in media_iso %}
+                                        <option value="{{ iso }}">{{ iso }}</option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="none">{% i18n "None" %}</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        <div class="col-sm-2">
+                            {% if media_iso %}
+                                <button type="submit" class="btn btn-primary btn-sm pull-left" value="{{ cd.dev }}"
+                                        name="mount_iso">{% i18n "Connect" %}</button>
+                            {% else %}
+                                <button class="btn btn-primary btn-sm pull-left disabled"
+                                        name="mount_iso">{% i18n "Connect" %}</button>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="col-sm-6">
+                            <p>{{ cd.image }}</p>
+                        </div>
+                        <div class="col-sm-2">
+                            <input type="hidden" name="path" value="{{ cd.path }}">
+                            <button type="submit" class="btn btn-primary btn-sm pull-left" value="{{ cd.dev }}"
+                                    name="umount_iso">{% i18n "Disconnect" %}</button>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </form>
+        <div class="clearfix"></div>
+    </div>
+    <div class="tab-pane tab-inst" id="instancedevice">
+        <p style="font-weight:bold;">{% i18n "Network devices" %}</p>
+
+        <div class="col-sm-3">
+            {% for network in networks %}
+                <p style="text-align: right;">eth{{ forloop.counter0 }} ({{ network.nic }})</p>
+            {% endfor %}
+        </div>
+        <div class="col-sm-9">
+            {% for network in networks %}
+                {% if network.ip %}
+                    <p>{{ network.ip }}</p>
+                {% else %}
+                    <p>{{ network.mac }}</p>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <p style="font-weight:bold;">{% i18n "Storage devices" %}</p>
+
+        <div class="col-sm-3">
+            {% for disk in disks %}
+                <p style="text-align: right;">{{ disk.dev }} ({{ disk.storage }})</p>
+            {% endfor %}
+        </div>
+        <div class="col-sm-9">
+            {% for disk in disks %}
+                <p>{{ disk.image }} ({{ disk.format }})</p>
+            {% endfor %}
+        </div>
+        <div class="clearfix"></div>
+    </div>
+    <div class="tab-pane tab-inst" id="instanceclone">
+        <p style="font-weight:bold;">{% i18n "Create a clone" %}</p>
+
+        <form class="form-horizontal" action="" method="post" role="form">{{ csrf_token }}
+            <div class="form-group">
+                <label class="col-sm-3 control-label" style="font-weight:normal;">{% i18n "Clone Name" %}</label>
+
+                <div class="col-sm-3">
+                    <input type="text" class="form-control" name="name" value="{{ host.name }}-clone"/>
+                </div>
+            </div>
+            <p style="font-weight:bold;">{% i18n "Network devices" %}</p>
+            {% for network in networks %}
+                <div class="form-group">
+                    <label class="col-sm-3 control-label" style="font-weight:normal;">eth{{ forloop.counter0 }} ({{ network.nic }})</label>
+
+                    <div class="col-sm-3">
+                        <input type="text" class="form-control" name="net-{{ forloop.counter0 }}" value="{{ network.mac }}"/>
+                    </div>
+                    <div class="col-sm-1">
+                        <button type="button" class="btn btn-primary btn-sm pull-left" name="random-mac-{{ forloop.counter0 }}"
+                                onclick="random_mac({{ forloop.counter0 }})">{% i18n "Random MAC address" %}</button>
+                    </div>
+                </div>
+            {% endfor %}
+            <p style="font-weight:bold;">{% i18n "Storage devices" %}</p>
+            {% for disk in clone_disks %}
+                <div class="form-group">
+                    <label class="col-sm-3 control-label" style="font-weight:normal;">{{ disk.dev }} ({{ disk.storage }})</label>
+
+                    <div class="col-sm-3">
+                        <input type="text" class="form-control" name="disk-{{ disk.dev }}" value="{{ disk.image }}"/>
+                    </div>
+                    {% if disk.format == 'qcow2' %}
+                        <label class="col-sm-2 control-label" style="font-weight:normal;">Metadata</label>
+                        <div class="col-sm-1">
+                            <input type="checkbox" name="meta-{{ disk.dev }}" value="true">
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            {% if host.status == 5 %}
+                <button type="submit" class="btn btn-primary btn-lg pull-right"
+                        name="clone">{% i18n "Clone" %}</button>
+            {% else %}
+                <button class="btn btn-primary btn-lg pull-right disabled" name="clone">{% i18n "Clone" %}</button>
+            {% endif %}
+        </form>
+        <div class="clearfix"></div>
+    </div>
+    <div class="tab-pane tab-inst" id="instancexml">
+        <div id="viewXMLpre">
+            <pre class="pre-scrollable">{{ host.inst_xml }}</pre>
+            {% if host.status == 5 %}
+                <button type="button" class="btn btn-lg btn-primary pull-right"
+                        onclick="javascript:$('#viewXMLpre').hide();$('#viewXMLform').show();">{% i18n "Edit" %}</button>
+            {% else %}
+                <button type="button" class="btn btn-lg btn-primary pull-right disabled">{% i18n "Edit" %}</button>
+            {% endif %}
+        </div>
+        <form id="viewXMLform" class="form-horizontal" method="post" role="form" style="display: none">{{ csrf_token }}
+            <textarea id="xmltextarea" name="inst_xml">{{ host.inst_xml }}</textarea>
+            <button type="button" class="btn btn-lg btn-default"
+                    onclick="javascript:$('#viewXMLpre').show();$('#viewXMLform').hide();">{% i18n "Close" %}</button>
+            <button type="submit" class="btn btn-lg btn-danger pull-right" name="change_xml">{% i18n "Save" %}</button>
+        </form>
+        <div class="clearfix"></div>
+    </div>
+    </div>
+    </div>
+    <div class="tab-pane" id="snapshots">
+        <ul class="nav nav-tabs nav-btn-act" style="margin-top: 20px">
+            <li class="active"><a href="#createsnapshot" data-toggle="tab">{% i18n "Create Snapshot" %}</a></li>
+            <li><a href="#istaceshapshosts" data-toggle="tab">{% i18n "Restore from Snapshot" %}</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane tab-inst active" id="createsnapshot">
+                <p>{% i18n "To take a snapshot, shutdown the instance." %}</p>
+
+                <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
+                    <div class="form-group">
+                        <label for="snapshot" class="col-sm-2 control-label">{% i18n "Name" %}</label>
+
+                        <div class="col-sm-4">
+                            <input type="text" class="form-control" name="name" placeholder="{% i18n "Name" %}"
+                                   maxlength="14">
+                        </div>
+                    </div>
+                    {% if host.status == 5 %}
+                        <button type="submit" class="btn btn-primary btn-lg pull-right"
+                                name="snapshot">{% i18n "Create Snapshot" %}</button>
+                    {% else %}
+                        <button class="btn btn-primary btn-lg pull-right disabled">{% i18n "Create Snapshot" %}</button>
+                    {% endif %}
+                </form>
+                <div class="clearfix"></div>
+            </div>
+            <div class="tab-pane tab-inst" id="istaceshapshosts">
+                <p>{% i18n "To revert to a snapshot, shutdown the instance" %}</p>
+                {% if snapshots %}
+                    <table class="table table-bordered">
+                        <thead>
+                        <tr class="active">
+                            <th>{% i18n "Name" %}</th>
+                            <th>{% i18n "Date" %}</th>
+                            <th colspan="2">{% i18n "Action" %}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for snap in snapshots %}
+                            <tr>
+                                <td><strong>{{ snap.name }}</strong></td>
+                                <td>{{ snap.date|date:"M d H:i:s" }}</td>
+                                <td style="width:30px;">
+                                    <form action="" method="post" style="height:10px" role="form">{{ csrf_token }}
+                                        <input type="hidden" name="name" value="{{ snap.name }}">
+                                        {% if host.status == 5 %}
+                                            <button type="submit" class="btn btn-sm btn-primary" name="revert_snapshot"
+                                                    onclick="return confirm('Are you sure?')">{% i18n "Revert" %}</button>
+                                        {% else %}
+                                            <button type="button"
+                                                    class="btn btn-sm btn-primary disabled">{% i18n "Revert" %}</button>
+                                        {% endif %}
+                                    </form>
+                                </td>
+                                <td style="width:30px;">
+                                    <form action="" method="post" role="form">{{ csrf_token }}
+                                        <input type="hidden" name="name" value="{{ snap.name }}">
+                                        <button type="submit" class="btn btn-sm btn-danger" name="delete_snapshot"
+                                                onclick="return confirm('{% i18n "Are you sure?" %}')">{% i18n "Delete" %}</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>{% i18n "You do not have any snapshots" %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane" id="graph">
+        <ul class="nav nav-tabs nav-btn-act" style="margin-top: 20px">
+            <li class="active"><a href="#statistics" data-toggle="tab">{% i18n "Instance Statistics" %}</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane tab-inst active" id="statistics">
+                <div id="cpu-usage">
+                    <p style="margin-left: 25px">{% i18n "CPU usage" %}</p>
+                    <canvas style="margin-left: 25px" id="cpuChart" width="600" height="125"></canvas>
+                </div>
+                <div id="net-usage">
+                    {% for network in networks %}
+                        <p style="margin-left: 25px">{% i18n "Bandwidth" %} - Eth{{ forloop.counter0 }}</p>
+                        <canvas style="margin-left: 25px" id="netEth{{ forloop.counter0 }}Chart" width="600"
+                                height="125"></canvas>
+                        <div id="lineLegend">
+                            <span class="netIN">{% i18n "In" %}</span>
+                            <span class="netOUT">{% i18n "Out" %}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div id="disk-usage">
+                    {% for disk in disks %}
+                        <p style="margin-left: 25px">{% i18n "Disk I/O" %} - {{ disk.dev }}</p>
+                        <canvas style="margin-left: 25px" id="blk{{ disk.dev }}Chart" width="600" height="125"></canvas>
+                        <div id="lineLegend">
+                            <span class="diskRD">{% i18n "Read" %}</span>
+                            <span class="diskWR">{% i18n "Write" %}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane" id="migrate">
+        <ul class="nav nav-tabs nav-btn-act" style="margin-top: 20px">
+            <li class="active"><a href="#instancemigate" data-toggle="tab">{% i18n "Instance Migrate" %}</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane tab-inst active" id="instancemigate">
+                <p style="text-align:center;">
+                    <span class="label label-danger">{% i18n "Warning:" %}</span> {% i18n "Both host servers must have equal settings and OS type" %}
+                </p>
+                <br>
+
+                <div class="row show-grid">
+                    <div class="col-sm-3" style="text-align: right;padding-right: 2px;">
+                        <p><strong>{% i18n "Original host" %}</strong></p>
+                    </div>
+                    <div class="col-sm-6">
+                        <p style="margin: 10px -10px 0 0;">{{ compute.name }}</p>
+                    </div>
+                </div>
+                <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">{% i18n "Host migration" %}</label>
+
+                        <div class="col-sm-6">
+                            <select name="compute_id" class="form-control">
+                                {% if computes_count != 1 %}
+                                    {% for comp in computes %}
+                                        {% if comp.id != compute.id %}
+                                            <option value="{{ comp.id }}">{{ comp.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">{% i18n "Live migration" %}</label>
+
+                        <div class="col-sm-6">
+                            <input type="checkbox" name="live_migrate" value="true" id="vm_live_migrate">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">{% i18n "Unsafe migration" %}</label>
+
+                        <div class="col-sm-6">
+                            <input type="checkbox" name="unsafe_migrate" value="true" id="vm_unsafe_migrate">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">{% i18n "Delete original" %}</label>
+
+                        <div class="col-sm-6">
+                            <input type="checkbox" name="xml_delete" value="true" id="xml_delete">
+                        </div>
+                    </div>
+                    {% if computes_count != 1 %}
+                        <button type="submit" class="btn btn-lg btn-primary pull-right"
+                                name="migrate">{% i18n "Migrate" %}</button>
+                    {% else %}
+                        <button class="btn btn-lg btn-primary pull-right disabled">{% i18n "Migrate" %}</button>
+                    {% endif %}
+                </form>
+                <div class="clearfix"></div>
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane" id="delete">
+        <ul class="nav nav-tabs nav-btn-act" style="margin-top: 20px">
+            <li class="active"><a href="#destroy" data-toggle="tab">{% i18n "Delete Instance" %}</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane tab-inst active" id="destroy">
+                <p>{% i18n "Delete HDD image?" %}</p>
+
+                <form class="form-group" method="post" role="form">{{ csrf_token }}
+                    <div class="checkbox" style="margin-left: 8px;">
+                        <label>
+                            <input type="checkbox" name="delete_disk" value="true">
+                            <strong><span
+                                    class="label label-danger">{% i18n "Warning:" %}</span> {% i18n "If you check this box, Instance's data will be lost!" %}
+                            </strong>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-lg btn-primary pull-right"
+                            name="delete">{% i18n "Delete" %}</button>
+                </form>
+                <div class="clearfix"></div>
+            </div>
+        </div>
+    </div>
+    </div>
+    </div>
+    {% include 'sidebar_close.html' %}
+{% endblock %}
+{% block script %}
+<script>
+    function open_console() {
+        window.open('/console/{{ host_id }}/{{ uuid }}', '', 'width=850,height=485')
+    }
+    function show_console() {
+        if ($('#console_show_pass').attr('type') == 'password') {
+            $('#console_show_pass').attr('type', 'text');
+        } else {
+            $('#console_show_pass').attr('type', 'password');
+        }
+    }
+    function random_mac(net) {
+        var hexDigits = "0123456789abcdef";
+        var macAddress="52:54:00:";
+        for (var i=0; i<3; i++) {
+            macAddress+=hexDigits.charAt(Math.round(Math.random()*16));
+            macAddress+=hexDigits.charAt(Math.round(Math.random()*16));
+            if (i != 2) macAddress+=":";
+        }
+        $('input[name="net-'+net+'"]').val(macAddress);
+    };
+</script>
+<script src="/static/js/Chart.min.js"></script>
+<script>
+    var hash = location.hash;
+    if (~$.inArray(hash, ['#shutdown', '#forceshutdown', '#managedsave', '#suspend'])) {
+        var btn = $('#power>ul>li>a');
+        $(btn).each(function () {
+            if ($(this).attr('href') === hash) {
+                $(this).trigger('click');
+            }
+        });
+    }
+    if (~$.inArray(hash, ['#console_pass', '#console_keymap', '#console_type'])) {
+        var btnsect = $('#btnsection>li>a');
+        $(btnsect).each(function () {
+            if ($(this).attr('href') === '#access') {
+                $(this).trigger('click');
+            }
+        });
+        var btn = $('#access>ul>li>a');
+        $(btn).each(function () {
+            if ($(this).attr('href') === hash) {
+                $(this).trigger('click');
+            }
+        });
+    }
+    if (~$.inArray(hash, ['#createsnapshot', '#istaceshapshosts'])) {
+        var btnsect = $('#btnsection>li>a');
+        $(btnsect).each(function () {
+            if ($(this).attr('href') === '#snapshots') {
+                $(this).trigger('click');
+            }
+        });
+        var btn = $('#snapshots>ul>li>a');
+        $(btn).each(function () {
+            if ($(this).attr('href') === hash) {
+                $(this).trigger('click');
+            }
+        });
+    }
+    if (~$.inArray(hash, ['#instancesettings', '#instancemedia', '#instancexml'])) {
+        var btnsect = $('#btnsection>li>a');
+        $(btnsect).each(function () {
+            if ($(this).attr('href') === '#settings') {
+                $(this).trigger('click');
+            }
+        });
+        var btn = $('#settings>ul>li>a');
+        $(btn).each(function () {
+            if ($(this).attr('href') === hash) {
+                $(this).trigger('click');
+            }
+        });
+    }
+</script>
+<script>
+    $(document).on('change', '#console_passwd_gen', function () {
+        if ($(this).prop('checked')) {
+            $('#console_passwd_manual').hide();
+            $('#console_passwd_clear').prop('checked', false);
+        } else {
+            $('#console_passwd_manual').show();
+        }
+    });
+    $(document).on('change', '#console_passwd_clear', function () {
+        if ($(this).prop('checked')) {
+            $('#console_passwd_manual').hide();
+            $('#console_passwd_gen').prop('checked', false);
+        } else {
+            $('#console_passwd_manual').show();
+        }
+    });
+    $(document).on('change', '#console_keymap_clear', function () {
+        if ($(this).prop('checked')) {
+            $('#console_keymap_selection').hide();
+        } else {
+            $('#console_keymap_selection').show();
+        }
+    });
+    $(document).ready(function () {
+        // set current console keymap or fall back to default
+        var keymap = "{{ console_keymap }}"
+        if (keymap != '') {
+            $("#console_select_keymap option[value='" + keymap + "']").prop('selected', true);
+        }
+    });
+    $(document).ready(function () {
+        // set current console type or fall back to default
+        var console_type = "{{ console_type }}"
+        if (console_type != '') {
+            $("#console_select_type option[value='" + console_type + "']").prop('selected', true);
+        }
+    });
+</script>
+<script>
+    var cpu_ctx = $("#cpuChart").get(0).getContext("2d");
+    var cpuChart = new Chart(cpu_ctx);
+    var cpu_options = { animation: false,
+        pointDotRadius: 2,
+        scaleLabel: "<%=value%> %",
+        scaleOverride: true,
+        scaleSteps: 5,
+        scaleStepWidth: 20,
+        scaleStartValue: 0,
+        responsive: true
+    };
+
+    var diskChart = {};
+    {% for disk in disks %}
+        var disk_ctx_{{ disk.dev }} = $("#blk{{ disk.dev }}Chart").get(0).getContext("2d");
+        diskChart['{{ disk.dev }}'] = new Chart(disk_ctx_{{ disk.dev }});
+    {% endfor %}
+    var disk_options = {
+        animation: false,
+        pointDotRadius: 2,
+        scaleLabel: "<%=value%> Mb/s",
+        responsive: true
+    };
+
+    var netChart = {};
+    {% for net in networks %}
+        var net_ctx_{{ forloop.counter0 }} = $("#netEth{{ forloop.counter0 }}Chart").get(0).getContext("2d");
+        netChart['{{ forloop.counter0 }}'] = new Chart(net_ctx_{{ forloop.counter0 }});
+    {% endfor %}
+    var net_options = {
+        animation: false,
+        pointDotRadius: 2,
+        scaleLabel: "<%=value%> Mbps",
+        responsive: true
+    };
+
+    function instusage() {
+        $.getJSON('/info/instusage/{{ host_id }}/{{ host.name }}', function (data) {
+            cpuChart.Line(data['cpu'], cpu_options);
+            for (var i = 0; i < data['hdd'].length; i++) {
+                diskChart[data['hdd'][i].dev].Line(data['hdd'][i].data, disk_options);
+            }
+            for (var i = 0; i < data['net'].length; i++) {
+                netChart[[i]].Line(data['net'][i].data, net_options);
+            }
+        });
+    }
+    $(function () {
+        window.setInterval('instusage()', {{ time_refresh }});
+    });
+</script>
+<script>
+    $(function () {
+        $('.js-custom__checkbox').change(function () {
+            var container  = $(this).closest('.js-custom__container');
+            var toggles     = container.find('.js-custom__toggle');
+            toggles.toggle();
+        });
+    });
+</script>
+<script>
+     window.setInterval(function get_status() {
+         var status = {{ status }};
+         $.getJSON('/inst_status/{{ host_id}}/{{ host.name }}', function (data) {
+             if (data['status'] != status) {
+                 window.location.reload()
+             }
+         })
+     }, 2000);
+</script>
+{% endblock %}

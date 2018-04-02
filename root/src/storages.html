@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+{% block title %}{% i18n "Storages" %}{% endblock %}
+{% block content %}
+    {% include 'sidebar.html' %}
+    <div class="main col-xs-12 col-sm-9">
+        <div class="btn-group-sm">
+            <a href="#AddStgPool" class="btn btn-success" data-toggle="modal">{% i18n "New Storage" %}</a>
+        </div>
+        {% if errors %}
+            {% for error in errors %}
+                <div class="alert alert-danger" style="margin-top:10px">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                    {{ error }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% if form.name.errors %}
+            <div class="alert alert-danger" style="margin-top:10px">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                {% for error in form.name.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if form.target.errors %}
+            <div class="alert alert-danger" style="margin-top:10px">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                {% for error in form.target.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if form.source.errors %}
+            <div class="alert alert-danger" style="margin-top:10px">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                {% for error in form.source.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if not storages %}
+            <div class="well">
+                <h4>{% i18n "You do not have any storage pools" %}</h4>
+            </div>
+        {% else %}
+            <div class="row" role="main">
+                {% for pool in storages %}
+                    <div class="col-xs-12 col-sm-4">
+                        <div class="panel {% if pool.status %}panel-success{% else %}panel-danger{% endif %} panel-data">
+                            <div class="panel-heading">
+                                <h3 class="panel-title"><a href="{% url 'storage' host_id pool.name %}">{{ pool.name }}</a></h3>
+                            </div>
+                            <div class="panel-body">
+                                <p>{% i18n "Type" %}: {{ pool.type|upper }}</p>
+
+                                <p>{% i18n "Size" %}: {{ pool.size|filesizeformat }}</p>
+
+                                <p>{% i18n "Volumes" %}: {{ pool.volumes }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Modal Storage pool -->
+    <div class="modal fade" id="AddStgPool" tabindex="-1" role="dialog" aria-labelledby="AddStgPoolLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">{% i18n "Create Storage Pool" %}</h4>
+                </div>
+                <div class="tabbable">
+                    <ul class="nav nav-tabs">
+                        <li class="active">
+                            <a href="#1" data-toggle="tab">{% i18n "DIR" %}</a>
+                        </li>
+                        <li><a href="#2" data-toggle="tab">{% i18n "LVM" %}</a></li>
+                        <li><a href="#3" data-toggle="tab">{% i18n "CEPH" %}</a></li>
+                        <li><a href="#4" data-toggle="tab">{% i18n "NETFS" %}</a></li>
+                        <li><a href="#5" data-toggle="tab">{% i18n "ISO" %}</a></li>
+                    </ul>
+                </div>
+                <div class="tab-content">
+                    <div class="tab-pane active" id="1">
+                        <form class="form-horizontal" method="post" action="" role="form">{% csrf_token %}
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Type" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="stg_type" value="dir" disabled>
+                                    <input type="hidden" name="stg_type" value="dir">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Name" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="name" placeholder="default"
+                                           maxlength="20" required pattern="[a-zA-Z0-9\.\-_]+">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Path" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" name="target" class="form-control"
+                                           value="/var/lib/libvirt/images" required pattern="[a-zA-Z0-9\/\-_]+">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default"
+                                        data-dismiss="modal">{% i18n "Close" %}</button>
+                                <button type="submit" class="btn btn-primary"
+                                        name="create">{% i18n "Create" %}</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="tab-pane" id="2">
+                        <form class="form-horizontal" method="post" action="" role="form">{% csrf_token %}
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Type" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="stg_type" value="logical" disabled>
+                                    <input type="hidden" name="stg_type" value="logical">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Name" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="name" placeholder="default"
+                                           maxlength="20" required pattern="[a-zA-Z0-9\.\-\_]+">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Device" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="source" value="/dev/sdb" required
+                                           pattern="[a-z0-9\/_]+">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default"
+                                        data-dismiss="modal">{% i18n "Close" %}</button>
+                                <button type="submit" class="btn btn-primary"
+                                        name="create">{% i18n "Create" %}</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="tab-pane" id="3">
+                        <form class="form-horizontal" method="post" action="" role="form">{% csrf_token %}
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Type" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="stg_type" value="rbd" disabled>
+                                    <input type="hidden" name="stg_type" value="rbd">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Name" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="name" placeholder="rbdpool"
+                                           maxlength="20" required pattern="[a-zA-Z0-9\.\-_]+">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Ceph User" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="ceph_user" placeholder="libvirt"
+                                           maxlength="20" required pattern="[a-zA-Z0-9\.\-_]+">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Ceph Pool" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="ceph_pool" placeholder="libvirt-pool"
+                                           maxlength="20" required pattern="[a-zA-Z0-9\.\-_]+">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Ceph Host" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="ceph_host"
+                                           placeholder="mon0.ceph.host" maxlength="20" required
+                                           pattern="[a-zA-Z0-9\.\-_]+">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Secrets" %}</label>
+
+                                <div class="col-sm-6">
+                                    <select name="secret" class="form-control">
+                                        {% if secrets %}
+                                            {% for secret in secrets %}
+                                                <option value="{{ secret }}">{{ secret }}</option>
+                                            {% endfor %}
+                                        {% else %}
+                                            <option value="None">{% i18n "None" %}</option>
+                                        {% endif %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default"
+                                        data-dismiss="modal">{% i18n "Close" %}</button>
+                                {% if secrets %}
+                                    <button type="submit" class="btn btn-primary"
+                                            name="create">{% i18n "Create" %}</button>
+                                {% else %}
+                                    <button class="btn btn-primary disabled" name="create">{% i18n "Create" %}</button>
+                                {% endif %}
+                            </div>
+                        </form>
+                    </div>
+                    <div class="tab-pane" id="4">
+                        <form class="form-horizontal" method="post" action="" role="form">{% csrf_token %}
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Type" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="stg_type" value="netfs" disabled>
+                                    <input type="hidden" name="stg_type" value="netfs">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Name" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="name" placeholder="netfspool"
+                                           maxlength="20" required pattern="[a-zA-Z0-9\.\-_]+">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Hostname" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="netfs_host"
+                                           placeholder="nfs.example.com" maxlength="20" required
+                                           pattern="[a-zA-Z0-9\.\-_]+">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Remote Path" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="source" placeholder="/srv/storage/"
+                                           maxlength="40" required pattern="[a-zA-Z0-9\/\-_]+">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Format" %}</label>
+
+                                <div class="col-sm-6">
+                                    <select name="source_format" class="form-control" id="source_format">
+                                        <option value="auto">{% i18n "auto" %}</option>
+                                        <option value="nfs">{% i18n "nfs" %}</option>
+                                        <option value="glusterfs">{% i18n "glusterfs" %}</option>
+                                        <option value="cifs">{% i18n "cifs" %}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Local Path" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="target" placeholder="/srv/storage/"
+                                           maxlength="40" required pattern="[a-zA-Z0-9\/\-_]+">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default"
+                                        data-dismiss="modal">{% i18n "Close" %}</button>
+                                <button type="submit" class="btn btn-primary"
+                                        name="create">{% i18n "Create" %}</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="tab-pane" id="5">
+                        <form class="form-horizontal" method="post" action="" role="form">{% csrf_token %}
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Name" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="name" value="iso" disabled>
+                                    <input type="hidden" name="name" value="iso">
+                                    <input type="hidden" name="stg_type" value="dir">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% i18n "Path" %}</label>
+
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" name="target"
+                                           value="/var/www/webvirtmgr/images" required pattern="[a-zA-Z0-9\/\-\_]+">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default"
+                                        data-dismiss="modal">{% i18n "Close" %}</button>
+                                <button type="submit" class="btn btn-primary"
+                                        name="create">{% i18n "Create" %}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+    {% include 'sidebar_close.html' %}
+{% endblock %}

@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+{% block title %}{% i18n "Storage Pool" %}{% endblock %}
+{% block style %}
+    <link href="{% static "css/table-sort.css" %}" rel="stylesheet">
+{% endblock %}
+{% block content %}
+    {% include 'sidebar.html' %}
+    <div class="main col-xs-12 col-sm-9">
+        {% if errors %}
+            {% for error in errors %}
+                <div class="alert alert-danger">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                    {{ error }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% if form.name.errors %}
+            <div class="alert alert-danger">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                {% for error in form.name.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+        <table class="table table-hover table-nolines" role="main">
+            <tbody>
+                <tr>
+                    <td>{% i18n "Pool name" %}</td>
+                    <td>
+                        [{% for storage in storages %}
+                            {% ifequal storage pool %}
+                                <b>{{ pool }}</b>
+                            {% else %}
+                                <a href="{% url 'storage' host_id storage %}">{{ storage }}</a>
+                            {% endifequal %}
+                        {% endfor %} ]
+                    </td>
+                </tr>
+                <tr>
+                    <td>{% i18n "Pool type" %}</td>
+                    <td>{% if not type %}{% i18n "None" %}{% else %}{{ type }}{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>{% i18n "Pool path" %}</td>
+                    <td>{% if not path %}{% i18n "None" %}{% else %}{{ path }}{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>{% i18n "Pool status" %}</td>
+                    <td>{% if not status %}{% i18n "None" %}{% else %}{{ status }}{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>{% i18n "Size" %} ({{ size|filesizeformat }} / {{ used|filesizeformat }})</td>
+                    <td>{% i18n "Usage" %}: {{ percent }}%</td>
+                </tr>
+                <tr>
+                    <td>{% i18n "State" %}</td>
+                    <td>
+                        <form action="" method="post" role="form">{% csrf_token %}
+                            {% ifequal state 0 %}
+                                <input type="submit" class="btn btn-xs btn-default" name="start" value="{% i18n "Start" %}">
+                                <input type="submit" class="btn btn-xs btn-default" name="delete" value="{% i18n "Delete" %}"
+                                       onclick="return confirm('{% i18n "Are you sure?" %}')">
+                            {% else %}
+                                <input type="submit" class="btn btn-xs btn-default" name="stop" value="{% i18n "Stop" %}"
+                                       onclick="return confirm('{% i18n "Are you sure?" %}')">
+                            {% endifequal %}
+                        </form>
+                    </td>
+                </tr>
+                <tr>
+                    <td>{% i18n "Autostart" %}</td>
+                    <td>
+                        <form action="" method="post" role="form">{% csrf_token %}
+                            {% ifequal autostart 0 %}
+                                <input type="submit" class="btn btn-xs btn-default" name="set_autostart"
+                                       value="{% i18n "Enable" %}">
+                            {% else %}
+                                <input type="submit" class="btn btn-xs btn-default" name="unset_autostart"
+                                       onclick="return confirm('{% i18n "Are you sure?" %}')" value="{% i18n "Disable" %}">
+                            {% endifequal %}
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        {% if state %}
+            {% ifequal pool "iso" %}
+                <h3>{% i18n "Images" %}</h3>
+                <hr>
+                {% ifnotequal state 0 %}
+                    <a href="#IsoUpload" class="btn btn-success" data-toggle="modal">{% i18n "Upload ISO" %}</a><br>
+                    <br>
+                {% endifnotequal %}
+
+                {% if volumes %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered" id="sortTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:35px;">#</th>
+                                    <th>{% i18n "Name" %}</th>
+                                    <th style="width:90px;">{% i18n "Size" %}</th>
+                                    <th style="width:75px;">{% i18n "Format" %}</th>
+                                    <th colspan="2">{% i18n "Action" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for volume in volumes %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ volume.name }}</td>
+                                        <td style="width:65px;">{{ volume.size|filesizeformat }}</td>
+                                        <td>{{ volume.type }}</td>
+                                        <td style="width:30px;">
+                                            <form action="" method="post" role="form">{% csrf_token %}
+                                                <input type="hidden" name="volname" value="{{ volume.name }}">
+                                                <input type="submit" class="btn btn-sm btn-danger" name="del_volume"
+                                                       value="{% i18n "Delete" %}"
+                                                       onclick="return confirm('{% i18n "Are you sure?" %}')">
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="well">
+                        <h4>{% i18n "You do not have any ISO images or storage pool not active" %}</h4>
+                    </div>
+                {% endif %}
+            {% else %}
+                <h3>{% i18n "Volumes" %}</h3>
+                <hr>
+                {% ifnotequal state 0 %}
+                    <a href="#AddImage" class="btn btn-success" data-toggle="modal">{% i18n "Add Image" %}</a><br><br>
+                {% endifnotequal %}
+
+                {% if volumes %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered" id="sortTable">
+                            <thead>
+                            <tr>
+                                <th style="width:35px;">#</th>
+                                <th>{% i18n "Name" %}</th>
+                                <th style="width:80px;">{% i18n "Size" %}</th>
+                                <th style="width:75px;">{% i18n "Format" %}</th>
+                                <th colspan="2">{% i18n "Action" %}</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for volume in volumes %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ volume.name }}</td>
+                                    <td>{{ volume.size|filesizeformat }}</td>
+                                    <td>{{ volume.type }}</td>
+                                    <td style="width:30px;">
+                                        <div class="modal fade" id="Clone{{ forloop.counter }}" tabindex="-1" role="dialog"
+                                             aria-labelledby="addHostLabel" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <button type="button" class="close" data-dismiss="modal"
+                                                                aria-hidden="true">&times;</button>
+                                                        <h4 class="modal-title">{% i18n "Clone image" %} <span
+                                                                class="label label-danger">{{ volume.name }}</span></h4>
+                                                    </div>
+                                                    <form class="form-horizontal" method="post" role="form">{% csrf_token %}
+                                                        <div class="form-group">
+                                                            <label class="col-sm-3 control-label">{% i18n "Name" %}</label>
+
+                                                            <div class="col-sm-6">
+                                                                <input type="text" class="form-control" name="name"
+                                                                       placeholder="{% i18n "Name" %}" required
+                                                                       pattern="[a-zA-Z0-9\.\-_]+">
+                                                                <input type="hidden" name="image" value="{{ volume.name }}">
+                                                            </div>
+                                                            <label class="col-sm-1 control-label">.img</label>
+                                                        </div>
+                                                        <div class="form-group" id="image_format">
+                                                            <label class="col-sm-3 control-label">{% i18n "Convert" %}</label>
+
+                                                            <div class="col-sm-6">
+                                                                <input class="volume-convert" type="checkbox" name="convert"
+                                                                       value="true">
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group format-convert">
+                                                            <label class="col-sm-3 control-label">{% i18n "Format" %}</label>
+
+                                                            <div class="col-sm-6">
+                                                                <select name="format" class="form-control image-format">
+                                                                    <option value="raw">{% i18n "raw" %}</option>
+                                                                    <option value="qcow">{% i18n "qcow" %}</option>
+                                                                    <option value="qcow2">{% i18n "qcow2" %}</option>
+                                                                    <option value="qed">{% i18n "qed" %}</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group meta-prealloc" style="display: none;">
+                                                            <label class="col-sm-3 control-label">{% i18n "Metadata" %}</label>
+
+                                                            <div class="col-sm-6">
+                                                                <input type="checkbox" name="meta_prealloc" value="true"
+                                                                       checked>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-default"
+                                                                    data-dismiss="modal">{% i18n "Close" %}</button>
+                                                            <button type="submit" class="btn btn-primary"
+                                                                    name="cln_volume">{% i18n "Clone" %}</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <!-- /.modal-content -->
+                                            </div>
+                                            <!-- /.modal-dialog -->
+                                        </div>
+                                        <!-- /.modal -->
+                                        {% ifnotequal volume.type "iso" %}
+                                            <a data-toggle="modal" href="#Clone{{ forloop.counter }}"
+                                               class="btn btn-sm btn-primary">{% i18n "Clone" %}</a>
+                                        {% else %}
+                                            <a class="btn btn-sm btn-primary disabled">{% i18n "Clone" %}</a>
+                                        {% endifnotequal %}
+                                    </td>
+                                    <td style="width:30px;">
+                                        <form action="" method="post" style="height:10px" role="form">{% csrf_token %}
+                                            <input type="hidden" name="volname" value="{{ volume.name }}">
+                                            <input type="submit" class="btn btn-sm btn-danger" name="del_volume"
+                                                   value="{% i18n "Delete" %}"
+                                                   onclick="return confirm('{% i18n "Are you sure?" %}')">
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="well pagination-centered">
+                        <h4>{% i18n "You do not have any volumes or storage pools active" %}</h4>
+                    </div>
+                {% endif %}
+            {% endifequal %}
+        {% endif %}
+    </div>
+
+    <!-- Modal Image -->
+    <div class="modal fade" id="AddImage" tabindex="-1" role="dialog" aria-labelledby="AddImageLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">{% i18n "Add New Image" %}</h4>
+                </div>
+                <form class="form-horizontal" method="post" role="form">{% csrf_token %}
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">{% i18n "Name" %}</label>
+
+                        <div class="col-sm-6">
+                            <input type="text" class="form-control" name="name" placeholder="{% i18n "Name" %}"
+                                   required pattern="[a-zA-Z0-9\.\-_]+">
+                        </div>
+                    </div>
+                    <div class="form-group" id="image_format">
+                        <label class="col-sm-3 control-label">{% i18n "Format" %}</label>
+
+                        <div class="col-sm-6">
+                            <select name="format" class="form-control image-format">
+                                <option value="qcow2">{% i18n "qcow2" %}</option>
+                                <option value="qcow">{% i18n "qcow" %}</option>
+                                <option value="qed">{% i18n "qed" %}</option>
+                                <option value="raw">{% i18n "raw" %}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">{% i18n "Size" %}</label>
+
+                        <div class="col-sm-6">
+                            <input type="text" class="form-control" name="size" value="10" maxlength="3" required
+                                   pattern="[0-9]+">
+                        </div>
+                        <label class="col-sm-1 control-label">{% i18n "GB" %}</label>
+                    </div>
+                    <div class="form-group meta-prealloc">
+                        <label class="col-sm-3 control-label">{% i18n "Metadata" %}</label>
+
+                        <div class="col-sm-6">
+                            <input type="checkbox" name="meta_prealloc" value="true" checked>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% i18n "Close" %}</button>
+                        <button type="submit" class="btn btn-primary" name="add_volume">{% i18n "Create" %}</button>
+                    </div>
+                </form>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <!-- Modal Upload -->
+    <div class="modal fade" id="IsoUpload" tabindex="-1" role="dialog" aria-labelledby="IsoUploadLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">{% i18n "Upload ISO Image" %}</h4>
+                </div>
+                <form class="form-horizontal" enctype="multipart/form-data" method="post" role="form">{% csrf_token %}
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">{% i18n "Name" %}</label>
+
+                        <div class="col-sm-6">
+                            <input type="file" name="file" id="id_file">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% i18n "Close" %}</button>
+                        <button type="submit" class="btn btn-primary" name="iso_upload">{% i18n "Upload" %}</button>
+                    </div>
+                </form>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+    {% include 'sidebar_close.html' %}
+{% endblock %}
+{% block script %}
+    <script>
+        $(document).on('change', '.volume-convert', function () {
+            if ($(this).prop('checked')) {
+                $('.format-convert').show();
+                if ($('.image-format').val() == 'qcow2') {
+                    $('.meta-prealloc').show();
+                }
+            } else {
+                $('.format-convert').hide();
+                $('.meta-prealloc').hide();
+            }
+        });
+        $(document).on('change', '.image-format', function () {
+            if ($(this).val() == "qcow2") {
+                $('.meta-prealloc').show();
+            } else {
+                $('.meta-prealloc').hide();
+            }
+        });
+        {% ifnotequal type 'dir' %}
+            $('#image_format').hide();
+        {% endifnotequal %}
+    </script>
+    <script src="{% static "js/jquery.tablesorter.js" %}"></script>
+    <script>
+        $(function() {
+            $("#sortTable").tablesorter({
+                ignoreCase: true,
+                sortList: [[0,0]],
+                headers: {4: {sorter: false}},
+                textSorter: {1: $.tablesorter.sortText}
+            });
+        });
+    </script>
+{% endblock %}

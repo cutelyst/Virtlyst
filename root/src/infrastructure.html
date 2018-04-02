@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}{% i18n "Infrastructure" %}{% endblock %}
+{% block content %}
+    <div class="row">
+        <div class="col-xs-12" role="main">
+            <div class="page-header page-header__filter clearfix">
+                <h1>{% i18n "Infrastructure" %}</h1>
+                <div class="input-append form-inline">
+                    <div class="form-group">
+                        <input type="text" class="form-control" id="filter_input">
+                    </div>
+                    <div class="form-group">
+                        <input type="button" class="btn btn-default" id="filter_button" value="Filter">
+                        <button type="button" class="btn btn-default" id="filter_clear">Clear</button>
+                    </div>
+                </div>
+            </div>
+            {% if hosts_vms %}
+                <div id="hide_vms_bystate" class="text-right">
+                    <div class="form-group">
+                        <span>Hide:</span>
+                        <label class="text-success">
+                            <input type="checkbox" data-value="1"> {% i18n "Running" %}</input>
+                        </label>
+                        <label class="text-warning">
+                            <input type="checkbox" data-value="3"> {% i18n "Suspend" %}</input>
+                        </label>
+                        <label class="text-danger">
+                            <input type="checkbox" data-value="5"> {% i18n "Shutoff" %}</input>
+                        </label>
+                    </div>
+                </div>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 10px;">#</th>
+                            <th>{% i18n "Hostname / VMs" %}</th>
+                            <th>{% i18n "Status" %}</th>
+                            <th style="text-align:center;width:50px;">{% i18n "VCPUs" %}</th>
+                            <th style="text-align:center;width:100px;">{% i18n "Memory" %}</th>
+                            <th style="text-align:center;width:80px;">{% i18n "Usage" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for host in hosts_vms %}
+                            <tr style="font-size:18px;">
+                                <td>{{ forloop.counter }}</td>
+                                <td><a href="/instances/{{ host.id }}">{{ host.name }}</a></td>
+                                <td>{% if host.status == 1 %}<span class="label label-success">{% i18n "Active" %}
+                                    </span>{% endif %}
+                                    {% if host.status == 2 %}<span class="label label-danger">{% i18n "Not Active" %}
+                                        </span>{% endif %}
+                                    {% if host.status == 3 %}<span class="label label-danger">{% i18n "Connection Failed" %}
+                                        </span>{% endif %}
+                                </td>
+                                <td style="text-align:center;">{{ host.cpus }}</td>
+                                <td style="text-align:center;">{{ host.memory }}<!--|filesizeformat--></td>
+                                <td style="text-align:center;">{{ host.mem_usage }} %</td>
+                            </tr>
+                            {% if host.vms %}
+                                {% for vm in host.vms %}
+                                    <tr data-status="{{ vm.status }}">
+                                        <td></td>
+                                        <td>{{ forloop.counter }} &emsp; <a
+                                                href="/instance/{{ host.id }}/{{ vm.name }}">{{ vm.name }}</a></td>
+                                        <td>{% if vm.status == 1 %}<span class="label label-success">{% i18n "Running" %}
+                                            </span>{% endif %}
+                                            {% if vm.status == 3 %}<span class="label label-warning">{% i18n "Suspend" %}
+                                                </span>{% endif %}
+                                            {% if vm.status == 5 %}<span class="label label-danger">{% i18n "Shutoff" %}
+                                                </span>{% endif %}
+                                        </td>
+                                        <td style="text-align:center;">{{ vm.vcpu }}</td>
+                                        <td style="text-align:center;">{{ vm.memory }}<!--|filesizeformat--></td>
+                                        <td style="text-align:center;">{{ vm.mem_usage }} %</td>
+                                    </tr>
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="well">
+                    <h4>{% i18n "You have no connection" %}</h4>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+{% block script %}
+    <script src="/static/js/infrastructure.js"></script>
+{% endblock %}

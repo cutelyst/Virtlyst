@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{% i18n "404" %}{% endblock %}
+{% block content %}
+    <div class="row">
+        <div class="col-xs-12" id="error">
+            <h1>Oops!</h1>
+
+            <p class="lead">{% i18n "404 Not Found" %}</p>
+
+            <p>{% i18n "The requested page was not found on this server." %}</p>
+            <a class="btn btn-medium btn-success" href="javascript:history.back()">&larr; Back</a>
+        </div>
+    </div>
+{% endblock %}
