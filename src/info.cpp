@@ -77,7 +77,7 @@ void Info::insts_status(Context *c, const QString &hostId)
                            {QStringLiteral("name"), QString::fromUtf8(name)},
                            {QStringLiteral("dump"), 0},
                            {QStringLiteral("status"), info.state},
-                           {QStringLiteral("memory"), int(info.memory / 1024)},
+                           {QStringLiteral("memory"), Virtlyst::prettyKibiBytes(info.memory)},
                            {QStringLiteral("vcpu"), info.nrVirtCpu},
                        });
         }

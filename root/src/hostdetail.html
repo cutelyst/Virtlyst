@@ -17,31 +17,31 @@
             <tbody>
                 <tr>
                     <td>{% i18n "Connection" %}</td>
-                    <td>{{ uri_conn }}</td>
+                    <td>{{ host.uri }}</td>
                 </tr>
                 <tr>
                     <td>{% i18n "Hostname" %}</td>
-                    <td>{{ hostname }}</td>
+                    <td>{{ host.hostname }}</td>
                 </tr>
                 <tr>
                     <td>{% i18n "Hypervisor" %}</td>
-                    <td>{{ hypervisor }}</td>
+                    <td>{{ host.hypervisor }}</td>
                 </tr>
                 <tr>
                     <td>{% i18n "Memory" %}</td>
-                    <td>{{ host_memory|filesizeformat }}</td>
+                    <td>{{ host.memoryPretty }}<!--|filesizeformat--></td>
                 </tr>
                 <tr>
                     <td>{% i18n "Logical CPUs" %}</td>
-                    <td>{{ logical_cpu }}</td>
+                    <td>{{ host.cpus }}</td>
                 </tr>
                 <tr>
                     <td>{% i18n "Processor" %}</td>
-                    <td>{{ model_cpu }}</td>
+                    <td>{{ host.cpuVendor }}</td>
                 </tr>
                 <tr>
                     <td>{% i18n "Architecture" %}</td>
-                    <td>{{ host_arch }}</td>
+                    <td>{{ host.arch }}</td>
                 </tr>
             </tbody>
         </table>
@@ -55,7 +55,7 @@
     {% include 'sidebar_close.html' %}
 {% endblock %}
 {% block script %}
-    <script src="{% static "js/Chart.min.js" %}"></script>
+    <script src="/static/js/Chart.min.js"></script>
     <script>
         var cpu_ctx = $("#cpuChart").get(0).getContext("2d");
         var cpuChart = new Chart(cpu_ctx);
@@ -80,7 +80,7 @@
         };
 
         function hostusage() {
-            $.getJSON('{% url 'hostusage' host_id %}', function (data) {
+            $.getJSON('/info/hostusage/{{ host_id }}', function (data) {
                 cpuChart.Line(data['cpu'], cpu_options);
                 memChart.Line(data['memory'], mem_options);
             });

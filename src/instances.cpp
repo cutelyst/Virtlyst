@@ -38,11 +38,9 @@ void Instances::index(Context *c, const QString &hostId)
         fprintf(stderr, "Failed to open connection to qemu:///system\n");
         return;
     }
-
-    QVariantHash compute{
-        {QStringLiteral("name"), conn->hostname()}
-    };
-    c->setStash(QStringLiteral("compute"), compute);
+    c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));
+    c->setStash(QStringLiteral("host_id"), hostId);
+    c->setStash(QStringLiteral("time_refresh"), 8000);
 
     if (c->request()->isPost()) {
         const ParamsMultiMap params = c->request()->bodyParameters();
@@ -80,9 +78,6 @@ void Instances::index(Context *c, const QString &hostId)
             }
         }
     }
-
-    c->setStash(QStringLiteral("host_id"), hostId);
-    c->setStash(QStringLiteral("time_refresh"), 8000);
 
     virDomainPtr *domains;
     unsigned int flags = VIR_CONNECT_LIST_DOMAINS_ACTIVE |

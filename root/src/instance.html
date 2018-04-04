@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{% i18n "VMs" %} - {{ host.name }}{% endblock %}
+{% block title %}{% i18n "VMs" %} - {{ domain.name }}{% endblock %}
 {% block content %}
     {% include 'sidebar.html' %}
     <div class="main col-xs-12 col-sm-9">
@@ -31,25 +31,25 @@
         </thead>
         <tbody>
         <tr>
-            <td>{{ host.name }}</td>
-            <td>{% if host.status %}
-                <span id="status" class={% if host.status == 5 %}
-                    {% if has_managed_save_image == 1 %}
+            <td>{{ domain.name }}</td>
+            <td>{% if domain.status %}
+                <span id="status" class={% if domain.status == 5 %}
+                    {% if domain.hasManagedSaveImage == 1 %}
                         "label label-warning">{% i18n "Saved" %}
                     {% else %}
                         "label label-danger">{% i18n "Shutoff" %}
                     {% endif %}
                 {% endif %}
-                {% if host.status == 1 %}"label label-success">{% i18n "Running" %}{% endif %}
-                {% if host.status == 3 %}"label label-warning">{% i18n "Suspend" %}{% endif %}
+                {% if domain.status == 1 %}"label label-success">{% i18n "Running" %}{% endif %}
+                {% if domain.status == 3 %}"label label-warning">{% i18n "Suspend" %}{% endif %}
                             </span>
             {% else %}
                 {% i18n "None" %}
             {% endif %}
             </td>
-            <td>{% if host.cur_vcpu %}{{ host.cur_vcpu }}{% else %}{{ host.vcpu }}{% endif %}</td>
-            <td>{{ host.memory_pretty }}</td>
-            <td>{{ host.description }}</td>
+            <td>{% if domain.currentVcpu %}{{ domain.currentVcpu }}{% else %}{{ domain.vcpu }}{% endif %}</td>
+            <td>{{ domain.currentMemoryPretty }}</td>
+            <td>{{ domain.description }}</td>
         <tr>
         </tbody>
     </table>
@@ -88,48 +88,48 @@
     <div class="tab-content">
     <div class="tab-pane active" id="power" style="margin-top: 20px">
         <ul class="nav nav-tabs nav-btn-act">
-            <li class="active"><a href="#shutdown" data-toggle="tab">{% if host.status == 5 %}{% i18n "Start" %}{% else %}{% i18n "Shutdown" %}{% endif %}</a></li>
-            {% if host.status != 5 %}
+            <li class="active"><a href="#shutdown" data-toggle="tab">{% if domain.status == 5 %}{% i18n "Start" %}{% else %}{% i18n "Shutdown" %}{% endif %}</a></li>
+            {% if domain.status != 5 %}
             <li><a href="#forceshutdown" data-toggle="tab">{% i18n "Force Shutdown" %}</a></li>
             <li><a href="#suspend" data-toggle="tab">{% i18n "Suspend" %}</a></li>
             {% endif %}
-            {% if status != 5 or has_managed_save_image == 1 %}
+            {% if domain.status != 5 or domain.hasManagedSaveImage == 1 %}
             <li><a href="#managedsave" data-toggle="tab">{% i18n "Save" %}</a></li>
             {% endif %}
         </ul>
         <div class="tab-content">
             <div class="tab-pane tab-inst active" id="shutdown">
-                {% if host.status == 5 %}
+                {% if domain.status == 5 %}
                 <p>{% i18n "Click on Start button to start this instance." %}</p>
                 {% else %}
                 <p>{% i18n "This action sends an ACPI shutdown signal to the instance." %}</p>
                 {% endif %}
 
                 <form action="" method="post" role="form">{{ csrf_token }}
-                    {% if host.status == 5 %}
+                    {% if domain.status == 5 %}
                         <button type="submit" name="start"
                                 class="btn btn-lg btn-primary pull-right">{% i18n "Start" %}</button>
                     {% endif %}
-                    {% if host.status == 1 %}
+                    {% if domain.status == 1 %}
                         <button data-id="shutoff" type="submit" name="power" value="shutdown"
                                 class="btn btn-lg btn-primary pull-right">{% i18n "Shutdown" %}</button>
                     {% endif %}
-                    {% if host.status == 3 %}
+                    {% if domain.status == 3 %}
                         <button class="btn btn-lg btn-primary pull-right disabled">{% i18n "Shutdown" %}</button>
                     {% endif %}
                 </form>
                 <div class="clearfix"></div>
             </div>
-            {% if host.status != 5 %}
+            {% if domain.status != 5 %}
             <div class="tab-pane tab-inst" id="forceshutdown">
                 <p>{% i18n "This action forcibly powers off the instance and may cause data corruption." %}</p>
 
                 <form action="" method="post" role="form">{{ csrf_token }}
-                    {% if host.status == 1 %}
+                    {% if domain.status == 1 %}
                         <button data-id="shutoff" type="submit" name="power" value="destroy"
                                 class="btn btn-lg btn-primary pull-right">{% i18n "Force Shutdown" %}</button>
                     {% endif %}
-                    {% if host.status == 3 %}
+                    {% if domain.status == 3 %}
                         <button class="btn btn-lg btn-primary pull-right disabled">{% i18n "Force Shutdown" %}</button>
                     {% endif %}
                 </form>
@@ -139,11 +139,11 @@
                 <p>{% i18n "This action suspends or restores the instance." %}</p>
 
                 <form action="" method="post" role="form">{{ csrf_token }}
-                    {% if host.status == 1 %}
+                    {% if domain.status == 1 %}
                         <button data-id="shutoff" type="submit" name="suspend"
                                 class="btn btn-lg btn-primary pull-right">{% i18n "Suspend" %}</button>
                     {% endif %}
-                    {% if host.status == 3 %}
+                    {% if domain.status == 3 %}
                         <button type="submit" name="resume"
                                 class="btn btn-lg btn-primary pull-right">{% i18n "Resume" %}</button>
                     {% endif %}
@@ -151,25 +151,25 @@
                 <div class="clearfix"></div>
             </div>
             {% endif %}
-            {% if status != 5 or has_managed_save_image == 1 %}
+            {% if status != 5 or domain.hasManagedSaveImage == 1 %}
             <div class="tab-pane tab-inst" id="managedsave">
                 <p>{% i18n "This action saves the state of the instance." %}</p>
 
                 <form action="" method="post" role="form">{{ csrf_token }}
-                    {% if host.status == 5 %}
+                    {% if domain.status == 5 %}
                         <button data-id="shutoff" type="submit" name="start"
                                 class="btn btn-lg btn-primary pull-right">{% i18n "Start" %}</button>
-                        {% if has_managed_save_image == 1 %}
+                        {% if domain.hasManagedSaveImage == 1 %}
                             <div class="clearfix" style="height:60px;"></div>
                             <button type="submit" name="deletesaveimage"
                                     class="btn btn-lg btn-primary pull-right">{% i18n "Delete Save Image" %}</button>
                         {% endif %}
                     {% endif %}
-                    {% if host.status == 1 %}
+                    {% if domain.status == 1 %}
                         <button type="submit" name="power" value="managedsave"
                                 class="btn btn-lg btn-primary pull-right">{% i18n "Save" %}</button>
                     {% endif %}
-                    {% if host.status == 3 %}
+                    {% if domain.status == 3 %}
                         <button class="btn btn-lg btn-primary pull-right disabled">{% i18n "Save" %}</button>
                     {% endif %}
                 </form>
@@ -192,7 +192,7 @@
         <div class="tab-content">
             <div class="tab-pane tab-inst active" id="console">
                 <p>{% i18n "This action opens a new window with a connection to the console of the instance." %}</p>
-                {% if host.status == 5 %}
+                {% if domain.status == 5 %}
                     <button class="btn btn-primary btn-lg pull-right disabled">{% i18n "Console" %}</button>
                 {% else %}
                     <a href="#" class="btn btn-primary btn-lg pull-right" title="Console port: {{ console_port }}"
@@ -202,7 +202,7 @@
             </div>
             <div class="tab-pane tab-inst" id="telnet_console">
                 <p>{% i18n "This action open new window with console Telnet connection to your instance." %}</p>
-                {% if host.status == 5 %}
+                {% if domain.status == 5 %}
                     <button class="btn btn-primary btn-lg pull-right disabled">{% i18n "Console" %}</button>
                 {% else %}
                     <a href="telnet://{{ compute.hostname }}:{{ telnet_port }}"
@@ -227,7 +227,7 @@
                             </select>
                         </div>
                     </div>
-                    {% if host.status == 5 %}
+                    {% if domain.status == 5 %}
                         <button type="submit" class="btn btn-primary btn-lg pull-right"
                                 name="set_console_type">{% i18n "Set console type" %}</button>
                     {% else %}
@@ -273,7 +273,7 @@
                                 onclick="show_console()">{% i18n "Show" %}</a>
                         {% endif %}
                     </div>
-                    {% if host.status == 5 %}
+                    {% if domain.status == 5 %}
                         <button type="submit" class="btn btn-primary btn-lg pull-right"
                                 name="set_console_passwd">{% i18n "Set Password" %}</button>
                     {% else %}
@@ -309,7 +309,7 @@
                             </select>
                         </div>
                     </div>
-                    {% if host.status == 5 %}
+                    {% if domain.status == 5 %}
                         <button type="submit" class="btn btn-primary btn-lg pull-right"
                                 name="set_console_keymap">{% i18n "Set Keymap" %}</button>
                     {% else %}
@@ -338,7 +338,7 @@
                 <label class="col-sm-4 control-label" style="font-weight:normal;"> {% i18n "Autostart" %}</label>
 
                 <div class="col-sm-4">
-                    {% if host.autostart == 0 %}
+                    {% if not domain.autostart %}
                         <input type="submit" class="btn btn-md btn-default" name="set_autostart"
                                value="{% i18n "Enable" %}">
                     {% else %}
@@ -353,7 +353,7 @@
                 <label class="col-sm-4 control-label" style="font-weight:normal;">{% i18n "Description" %}</label>
 
                 <div class="col-sm-4">
-                    <input type="text" class="form-control" name="description" value="{{ host.description }}"/>
+                    <input type="text" class="form-control" name="description" value="{{ domain.description }}"/>
                 </div>
             </div>
             <p style="font-weight:bold;">{% i18n "Logical host CPUs:" %} {{ vcpu_host }}</p>
@@ -365,10 +365,10 @@
                 <div class="col-sm-4">
                     <select name="cur_vcpu" class="form-control">
                         {% for cpu in vcpu_range %}
-                            {% if host.cur_vcpu %}
-                                <option value="{{ cpu }}" {% if cpu == host.cur_vcpu %}selected{% endif %}>{{ cpu }}</option>
+                            {% if domain.currentVcpu %}
+                                <option value="{{ cpu }}" {% if cpu == domain.currentVcpu %}selected{% endif %}>{{ cpu }}</option>
                             {% else %}
-                                <option value="{{ cpu }}" {% if cpu == host.vcpu %}selected{% endif %}>{{ cpu }}</option>
+                                <option value="{{ cpu }}" {% if cpu == domain.vcpu %}selected{% endif %}>{{ cpu }}</option>
                             {% endif %}
                         {% endfor %}
                     </select>
@@ -381,7 +381,7 @@
                 <div class="col-sm-4">
                     <select name="vcpu" class="form-control">
                         {% for cpu in vcpu_range %}
-                            <option value="{{ cpu }}" {% if cpu == host.vcpu %}selected{% endif %}>{{ cpu }}</option>
+                            <option value="{{ cpu }}" {% if cpu == domain.vcpu %}selected{% endif %}>{{ cpu }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -396,7 +396,7 @@
                     <select name="cur_memory" class="form-control js-custom__toggle">
                         {% for mem in memory_range %}
                             <option value="{{ mem }}"
-                                    {% if mem == host.cur_memory %}selected{% endif %}>{{ mem }}</option>
+                                    {% if mem == domain.currentMemoryMiB %}selected{% endif %}>{{ mem }}</option>
                         {% endfor %}
                     </select>
                     <input type="text" name="cur_memory_custom" class="form-control js-custom__toggle" style="display: none" />
@@ -411,14 +411,14 @@
                     <select name="memory" class="form-control js-custom__toggle">
                         {% for mem in memory_range %}
                             <option value="{{ mem }}"
-                                    {% if mem == host.memory %}selected{% endif %}>{{ mem }}</option>
+                                    {% if mem == domain.memoryMiB %}selected{% endif %}>{{ mem }}</option>
                         {% endfor %}
                     </select>
                     <input type="text" name="memory_custom" class="form-control js-custom__toggle" style="display: none" />
                     <small><input type="checkbox" class="js-custom__checkbox" /> {% i18n "Custom value" %}</small>
                 </div>
             </div>
-            {% if host.status == 5 %}
+            {% if domain.status == 5 %}
                 <button type="submit" class="btn btn-lg btn-primary pull-right"
                         name="change_settings">{% i18n "Change" %}</button>
             {% else %}
@@ -507,7 +507,7 @@
                 <label class="col-sm-3 control-label" style="font-weight:normal;">{% i18n "Clone Name" %}</label>
 
                 <div class="col-sm-3">
-                    <input type="text" class="form-control" name="name" value="{{ host.name }}-clone"/>
+                    <input type="text" class="form-control" name="name" value="{{ domain.name }}-clone"/>
                 </div>
             </div>
             <p style="font-weight:bold;">{% i18n "Network devices" %}</p>
@@ -540,7 +540,7 @@
                     {% endif %}
                 </div>
             {% endfor %}
-            {% if host.status == 5 %}
+            {% if domain.status == 5 %}
                 <button type="submit" class="btn btn-primary btn-lg pull-right"
                         name="clone">{% i18n "Clone" %}</button>
             {% else %}
@@ -551,8 +551,8 @@
     </div>
     <div class="tab-pane tab-inst" id="instancexml">
         <div id="viewXMLpre">
-            <pre class="pre-scrollable">{{ host.inst_xml }}</pre>
-            {% if host.status == 5 %}
+            <pre class="pre-scrollable">{{ domain.xml }}</pre>
+            {% if domain.status == 5 %}
                 <button type="button" class="btn btn-lg btn-primary pull-right"
                         onclick="javascript:$('#viewXMLpre').hide();$('#viewXMLform').show();">{% i18n "Edit" %}</button>
             {% else %}
@@ -560,7 +560,7 @@
             {% endif %}
         </div>
         <form id="viewXMLform" class="form-horizontal" method="post" role="form" style="display: none">{{ csrf_token }}
-            <textarea id="xmltextarea" name="inst_xml">{{ host.inst_xml }}</textarea>
+            <textarea id="xmltextarea" name="inst_xml">{{ domain.inst_xml }}</textarea>
             <button type="button" class="btn btn-lg btn-default"
                     onclick="javascript:$('#viewXMLpre').show();$('#viewXMLform').hide();">{% i18n "Close" %}</button>
             <button type="submit" class="btn btn-lg btn-danger pull-right" name="change_xml">{% i18n "Save" %}</button>
@@ -587,7 +587,7 @@
                                    maxlength="14">
                         </div>
                     </div>
-                    {% if host.status == 5 %}
+                    {% if domain.status == 5 %}
                         <button type="submit" class="btn btn-primary btn-lg pull-right"
                                 name="snapshot">{% i18n "Create Snapshot" %}</button>
                     {% else %}
@@ -615,7 +615,7 @@
                                 <td style="width:30px;">
                                     <form action="" method="post" style="height:10px" role="form">{{ csrf_token }}
                                         <input type="hidden" name="name" value="{{ snap.name }}">
-                                        {% if host.status == 5 %}
+                                        {% if domain.status == 5 %}
                                             <button type="submit" class="btn btn-sm btn-primary" name="revert_snapshot"
                                                     onclick="return confirm('Are you sure?')">{% i18n "Revert" %}</button>
                                         {% else %}
@@ -924,7 +924,7 @@
     };
 
     function instusage() {
-        $.getJSON('/info/instusage/{{ host_id }}/{{ host.name }}', function (data) {
+        $.getJSON('/info/instusage/{{ host_id }}/{{ domain.name }}', function (data) {
             cpuChart.Line(data['cpu'], cpu_options);
             for (var i = 0; i < data['hdd'].length; i++) {
                 diskChart[data['hdd'][i].dev].Line(data['hdd'][i].data, disk_options);
@@ -950,7 +950,7 @@
 <script>
      window.setInterval(function get_status() {
          var status = {{ status }};
-         $.getJSON('/inst_status/{{ host_id}}/{{ host.name }}', function (data) {
+         $.getJSON('/inst_status/{{ host_id}}/{{ domain.name }}', function (data) {
              if (data['status'] != status) {
                  window.location.reload()
              }

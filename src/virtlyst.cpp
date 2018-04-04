@@ -40,6 +40,11 @@
 #include "instances.h"
 #include "instance.h"
 #include "info.h"
+#include "overview.h"
+#include "storages.h"
+#include "networks.h"
+#include "interfaces.h"
+#include "secrets.h"
 #include "root.h"
 
 #include "sqluserstore.h"
@@ -64,6 +69,11 @@ bool Virtlyst::init()
     new Instances(this);
     new Instance(this);
     new Info(this);
+    new Overview(this);
+    new Networks(this);
+    new Interfaces(this);
+    new Secrets(this);
+    new Storages(this);
 
     bool production = config(QStringLiteral("production")).toBool();
     qDebug() << "Production" << production;

@@ -44,11 +44,7 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
         fprintf(stderr, "Failed to open connection to qemu:///system\n");
         return;
     }
-
-    QVariantHash compute{
-        {QStringLiteral("name"), conn->hostname()}
-    };
-    c->setStash(QStringLiteral("compute"), compute);
+    c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));
 
     virDomainPtr domain = virDomainLookupByName(conn->raw(), name.toUtf8().constData());
     if (!domain) {
@@ -56,13 +52,8 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
         c->setStash(QStringLiteral("errors"), errors);
         return;
     }
-    Domain dom(domain, conn);
-    dom.load();
-
-    virDomainInfo info;
-    if (virDomainGetInfo(domain, &info) < 0) {
-        qWarning() << "Failed to get info for domain" << name;
-    }
+    auto dom = new Domain(domain, conn, c);
+    dom->loadXml();
 
     if (c->request()->isPost()) {
         const ParamsMultiMap params = c->request()->bodyParameters();
@@ -96,7 +87,7 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
             virDomainSetAutostart(domain, 1);
             redir = true;
         } else if (params.contains(QStringLiteral("delete"))) {
-            if (info.state == VIR_DOMAIN_RUNNING) {
+            if (dom->status() == VIR_DOMAIN_RUNNING) {
                 virDomainDestroy(domain);
             }
 
@@ -153,18 +144,16 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
             ulong vcpu = params.value(QStringLiteral("vcpu")).toUInt();
             ulong cur_vcpu = params.value(QStringLiteral("cur_vcpu")).toUInt();
 
-            dom.setDescription(description);
-            dom.setMemory(memory * 1024);
-            dom.setCurrentMemory(cur_memory * 1024);
-            dom.setVcpu(vcpu);
-            dom.setCurrentVcpu(cur_vcpu);
-            dom.save();
-//            conn->changeDomainSettings(domain, description, cur_memory, memory, cur_vcpu, vcpu);
+            dom->setDescription(description);
+            dom->setMemory(memory * 1024);
+            dom->setCurrentMemory(cur_memory * 1024);
+            dom->setVcpu(vcpu);
+            dom->setCurrentVcpu(cur_vcpu);
+            dom->saveXml();
             redir = true;
         }
 
         if (redir) {
-            virDomainFree(domain);
             c->response()->redirect(c->uriFor(CActionFor("index"), QStringList{ hostId, name }));
             return;
         }
@@ -173,18 +162,6 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
     c->setStash(QStringLiteral("host_id"), hostId);
     c->setStash(QStringLiteral("time_refresh"), 8000);
 
-    char uuid[VIR_UUID_STRING_BUFLEN];
-    if (virDomainGetUUIDString(domain, uuid) < 0) {
-        qWarning() << "Failed to get UUID string for domain" << name;
-    }
-
-    int autostart = 0;
-    if (virDomainGetAutostart(domain, &autostart) < 0) {
-        qWarning() << "Failed to get autostart for domain" << name;
-    }
-
-    int has_managed_save_image = virDomainHasManagedSaveImage(domain, 0);
-
     int vcpus = conn->maxVcpus();
     QVector<int> vcpu_range;
     for (int i = 1; i <= vcpus; ++i) {
@@ -192,40 +169,32 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
     }
     c->setStash(QStringLiteral("vcpu_range"), QVariant::fromValue(vcpu_range));
 
-    QVector<int> memory_range({256, 512, 768, 1024, 2048, 4096, 6144, 8192, 16384});
-    int cur_memory = dom.currentMemory() / 1024;
+    virNodeInfo nodeinfo;
+    virNodeGetInfo(conn->raw(), &nodeinfo);
+
+    QVector<int> memory_range;
+    int last = 256;
+    // nodeinfo.memory is in kilobytes, I guess we need to convert to kibi bytes
+    while (last <= nodeinfo.memory / 1024) {
+        memory_range.append(last);
+        last *= 2;
+    }
+    int cur_memory = dom->currentMemory() / 1024;
     if (!memory_range.contains(cur_memory)) {
         memory_range.append(cur_memory);
         std::sort(memory_range.begin(), memory_range.end(),[] (int a, int b) -> int { return a < b; });
     }
-    int memory = dom.memory() / 1024;
+    int memory = dom->memory() / 1024;
     if (!memory_range.contains(memory)) {
         memory_range.append(memory);
         std::sort(memory_range.begin(), memory_range.end(),[] (int a, int b) -> int { return a < b; });
     }
     c->setStash(QStringLiteral("memory_range"), QVariant::fromValue(memory_range));
 
-
-    virNodeInfo nodeinfo;
-    virNodeGetInfo(conn->raw(), &nodeinfo);
     c->setStash(QStringLiteral("vcpu_host"), nodeinfo.cpus);
     c->setStash(QStringLiteral("memory_host"), Virtlyst::prettyKibiBytes(nodeinfo.memory));
 
-    c->setStash(QStringLiteral("host"), QVariantHash{
-                    {QStringLiteral("name"), name},
-                    {QStringLiteral("uuid"), QString::fromUtf8(uuid)},
-                    {QStringLiteral("status"), info.state},
-                    {QStringLiteral("memory_pretty"), Virtlyst::prettyKibiBytes(dom.currentMemory())},
-                    {QStringLiteral("cur_memory"), cur_memory},
-                    {QStringLiteral("memory"), memory},
-                    {QStringLiteral("vcpu"), dom.vcpu()},
-                    {QStringLiteral("cur_vcpu"), dom.currentVcpu()},
-                    {QStringLiteral("autostart"), autostart},
-                    {QStringLiteral("has_managed_save_image"), has_managed_save_image},
-                    {QStringLiteral("description"), dom.description()},
-                    {QStringLiteral("inst_xml"), dom.xml()},
-                    {QStringLiteral("vcpu_range"), QVariant::fromValue(vcpu_range)},
-                });
+    c->setStash(QStringLiteral("domain"), QVariant::fromValue(dom));
 
     c->setStash(QStringLiteral("errors"), errors);
 }
