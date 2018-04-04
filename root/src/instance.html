@@ -773,7 +773,7 @@
 {% block script %}
 <script>
     function open_console() {
-        window.open('/console/{{ host_id }}/{{ uuid }}', '', 'width=850,height=485')
+        window.open('/console/{{ host_id }}/{{ domain.uuid }}', '', 'width=850,height=485')
     }
     function show_console() {
         if ($('#console_show_pass').attr('type') == 'password') {

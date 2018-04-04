@@ -123,7 +123,7 @@
                                             <span class="glyphicon glyphicon-stop"></span>
                                         </button>
                                         <a href="#" class="btn btn-sm btn-default"
-                                           onclick='open_console("{{ host_id }}-{{ inst.uuid }}")' title="{% i18n "Console" %}">
+                                           onclick='open_console("{{ host_id }}/{{ inst.uuid }}")' title="{% i18n "Console" %}">
                                             <span class="glyphicon glyphicon-align-justify"></span>
                                         </a>
                                     {% endifequal %}
@@ -178,7 +178,7 @@
                                 + "<button class='btn btn-sm btn-default' type='submit' name='destroy' title='{% i18n "Force Shutdown" %}' onclick='return confirm('Are you sure?')'>"
                                 + "<span class='glyphicon glyphicon-stop'></span>"
                                 + "</button> "
-                                + "<a href='#' class='btn btn-sm btn-default' onclick='open_console(\"" + data[i]['host'] + "-" + data[i]['uuid'] + "\")' title='{% i18n "Console" %}'>"
+                                + "<a href='#' class='btn btn-sm btn-default' onclick='open_console(\"" + data[i]['host'] + "/" + data[i]['uuid'] + "\")' title='{% i18n "Console" %}'>"
                                 + "<span class='glyphicon glyphicon-align-justify'></span>"
                                 + "</a> "
                                 + "</form>"
@@ -249,7 +249,7 @@
             window.setInterval('status()', {{ time_refresh }});
         });
         function open_console(uuid) {
-            window.open("/console/?token=" + uuid, "", "width=850,height=485");
+            window.open("/console/" + uuid, "", "width=850,height=485");
         }
     </script>
     <script src="/static/js/jquery.tablesorter.js"></script>

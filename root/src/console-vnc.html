@@ -1,20 +1,20 @@
 {% extends "console-base.html" %}
-{% load i18n %}
-{% load staticfiles %}
+<!--{ load i18n %}-->
+<!--{ load staticfiles %}-->
 {% block head %}
-    <script src="{% static "js/novnc/util.js" %}"></script>
+    <script src="/static/js/novnc/util.js"></script>
 
 {% endblock %}
 
 {% block navbarmenu %}
                 <!-- dirty fix for keyboard on iOS devices -->
-                <li id="showKeyboard"><a href='#'>{% trans "Show Keyboad" %}</a></li>
+                <li id="showKeyboard"><a href='#'>{% i18n "Show Keyboad" %}</a></li>
 {% endblock %}
 
 {% block content %}
     <div id='noVNC_area'>
     <canvas id="noVNC_canvas" width="640px" height="20px">
-        {% trans "Canvas not supported." %}
+        {% i18n "Canvas not supported." %}
     </canvas>
     </div>
 
@@ -54,7 +54,7 @@
         modal += '  <div class="modal-dialog">';
         modal += '    <div class="modal-content">';
         modal += '      <div class="modal-header">';
-        modal += '        <h4 class="modal-title">{% trans "Password required" %}</h4>';
+        modal += '        <h4 class="modal-title">{% i18n "Password required" %}</h4>';
         modal += '      </div>';
         modal += '      <div class="modal-body">';
         modal += '        <form id="password_form" onsubmit="return setPassword();">';
@@ -65,7 +65,7 @@
         modal += '        </form>';
         modal += '      </div>';
         modal += '      <div class="modal-footer">';
-        modal += '        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="return setPassword();">{% trans "OK" %}</button>';
+        modal += '        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="return setPassword();">{% i18n "OK" %}</button>';
         modal += '      </div>';
         modal += '    </div>';
         modal += '  </div>';
