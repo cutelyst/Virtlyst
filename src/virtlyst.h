@@ -19,12 +19,11 @@
 
 #include <Cutelyst/Application>
 
-#include <libvirt/libvirt.h>
-
 #include <QHash>
 
 using namespace Cutelyst;
 
+class Connection;
 class Virtlyst : public Application
 {
     Q_OBJECT
@@ -37,18 +36,18 @@ public:
 
     bool postFork() override;
 
-    QHash<QString, virConnectPtr> connections();
+    QHash<QString, Connection *> connections();
 
-    virConnectPtr connection(const QString &id);
+    Connection *connection(const QString &id);
 
     static QString prettyKibiBytes(quint64 kibiBytes);
 
-    static bool changeSettings(virDomainPtr domain, const QString &description, quint64 cur_memory, quint64 memory, uint cur_vcpu, uint vcpu);
+//    static bool changeSettings(virDomainPtr domain, const QString &description, quint64 cur_memory, quint64 memory, uint cur_vcpu, uint vcpu);
 
 private:
     bool createDB();
 
-    QHash<QString, virConnectPtr> m_connections;
+    QHash<QString, Connection *> m_connections;
     QString m_dbPath;
 };
 

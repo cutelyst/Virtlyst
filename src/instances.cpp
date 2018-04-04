@@ -17,6 +17,8 @@
 #include "instances.h"
 #include "virtlyst.h"
 
+#include "lib/connection.h"
+
 #include <libvirt/libvirt.h>
 
 #include <QDebug>
@@ -31,16 +33,21 @@ Instances::Instances(Virtlyst *parent)
 
 void Instances::index(Context *c, const QString &hostId)
 {
-    virConnectPtr conn = m_virtlyst->connection(hostId);
-    if (conn == NULL) {
+    Connection *conn = m_virtlyst->connection(hostId);
+    if (conn == nullptr) {
         fprintf(stderr, "Failed to open connection to qemu:///system\n");
         return;
     }
 
+    QVariantHash compute{
+        {QStringLiteral("name"), conn->hostname()}
+    };
+    c->setStash(QStringLiteral("compute"), compute);
+
     if (c->request()->isPost()) {
         const ParamsMultiMap params = c->request()->bodyParameters();
         const QString name = params.value(QStringLiteral("name"));
-        virDomainPtr domain = virDomainLookupByName(conn, name.toUtf8().constData());
+        virDomainPtr domain = virDomainLookupByName(conn->raw(), name.toUtf8().constData());
         if (domain) {
             bool redir = false;
             if (params.contains(QStringLiteral("start"))) {
@@ -80,7 +87,7 @@ void Instances::index(Context *c, const QString &hostId)
     virDomainPtr *domains;
     unsigned int flags = VIR_CONNECT_LIST_DOMAINS_ACTIVE |
                          VIR_CONNECT_LIST_DOMAINS_INACTIVE;
-    int ret = virConnectListAllDomains(conn, &domains, flags);
+    int ret = virConnectListAllDomains(conn->raw(), &domains, flags);
     if (ret > 0) {
         QVariantList vms;
         for (int i = 0; i < ret; i++) {

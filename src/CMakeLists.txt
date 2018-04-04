@@ -1,4 +1,4 @@
-file(GLOB_RECURSE Virtlyst_SRCS *.cpp *.h)
+file(GLOB_RECURSE Virtlyst_SRCS *.cpp *.h lib/*.cpp lib/*.h)
 
 set(Virtlyst_SRCS
     ${Virtlyst_SRCS}

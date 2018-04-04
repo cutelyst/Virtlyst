@@ -17,6 +17,8 @@
 #include "info.h"
 #include "virtlyst.h"
 
+#include "lib/connection.h"
+
 #include <libvirt/libvirt.h>
 
 #include <QJsonArray>
@@ -35,8 +37,8 @@ void Info::insts_status(Context *c, const QString &hostId)
 {
     c->setStash(QStringLiteral("host_id"), hostId);
 
-    virConnectPtr conn = m_virtlyst->connection(hostId);
-    if (conn == NULL) {
+    Connection *conn = m_virtlyst->connection(hostId);
+    if (conn == nullptr) {
         fprintf(stderr, "Failed to open connection to qemu:///system\n");
         return;
     }
@@ -46,7 +48,7 @@ void Info::insts_status(Context *c, const QString &hostId)
     virDomainPtr *domains;
     unsigned int flags = VIR_CONNECT_LIST_DOMAINS_ACTIVE |
                          VIR_CONNECT_LIST_DOMAINS_INACTIVE;
-    int ret = virConnectListAllDomains(conn, &domains, flags);
+    int ret = virConnectListAllDomains(conn->raw(), &domains, flags);
     if (ret > 0) {
         for (int i = 0; i < ret; i++) {
             virDomainPtr dom = domains[i];

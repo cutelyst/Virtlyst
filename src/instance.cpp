@@ -17,6 +17,9 @@
 #include "instance.h"
 #include "virtlyst.h"
 
+#include "lib/connection.h"
+#include "lib/domain.h"
+
 #include <libvirt/libvirt.h>
 
 #include <QDebug>
@@ -36,18 +39,25 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
     c->setStash(QStringLiteral("host_id"), hostId);
     c->setStash(QStringLiteral("time_refresh"), 8000);
 
-    virConnectPtr conn = m_virtlyst->connection(hostId);
-    if (conn == NULL) {
+    Connection *conn = m_virtlyst->connection(hostId);
+    if (conn == nullptr) {
         fprintf(stderr, "Failed to open connection to qemu:///system\n");
         return;
     }
 
-    virDomainPtr domain = virDomainLookupByName(conn, name.toUtf8().constData());
+    QVariantHash compute{
+        {QStringLiteral("name"), conn->hostname()}
+    };
+    c->setStash(QStringLiteral("compute"), compute);
+
+    virDomainPtr domain = virDomainLookupByName(conn->raw(), name.toUtf8().constData());
     if (!domain) {
         errors.append(QStringLiteral("Domain not found: no domain with matching name '%1'").arg(name));
         c->setStash(QStringLiteral("errors"), errors);
         return;
     }
+    Domain dom(domain, conn);
+    dom.load();
 
     virDomainInfo info;
     if (virDomainGetInfo(domain, &info) < 0) {
@@ -97,8 +107,7 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
             redir = true;
         } else if (params.contains(QStringLiteral("change_xml"))) {
             const QString xml = params.value(QStringLiteral("inst_xml"));
-            virDomainPtr dom = virDomainDefineXML(conn, xml.toUtf8().constData());
-            virDomainFree(dom);
+            conn->domainDefineXml(xml);
             redir = true;
         } else if (params.contains(QStringLiteral("snapshot"))) {
 //            const QString name = params.value(QStringLiteral("name"));
@@ -144,7 +153,13 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
             ulong vcpu = params.value(QStringLiteral("vcpu")).toUInt();
             ulong cur_vcpu = params.value(QStringLiteral("cur_vcpu")).toUInt();
 
-            Virtlyst::changeSettings(domain, description, cur_memory, memory, cur_vcpu, vcpu);
+            dom.setDescription(description);
+            dom.setMemory(memory * 1024);
+            dom.setCurrentMemory(cur_memory * 1024);
+            dom.setVcpu(vcpu);
+            dom.setCurrentVcpu(cur_vcpu);
+            dom.save();
+//            conn->changeDomainSettings(domain, description, cur_memory, memory, cur_vcpu, vcpu);
             redir = true;
         }
 
@@ -170,10 +185,7 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
 
     int has_managed_save_image = virDomainHasManagedSaveImage(domain, 0);
 
-    char *description = virDomainGetMetadata(domain, VIR_DOMAIN_METADATA_DESCRIPTION, NULL, VIR_DOMAIN_AFFECT_CURRENT);
-    char *xml = virDomainGetXMLDesc(domain, VIR_DOMAIN_XML_SECURE);
-
-    int vcpus = virConnectGetMaxVcpus(conn, NULL);
+    int vcpus = conn->maxVcpus();
     QVector<int> vcpu_range;
     for (int i = 1; i <= vcpus; ++i) {
         vcpu_range << i;
@@ -181,12 +193,12 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
     c->setStash(QStringLiteral("vcpu_range"), QVariant::fromValue(vcpu_range));
 
     QVector<int> memory_range({256, 512, 768, 1024, 2048, 4096, 6144, 8192, 16384});
-    int cur_memory = info.memory / 1024;
+    int cur_memory = dom.currentMemory() / 1024;
     if (!memory_range.contains(cur_memory)) {
         memory_range.append(cur_memory);
         std::sort(memory_range.begin(), memory_range.end(),[] (int a, int b) -> int { return a < b; });
     }
-    int memory = info.maxMem / 1024;
+    int memory = dom.memory() / 1024;
     if (!memory_range.contains(memory)) {
         memory_range.append(memory);
         std::sort(memory_range.begin(), memory_range.end(),[] (int a, int b) -> int { return a < b; });
@@ -195,7 +207,7 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
 
 
     virNodeInfo nodeinfo;
-    virNodeGetInfo(conn, &nodeinfo);
+    virNodeGetInfo(conn->raw(), &nodeinfo);
     c->setStash(QStringLiteral("vcpu_host"), nodeinfo.cpus);
     c->setStash(QStringLiteral("memory_host"), Virtlyst::prettyKibiBytes(nodeinfo.memory));
 
@@ -203,18 +215,17 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
                     {QStringLiteral("name"), name},
                     {QStringLiteral("uuid"), QString::fromUtf8(uuid)},
                     {QStringLiteral("status"), info.state},
-                    {QStringLiteral("memory_pretty"), Virtlyst::prettyKibiBytes(info.memory)},
+                    {QStringLiteral("memory_pretty"), Virtlyst::prettyKibiBytes(dom.currentMemory())},
                     {QStringLiteral("cur_memory"), cur_memory},
                     {QStringLiteral("memory"), memory},
-                    {QStringLiteral("vcpu"), info.nrVirtCpu},
+                    {QStringLiteral("vcpu"), dom.vcpu()},
+                    {QStringLiteral("cur_vcpu"), dom.currentVcpu()},
                     {QStringLiteral("autostart"), autostart},
                     {QStringLiteral("has_managed_save_image"), has_managed_save_image},
-                    {QStringLiteral("description"), QString::fromUtf8(description)},
-                    {QStringLiteral("inst_xml"), QString::fromUtf8(xml)},
+                    {QStringLiteral("description"), dom.description()},
+                    {QStringLiteral("inst_xml"), dom.xml()},
                     {QStringLiteral("vcpu_range"), QVariant::fromValue(vcpu_range)},
                 });
-    free(description);
-    free(xml);
 
     c->setStash(QStringLiteral("errors"), errors);
 }

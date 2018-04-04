@@ -17,6 +17,8 @@
 #include "infrastructure.h"
 #include "virtlyst.h"
 
+#include "lib/connection.h"
+
 #include <libvirt/libvirt.h>
 
 #include <QDebug>
@@ -33,33 +35,31 @@ void Infrastructure::index(Context *c)
 {
     QVariantList hosts;
 
-    const QHash<QString, virConnectPtr> conns = m_virtlyst->connections();
+    const QHash<QString, Connection *> conns = m_virtlyst->connections();
     auto it = conns.constBegin();
     while (it != conns.constEnd()) {
-        virConnectPtr conn = it.value();
+        Connection *conn = it.value();
 
-        char *host = virConnectGetHostname(conn);
         QVariantHash hostVms;
         hostVms.insert(QStringLiteral("id"), 1);
-        hostVms.insert(QStringLiteral("name"), QString::fromUtf8(host));
-        free(host);
+        hostVms.insert(QStringLiteral("name"), conn->hostname());
 
         hostVms.insert(QStringLiteral("status"), 1);
 
 
         virNodeInfo nodeinfo;
-        virNodeGetInfo(conn, &nodeinfo);
+        virNodeGetInfo(conn->raw(), &nodeinfo);
 
         hostVms.insert(QStringLiteral("cpus"), nodeinfo.cpus);
         hostVms.insert(QStringLiteral("memory"), Virtlyst::prettyKibiBytes(nodeinfo.memory));
-        double freeMemory = virNodeGetFreeMemory(conn) / 1024;// To KibiBytes
+        double freeMemory = conn->freeMemoryBytes() / 1024;// To KibiBytes
         double difference = freeMemory / nodeinfo.memory;
         hostVms.insert(QStringLiteral("mem_usage"), QString::number(difference * 100, 'g', 3));
 
         virDomainPtr *domains;
         unsigned int flags = VIR_CONNECT_LIST_DOMAINS_ACTIVE |
                 VIR_CONNECT_LIST_DOMAINS_INACTIVE;
-        int ret = virConnectListAllDomains(conn, &domains, flags);
+        int ret = virConnectListAllDomains(conn->raw(), &domains, flags);
         if (ret > 0) {
             QVariantList vms;
             for (int i = 0; i < ret; i++) {
