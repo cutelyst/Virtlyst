@@ -31,6 +31,9 @@ public:
     C_ATTR(index, :Path :AutoArgs)
     void index(Context *c, const QString &hostId, const QString &uuid);
 
+    C_ATTR(ws_vnc, :Local :AutoArgs)
+    void ws_vnc(Context *c, const QString &hostId, const QString &uuid);
+
 private:
     Virtlyst *m_virtlyst;
 };

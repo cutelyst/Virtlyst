@@ -1,35 +1,35 @@
 {% extends "console-base.html" %}
-{% load i18n %}
-{% load staticfiles %}
+<!--{ load i18n %}-->
+<!--{ load staticfiles %}-->
 {% block head %}
-    <script src="{% static "js/spice-html5/spicearraybuffer.js" %}"></script> 
-    <script src="{% static "js/spice-html5/enums.js" %}"></script>
-    <script src="{% static "js/spice-html5/atKeynames.js" %}"></script>
-    <script src="{% static "js/spice-html5/utils.js" %}"></script>
-    <script src="{% static "js/spice-html5/png.js" %}"></script>
-    <script src="{% static "js/spice-html5/lz.js" %}"></script>
-    <script src="{% static "js/spice-html5/quic.js" %}"></script>
-    <script src="{% static "js/spice-html5/bitmap.js" %}"></script>
-    <script src="{% static "js/spice-html5/spicedataview.js" %}"></script>
-    <script src="{% static "js/spice-html5/spicetype.js" %}"></script>
-    <script src="{% static "js/spice-html5/spicemsg.js" %}"></script>
-    <script src="{% static "js/spice-html5/wire.js" %}"></script>
-    <script src="{% static "js/spice-html5/spiceconn.js" %}"></script>
-    <script src="{% static "js/spice-html5/display.js" %}"></script>
-    <script src="{% static "js/spice-html5/main.js" %}"></script>
-    <script src="{% static "js/spice-html5/inputs.js" %}"></script>
-    <script src="{% static "js/spice-html5/webm.js" %}"></script>
-    <script src="{% static "js/spice-html5/playback.js" %}"></script>
-    <script src="{% static "js/spice-html5/simulatecursor.js" %}"></script>
-    <script src="{% static "js/spice-html5/cursor.js" %}"></script>
-    <script src="{% static "js/spice-html5/thirdparty/jsbn.js" %}"></script>
-    <script src="{% static "js/spice-html5/thirdparty/rsa.js" %}"></script>
-    <script src="{% static "js/spice-html5/thirdparty/prng4.js" %}"></script>
-    <script src="{% static "js/spice-html5/thirdparty/rng.js" %}"></script>
-    <script src="{% static "js/spice-html5/thirdparty/sha1.js" %}"></script>
-    <script src="{% static "js/spice-html5/ticket.js" %}"></script>
-    <script src="{% static "js/spice-html5/resize.js" %}"></script>
-    <script src="{% static "js/spice-html5/filexfer.js" %}"></script>
+    <script src="/static/js/spice-html5/spicearraybuffer.js"></script>
+    <script src="/static/js/spice-html5/enums.js"></script>
+    <script src="/static/js/spice-html5/atKeynames.js"></script>
+    <script src="/static/js/spice-html5/utils.js"></script>
+    <script src="/static/js/spice-html5/png.js"></script>
+    <script src="/static/js/spice-html5/lz.js"></script>
+    <script src="/static/js/spice-html5/quic.js"></script>
+    <script src="/static/js/spice-html5/bitmap.js"></script>
+    <script src="/static/js/spice-html5/spicedataview.js"></script>
+    <script src="/static/js/spice-html5/spicetype.js"></script>
+    <script src="/static/js/spice-html5/spicemsg.js"></script>
+    <script src="/static/js/spice-html5/wire.js"></script>
+    <script src="/static/js/spice-html5/spiceconn.js"></script>
+    <script src="/static/js/spice-html5/display.js"></script>
+    <script src="/static/js/spice-html5/main.js"></script>
+    <script src="/static/js/spice-html5/inputs.js"></script>
+    <script src="/static/js/spice-html5/webm.js"></script>
+    <script src="/static/js/spice-html5/playback.js"></script>
+    <script src="/static/js/spice-html5/simulatecursor.js"></script>
+    <script src="/static/js/spice-html5/cursor.js"></script>
+    <script src="/static/js/spice-html5/thirdparty/jsbn.js"></script>
+    <script src="/static/js/spice-html5/thirdparty/rsa.js"></script>
+    <script src="/static/js/spice-html5/thirdparty/prng4.js"></script>
+    <script src="/static/js/spice-html5/thirdparty/rng.js"></script>
+    <script src="/static/js/spice-html5/thirdparty/sha1.js"></script>
+    <script src="/static/js/spice-html5/ticket.js"></script>
+    <script src="/static/js/spice-html5/resize.js"></script>
+    <script src="/static/js/spice-html5/filexfer.js"></script>
 
 {% endblock %}
 
@@ -181,9 +181,9 @@
 
     var uri;
     if (window.location.protocol === "https:") {
-        uri = 'wss://{{ ws_host }}:{{ ws_port }}';
+        uri = 'wss://{{ ws_host }}:{{ ws_port }}/{{ ws_path }}';
     } else {
-        uri = 'ws://{{ ws_host }}:{{ ws_port }}';
+        uri = 'ws://{{ ws_host }}:{{ ws_port }}/{{ ws_path }}';
     }
 
     var password = '{{ console_passwd }}';
