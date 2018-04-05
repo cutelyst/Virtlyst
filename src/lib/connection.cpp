@@ -199,6 +199,7 @@ void Connection::loadDomainCapabilities()
         return;
     }
     const QString xmlString = QString::fromUtf8(xml);
+    qDebug() << xml;
     free(xml);
 
     QString errorString;

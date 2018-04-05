@@ -55,6 +55,10 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
     auto dom = new Domain(domain, conn, c);
     dom->loadXml();
 
+    qDebug() << "CONSOLE type" << dom->consoleType();
+
+    c->setStash(QStringLiteral("console_types"), QStringList{QStringLiteral("vnc"), QStringLiteral("spice")});
+
     if (c->request()->isPost()) {
         const ParamsMultiMap params = c->request()->bodyParameters();
         bool redir = false;
@@ -119,8 +123,14 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
             }
 
             if (errors.isEmpty()) {
-
+                dom->setConsolePassword(password);
+                dom->saveXml();
             }
+            redir = true;
+        } else if (params.contains(QStringLiteral("set_console_type"))) {
+            const QString type = params.value(QStringLiteral("console_type"));
+            dom->setConsoleType(type);
+            dom->saveXml();
             redir = true;
         } else if (params.contains(QStringLiteral("change_settings"))) {
             const QString description = params.value(QStringLiteral("description"));

@@ -262,10 +262,10 @@
 
                         <div class="col-sm-6">
                             <input id="console_show_pass" type="password" class="form-control" name="console_passwd"
-                                   {% if console_passwd %}
-                                        value="{{ console_passwd }}"
+                                   {% if domain.consolePassword %}
+                                        value="{{ domain.consolePassword }}"
                                    {% else %}
-                                        placeholder="{% i18n "Password" %}"
+                                        placeholder="{% i18n "Password" %}{{ domain.consolePassword }}"
                                    {% endif %} maxlength="14">
                         </div>
                         {% if console_passwd %}
@@ -873,14 +873,14 @@
     });
     $(document).ready(function () {
         // set current console keymap or fall back to default
-        var keymap = "{{ console_keymap }}"
+        var keymap = "{{ domain.consoleKeymap }}"
         if (keymap != '') {
             $("#console_select_keymap option[value='" + keymap + "']").prop('selected', true);
         }
     });
     $(document).ready(function () {
         // set current console type or fall back to default
-        var console_type = "{{ console_type }}"
+        var console_type = "{{ domain.consoleType }}"
         if (console_type != '') {
             $("#console_select_type option[value='" + console_type + "']").prop('selected', true);
         }

@@ -185,18 +185,85 @@ bool Domain::autostart() const
     return autostart;
 }
 
+QString Domain::consoleType() const
+{
+    return m_xmlDoc.documentElement()
+            .firstChildElement(QStringLiteral("devices"))
+            .firstChildElement(QStringLiteral("graphics"))
+            .attribute(QStringLiteral("type"));
+}
+
+void Domain::setConsoleType(const QString &type)
+{
+    m_xmlDoc.documentElement()
+            .firstChildElement(QStringLiteral("devices"))
+            .firstChildElement(QStringLiteral("graphics"))
+            .setAttribute(QStringLiteral("type"), type);
+}
+
+QString Domain::consolePassword() const
+{
+    return m_xmlDoc.documentElement()
+            .firstChildElement(QStringLiteral("devices"))
+            .firstChildElement(QStringLiteral("graphics"))
+            .attribute(QStringLiteral("passwd"));
+}
+
+void Domain::setConsolePassword(const QString &password)
+{
+    m_xmlDoc.documentElement()
+            .firstChildElement(QStringLiteral("devices"))
+            .firstChildElement(QStringLiteral("graphics"))
+            .setAttribute(QStringLiteral("passwd"), password);
+}
+
+quint32 Domain::consolePort() const
+{
+    return m_xmlDoc.documentElement()
+            .firstChildElement(QStringLiteral("devices"))
+            .firstChildElement(QStringLiteral("graphics"))
+            .attribute(QStringLiteral("port")).toUInt();
+}
+
+QString Domain::consoleListenAddress() const
+{
+    QString ret = m_xmlDoc.documentElement()
+                .firstChildElement(QStringLiteral("devices"))
+                .firstChildElement(QStringLiteral("graphics"))
+                .attribute(QStringLiteral("listen"));
+    if (ret.isEmpty()) {
+        ret = m_xmlDoc.documentElement()
+                .firstChildElement(QStringLiteral("devices"))
+                .firstChildElement(QStringLiteral("graphics"))
+                .firstChildElement(QStringLiteral("listen"))
+                .attribute(QStringLiteral("address"));
+        if (ret.isEmpty()) {
+            return QStringLiteral("127.0.0.1");
+        }
+    }
+    return ret;
+}
+
+QString Domain::consoleKeymap() const
+{
+    return m_xmlDoc.documentElement()
+            .firstChildElement(QStringLiteral("devices"))
+            .firstChildElement(QStringLiteral("graphics"))
+            .attribute(QStringLiteral("keymap"));
+}
+
 QString Domain::dataFromSimpleNode(const QString &element) const
 {
-    QDomElement docElem = m_xmlDoc.documentElement();
-    QDomElement node = docElem.firstChildElement(element);
-    QDomNode data = node.firstChild();
-    return data.nodeValue();
+    return m_xmlDoc.documentElement()
+            .firstChildElement(element)
+            .firstChild()
+            .nodeValue();
 }
 
 void Domain::setDataToSimpleNode(const QString &element, const QString &data)
 {
-    QDomElement docElem = m_xmlDoc.documentElement();
-    QDomElement node = docElem.firstChildElement(element);
-    QDomNode nodeData = node.firstChild();
-    nodeData.setNodeValue(data);
+    m_xmlDoc.documentElement()
+            .firstChildElement(element)
+            .firstChild()
+            .setNodeValue(data);
 }

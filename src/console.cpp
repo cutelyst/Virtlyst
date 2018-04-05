@@ -36,12 +36,7 @@ Console::Console(Virtlyst *parent) : Controller(parent)
 void Console::index(Context *c, const QString &hostId, const QString &uuid)
 {
     QStringList errors;
-    c->setStash(QStringLiteral("template"), QStringLiteral("console-vnc.html"));
     c->setStash(QStringLiteral("host_id"), hostId);
-    c->setStash(QStringLiteral("ws_host"), QStringLiteral("localhost"));
-    c->setStash(QStringLiteral("ws_port"), QStringLiteral("3000"));
-    const QString path = QLatin1String("console/ws_vnc/") + hostId + QLatin1Char('/') + uuid;
-    c->setStash(QStringLiteral("ws_path"), path);
     c->setStash(QStringLiteral("time_refresh"), 8000);
 
     Connection *conn = m_virtlyst->connection(hostId);
@@ -59,34 +54,63 @@ void Console::index(Context *c, const QString &hostId, const QString &uuid)
     }
     auto dom = new Domain(domain, conn, c);
     dom->loadXml();
+
+    const QString type = dom->consoleType();
+    if (type == QLatin1String("spice")) {
+        c->setStash(QStringLiteral("template"), QStringLiteral("console-spice.html"));
+    } else if (type == QLatin1String("vnc")) {
+        c->setStash(QStringLiteral("template"), QStringLiteral("console-vnc.html"));
+    } else {
+        qDebug() << "Console type not known for domain" << uuid;
+        return;
+    }
+    c->setStash(QStringLiteral("ws_host"), QStringLiteral("localhost"));
+    c->setStash(QStringLiteral("ws_port"), QStringLiteral("3000"));
+    c->setStash(QStringLiteral("console_passwd"), dom->consolePassword());
+    const QString path = QLatin1String("console/ws/") + hostId + QLatin1Char('/') + uuid;
+    c->setStash(QStringLiteral("ws_path"), path);
 }
 
-void Console::ws_vnc(Context *c, const QString &hostId, const QString &uuid)
+void Console::ws(Context *c, const QString &hostId, const QString &uuid)
 {
+    Connection *conn = m_virtlyst->connection(hostId);
+    if (conn == nullptr) {
+        fprintf(stderr, "Failed to open connection to qemu:///system\n");
+        return;
+    }
+
+    virDomainPtr domain = virDomainLookupByUUIDString(conn->raw(), uuid.toUtf8().constData());
+    if (!domain) {
+        qDebug() << "Domain not found: no domain with matching name '%1'" << uuid;
+        return;
+    }
+    auto dom = new Domain(domain, conn, c);
+    dom->loadXml();
+
     if (!c->response()->webSocketHandshake(QString(), QString(), QStringLiteral("binary"))) {
         qWarning() << "Failed to estabilish websocket handshake";
         return;
     }
 
-    auto sock = new QTcpSocket;
-    sock->connectToHost(QStringLiteral("localhost"), 5900);
+    auto sock = new QTcpSocket(c);
+    sock->connectToHost(dom->consoleListenAddress(), dom->consolePort());
     connect(sock, &QTcpSocket::readyRead, c, [=] {
         const QByteArray data = sock->readAll();
-        qWarning() << "TCP VNC socket in" << data.size();
+//        qWarning() << "Console Proxy socket data" << data.size();
         c->response()->webSocketBinaryMessage(data);
     });
     connect(sock, static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),
             c, [=] (QAbstractSocket::SocketError error) {
-        qWarning() << "TCP VNC socket error:" << error << sock->errorString();
+        qWarning() << "Console Proxy error:" << error << sock->errorString();
         c->response()->webSocketClose(Response::CloseCodeAbnormalDisconnection, sock->errorString());
     });
     connect(sock, &QTcpSocket::disconnected, c, [=] {
-        qWarning() << "TCP VNC socket disconnected";
+        qWarning() << "Console Proxy socket disconnected";
         c->response()->webSocketClose(Response::CloseCodeAbnormalDisconnection, sock->errorString());
     });
 
-    connect(c->request(), &Request::webSocketBinaryMessage, c, [=] (const QByteArray &message) {
-        qWarning() << "TCP VNC socket out" << message.size();
+    connect(c->request(), &Request::webSocketBinaryFrame, c, [=] (const QByteArray &message) {
+//        qWarning() << "Console Proxy ws data" << message.size();
         sock->write(message);
         sock->flush();
     });

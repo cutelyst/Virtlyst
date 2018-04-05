@@ -41,6 +41,9 @@ class Domain : public QObject
     Q_PROPERTY(QString currentMemoryPretty READ currentMemoryPretty CONSTANT)
     Q_PROPERTY(bool hasManagedSaveImage READ hasManagedSaveImage CONSTANT)
     Q_PROPERTY(bool autostart READ autostart CONSTANT)
+    Q_PROPERTY(QString consoleType READ consoleType CONSTANT)
+    Q_PROPERTY(QString consolePassword READ consolePassword CONSTANT)
+    Q_PROPERTY(QString consoleKeymap READ consoleKeymap CONSTANT)
 public:
     explicit Domain(virDomainPtr domain, Connection *conn, QObject *parent = nullptr);
     ~Domain();
@@ -79,6 +82,16 @@ public:
 
     bool hasManagedSaveImage() const;
     bool autostart() const;
+
+    QString consoleType() const;
+    void setConsoleType(const QString &type);
+
+    QString consolePassword() const;
+    void setConsolePassword(const QString &password);
+
+    quint32 consolePort() const;
+    QString consoleListenAddress() const;
+    QString consoleKeymap() const;
 
 private:
     QString dataFromSimpleNode(const QString &element) const;
