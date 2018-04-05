@@ -39,15 +39,6 @@ void Interfaces::index(Context *c, const QString &hostId)
     }
     c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));
 
-    QVariantList ifaces_all;
-    virInterfacePtr *ifaces;
-    int ret = virConnectListAllInterfaces(conn->raw(), &ifaces, 0);
-    if (ret > 0) {
-        for (int i = 0; i < ret; ++i) {
-            auto iface = new Interface(ifaces[i], conn, c);
-            ifaces_all.append(QVariant::fromValue(iface));
-        }
-        free(ifaces);
-    }
-    c->setStash(QStringLiteral("ifaces_all"), ifaces_all);
+    const QVector<Interface *> ifaces = conn->interfaces(0, c);
+    c->setStash(QStringLiteral("ifaces_all"), QVariant::fromValue(ifaces));
 }

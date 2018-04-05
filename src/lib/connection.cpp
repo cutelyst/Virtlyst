@@ -15,7 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "connection.h"
+
 #include "virtlyst.h"
+#include "domain.h"
+#include "interface.h"
+#include "network.h"
 
 #include <QLoggingCategory>
 
@@ -63,6 +67,14 @@ quint64 Connection::freeMemoryBytes() const
         return virNodeGetFreeMemory(m_conn);
     }
     return 0;
+}
+
+quint64 Connection::memory()
+{
+    if (!m_nodeInfoLoaded) {
+        loadNodeInfo();
+    }
+    return m_nodeInfo.memory;
 }
 
 QString Connection::memoryPretty()
@@ -120,6 +132,52 @@ bool Connection::domainDefineXml(const QString &xml)
     virDomainPtr dom = virDomainDefineXML(m_conn, xml.toUtf8().constData());
     virDomainFree(dom);
     return dom != NULL;
+}
+
+QVector<Domain *> Connection::domains(int flags, QObject *parent)
+{
+    QVector<Domain *> ret;
+    virDomainPtr *domains;
+    int count = virConnectListAllDomains(m_conn, &domains, flags);
+    if (count > 0) {
+        for (int i = 0; i < count; i++) {
+            auto domain = new Domain(domains[i], this, parent);
+            domain->loadXml();
+            ret.append(domain);
+        }
+        free(domains);
+    }
+    return ret;
+}
+
+QVector<Interface *> Connection::interfaces(uint flags, QObject *parent)
+{
+    QVector<Interface *> ret;
+    virInterfacePtr *ifaces;
+    int count = virConnectListAllInterfaces(m_conn, &ifaces, flags);
+    if (count > 0) {
+        for (int i = 0; i < count; ++i) {
+            auto iface = new Interface(ifaces[i], this, parent);
+            ret.append(iface);
+        }
+        free(ifaces);
+    }
+    return ret;
+}
+
+QVector<Network *> Connection::networks(uint flags, QObject *parent)
+{
+    QVector<Network *> ret;
+    virNetworkPtr *nets;
+    int count = virConnectListAllNetworks(m_conn, &nets, flags);
+    if (count > 0) {
+        for (int i = 0; i < count; ++i) {
+            auto net = new Network(nets[i], this, parent);
+            ret.append(net);
+        }
+        free(nets);
+    }
+    return ret;
 }
 
 virConnectPtr Connection::raw() const

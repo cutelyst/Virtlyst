@@ -14,7 +14,7 @@
                 </div>
             {% endfor %}
         {% endif %}
-        {% if instances %}
+        {% if instances.size %}
             <div class="table-responsive">
                 <table class="table" id="sortTable">
                     <thead>
@@ -46,7 +46,7 @@
                                 {% endifequal %}
                             </td>
                             <td>{{ inst.vcpu }}</td>
-                            <td>{{ inst.memory }}</td>
+                            <td>{{ inst.currentMemoryPretty }}</td>
                             <td>
                                 <form action="" method="post" role="form">{{ csrf_token }}
                                     <input type="hidden" name="name" value="{{ inst.name }}"/>

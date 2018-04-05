@@ -39,16 +39,6 @@ void Networks::index(Context *c, const QString &hostId)
     }
     c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));
 
-
-    QVariantList networks;
-    virNetworkPtr *nets;
-    int ret = virConnectListAllNetworks(conn->raw(), &nets, 0);
-    if (ret > 0) {
-        for (int i = 0; i < ret; ++i) {
-            auto net = new Network(nets[i], conn, c);
-            networks.append(QVariant::fromValue(net));
-        }
-        free(nets);
-    }
-    c->setStash(QStringLiteral("networks"), networks);
+    const QVector<Network *> networks = conn->networks(0, c);
+    c->setStash(QStringLiteral("networks"), QVariant::fromValue(networks));
 }

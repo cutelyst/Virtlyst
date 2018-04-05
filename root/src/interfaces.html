@@ -14,7 +14,7 @@
         <div class="btn-group-sm">
             <a href="#AddInterface" class="btn btn-success" data-toggle="modal">{% i18n "New Interface" %}</a>
         </div>
-        {% if ifaces_all %}
+        {% if ifaces_all.size %}
             <div class="row" role="main">
             {% for iface in ifaces_all %}
                 <div class="col-xs-12 col-sm-4">

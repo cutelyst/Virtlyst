@@ -169,13 +169,10 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
     }
     c->setStash(QStringLiteral("vcpu_range"), QVariant::fromValue(vcpu_range));
 
-    virNodeInfo nodeinfo;
-    virNodeGetInfo(conn->raw(), &nodeinfo);
-
     QVector<int> memory_range;
     int last = 256;
-    // nodeinfo.memory is in kilobytes, I guess we need to convert to kibi bytes
-    while (last <= nodeinfo.memory / 1024) {
+    // conn.memory is in kilobytes, I guess we need to convert to kibi bytes
+    while (last <= conn->memory() / 1024) {
         memory_range.append(last);
         last *= 2;
     }
@@ -191,8 +188,8 @@ void Instance::index(Context *c, const QString &hostId, const QString &name)
     }
     c->setStash(QStringLiteral("memory_range"), QVariant::fromValue(memory_range));
 
-    c->setStash(QStringLiteral("vcpu_host"), nodeinfo.cpus);
-    c->setStash(QStringLiteral("memory_host"), Virtlyst::prettyKibiBytes(nodeinfo.memory));
+    c->setStash(QStringLiteral("vcpu_host"), conn->cpus());
+    c->setStash(QStringLiteral("memory_host"), conn->freeMemoryBytes());
 
     c->setStash(QStringLiteral("domain"), QVariant::fromValue(dom));
 

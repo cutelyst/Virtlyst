@@ -18,6 +18,7 @@
 #include "virtlyst.h"
 
 #include "lib/connection.h"
+#include "lib/domain.h"
 
 #include <libvirt/libvirt.h>
 
@@ -40,60 +41,25 @@ void Infrastructure::index(Context *c)
     while (it != conns.constEnd()) {
         Connection *conn = it.value();
 
-        QVariantHash hostVms;
-        hostVms.insert(QStringLiteral("id"), 1);
-        hostVms.insert(QStringLiteral("name"), conn->hostname());
-
-        hostVms.insert(QStringLiteral("status"), 1);
-
-
-        virNodeInfo nodeinfo;
-        virNodeGetInfo(conn->raw(), &nodeinfo);
-
-        hostVms.insert(QStringLiteral("cpus"), nodeinfo.cpus);
-        hostVms.insert(QStringLiteral("memory"), Virtlyst::prettyKibiBytes(nodeinfo.memory));
         double freeMemory = conn->freeMemoryBytes() / 1024;// To KibiBytes
-        double difference = freeMemory / nodeinfo.memory;
-        hostVms.insert(QStringLiteral("mem_usage"), QString::number(difference * 100, 'g', 3));
+        double difference = freeMemory / conn->memory();
 
-        virDomainPtr *domains;
-        unsigned int flags = VIR_CONNECT_LIST_DOMAINS_ACTIVE |
-                VIR_CONNECT_LIST_DOMAINS_INACTIVE;
-        int ret = virConnectListAllDomains(conn->raw(), &domains, flags);
-        if (ret > 0) {
-            QVariantList vms;
-            for (int i = 0; i < ret; i++) {
-                virDomainPtr dom = domains[i];
-
-                const char *name = virDomainGetName(dom);
-                if (!name) {
-                    qWarning() << "Failed to get domain name";
-                    continue;
-                }
-
-                virDomainInfo info;
-                if (virDomainGetInfo(dom, &info) < 0) {
-                    qWarning() << "Failed to get info for domain" << name;
-                    continue;
-                }
-
-                double difference = double(info.memory) / nodeinfo.memory;
-                vms.append(QVariantHash{
-                               {QStringLiteral("name"), QString::fromUtf8(name)},
-                               {QStringLiteral("status"), info.state},
-                               {QStringLiteral("memory"), Virtlyst::prettyKibiBytes(info.memory)},
-                               {QStringLiteral("mem_usage"), QString::number(difference * 100, 'g', 3)},
-                               {QStringLiteral("vcpu"), info.nrVirtCpu},
-                           });
-            }
-            for (int i = 0; i < ret; i++) {
-                virDomainFree(domains[i]);
-            }
-            free(domains);
-            hostVms.insert(QStringLiteral("vms"), vms);
+        const QVector<Domain *> domains = conn->domains(
+                    VIR_CONNECT_LIST_DOMAINS_ACTIVE | VIR_CONNECT_LIST_DOMAINS_INACTIVE, c);
+        for (Domain *domain : domains) {
+            double difference = double(domain->memory()) / conn->memory();
+            domain->setProperty("mem_usage", QString::number(difference * 100, 'g', 3));
         }
 
-        hosts.append(hostVms);
+        hosts.append(QVariantHash{
+                         {QStringLiteral("id"), 1},
+                         {QStringLiteral("name"), conn->hostname()},
+                         {QStringLiteral("status"), 1},
+                         {QStringLiteral("cpus"), conn->cpus()},
+                         {QStringLiteral("memory"), conn->memoryPretty()},
+                         {QStringLiteral("mem_usage"), QString::number(difference * 100, 'g', 3)},
+                         {QStringLiteral("vms"), QVariant::fromValue(domains)},
+                     });
 
         ++it;
     }

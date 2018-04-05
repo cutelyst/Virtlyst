@@ -18,6 +18,7 @@
 #include "virtlyst.h"
 
 #include "lib/connection.h"
+#include "lib/domain.h"
 
 #include <libvirt/libvirt.h>
 
@@ -79,48 +80,9 @@ void Instances::index(Context *c, const QString &hostId)
         }
     }
 
-    virDomainPtr *domains;
-    unsigned int flags = VIR_CONNECT_LIST_DOMAINS_ACTIVE |
-                         VIR_CONNECT_LIST_DOMAINS_INACTIVE;
-    int ret = virConnectListAllDomains(conn->raw(), &domains, flags);
-    if (ret > 0) {
-        QVariantList vms;
-        for (int i = 0; i < ret; i++) {
-            virDomainPtr dom = domains[i];
-
-            const char *name = virDomainGetName(dom);
-            if (!name) {
-                qWarning() << "Failed to get domain name";
-                continue;
-            }
-
-            char uuid[VIR_UUID_STRING_BUFLEN];
-            if (virDomainGetUUIDString(dom, uuid) < 0) {
-                qWarning() << "Failed to get UUID string for domain" << name;
-                continue;
-            }
-
-            virDomainInfo info;
-            if (virDomainGetInfo(dom, &info) < 0) {
-                qWarning() << "Failed to get info for domain" << name;
-                continue;
-            }
-
-            vms.append(QVariantHash{
-                           {QStringLiteral("name"), QString::fromUtf8(name)},
-                           {QStringLiteral("uuid"), QString::fromUtf8(uuid)},
-                           {QStringLiteral("status"), info.state},
-                           {QStringLiteral("memory"), Virtlyst::prettyKibiBytes(info.memory)},
-                           {QStringLiteral("vcpu"), info.nrVirtCpu},
-                       });
-        }
-        for (int i = 0; i < ret; i++) {
-            virDomainFree(domains[i]);
-        }
-        free(domains);
-        c->setStash(QStringLiteral("instances"), vms);
-    }
-
+    const QVector<Domain *> domains = conn->domains(
+                VIR_CONNECT_LIST_DOMAINS_ACTIVE | VIR_CONNECT_LIST_DOMAINS_INACTIVE, c);
+    c->setStash(QStringLiteral("instances"), QVariant::fromValue(domains));
     c->setStash(QStringLiteral("template"), QStringLiteral("instances.html"));
 }
 

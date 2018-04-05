@@ -18,6 +18,7 @@
 #include "virtlyst.h"
 
 #include "lib/connection.h"
+#include "lib/domain.h"
 
 #include <libvirt/libvirt.h>
 
@@ -45,47 +46,20 @@ void Info::insts_status(Context *c, const QString &hostId)
 
     QJsonArray vms;
 
-    virDomainPtr *domains;
-    unsigned int flags = VIR_CONNECT_LIST_DOMAINS_ACTIVE |
-                         VIR_CONNECT_LIST_DOMAINS_INACTIVE;
-    int ret = virConnectListAllDomains(conn->raw(), &domains, flags);
-    if (ret > 0) {
-        for (int i = 0; i < ret; i++) {
-            virDomainPtr dom = domains[i];
-
-            const char *name = virDomainGetName(dom);
-            if (!name) {
-                qWarning() << "Failed to get domain name";
-                continue;
-            }
-
-            char uuid[VIR_UUID_STRING_BUFLEN];
-            if (virDomainGetUUIDString(dom, uuid) < 0) {
-                qWarning() << "Failed to get UUID string for domain" << name;
-                continue;
-            }
-
-            virDomainInfo info;
-            if (virDomainGetInfo(dom, &info) < 0) {
-                qWarning() << "Failed to get info for domain" << name;
-                continue;
-            }
-
-            vms.append(QJsonObject{
-                           {QStringLiteral("host"), hostId},
-                           {QStringLiteral("uuid"), QString::fromUtf8(uuid)},
-                           {QStringLiteral("name"), QString::fromUtf8(name)},
-                           {QStringLiteral("dump"), 0},
-                           {QStringLiteral("status"), info.state},
-                           {QStringLiteral("memory"), Virtlyst::prettyKibiBytes(info.memory)},
-                           {QStringLiteral("vcpu"), info.nrVirtCpu},
-                       });
-        }
-        for (int i = 0; i < ret; i++) {
-            virDomainFree(domains[i]);
-        }
-        free(domains);
-        c->setStash(QStringLiteral("instances"), vms);
+    const QVector<Domain *> domains = conn->domains(
+                VIR_CONNECT_LIST_DOMAINS_ACTIVE | VIR_CONNECT_LIST_DOMAINS_INACTIVE, c);
+    for (Domain *domain : domains) {
+        double difference = double(domain->memory()) / conn->memory();
+        domain->setProperty("mem_usage", QString::number(difference * 100, 'g', 3));
+        vms.append(QJsonObject{
+                       {QStringLiteral("host"), hostId},
+                       {QStringLiteral("uuid"), domain->uuid()},
+                       {QStringLiteral("name"), domain->name()},
+                       {QStringLiteral("dump"), 0},
+                       {QStringLiteral("status"), domain->status()},
+                       {QStringLiteral("memory"), domain->currentMemoryPretty()},
+                       {QStringLiteral("vcpu"), domain->vcpu()},
+                   });
     }
 
     c->response()->setJsonArrayBody(vms);

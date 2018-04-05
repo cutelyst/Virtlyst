@@ -21,6 +21,9 @@
 #include <QDomDocument>
 #include <libvirt/libvirt.h>
 
+class Domain;
+class Interface;
+class Network;
 class Connection : public QObject
 {
     Q_OBJECT
@@ -40,6 +43,7 @@ public:
     QString hypervisor() const;
     quint64 freeMemoryBytes() const;
 
+    quint64 memory();
     QString memoryPretty();
     uint cpus();
 
@@ -49,6 +53,10 @@ public:
     QString cpuVendor();
 
     bool domainDefineXml(const QString &xml);
+
+    QVector<Domain *> domains(int flags, QObject *parent = nullptr);
+    QVector<Interface *> interfaces(uint flags, QObject *parent = nullptr);
+    QVector<Network *> networks(uint flags, QObject *parent = nullptr);
 
     virConnectPtr raw() const;
 

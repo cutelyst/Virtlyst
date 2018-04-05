@@ -57,7 +57,7 @@
                                 <td style="text-align:center;">{{ host.memory }}<!--|filesizeformat--></td>
                                 <td style="text-align:center;">{{ host.mem_usage }} %</td>
                             </tr>
-                            {% if host.vms %}
+                            {% if host.vms.size %}
                                 {% for vm in host.vms %}
                                     <tr data-status="{{ vm.status }}">
                                         <td></td>
@@ -71,7 +71,7 @@
                                                 </span>{% endif %}
                                         </td>
                                         <td style="text-align:center;">{{ vm.vcpu }}</td>
-                                        <td style="text-align:center;">{{ vm.memory }}<!--|filesizeformat--></td>
+                                        <td style="text-align:center;">{{ vm.currentMemoryPretty }}<!--|filesizeformat--></td>
                                         <td style="text-align:center;">{{ vm.mem_usage }} %</td>
                                     </tr>
                                 {% endfor %}
