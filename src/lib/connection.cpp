@@ -20,6 +20,7 @@
 #include "domain.h"
 #include "interface.h"
 #include "network.h"
+#include "secret.h"
 
 #include <QLoggingCategory>
 
@@ -176,6 +177,21 @@ QVector<Network *> Connection::networks(uint flags, QObject *parent)
             ret.append(net);
         }
         free(nets);
+    }
+    return ret;
+}
+
+QVector<Secret *> Connection::secrets(uint flags, QObject *parent)
+{
+    QVector<Secret *> ret;
+    virSecretPtr *secrets;
+    int count = virConnectListAllSecrets(m_conn, &secrets, flags);
+    if (count > 0) {
+        for (int i = 0; i < count; ++i) {
+            auto secret = new Secret(secrets[i], this, parent);
+            ret.append(secret);
+        }
+        free(secrets);
     }
     return ret;
 }

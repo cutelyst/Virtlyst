@@ -24,6 +24,7 @@
 class Domain;
 class Interface;
 class Network;
+class Secret;
 class Connection : public QObject
 {
     Q_OBJECT
@@ -57,6 +58,7 @@ public:
     QVector<Domain *> domains(int flags, QObject *parent = nullptr);
     QVector<Interface *> interfaces(uint flags, QObject *parent = nullptr);
     QVector<Network *> networks(uint flags, QObject *parent = nullptr);
+    QVector<Secret *> secrets(uint flags, QObject *parent = nullptr);
 
     virConnectPtr raw() const;
 
