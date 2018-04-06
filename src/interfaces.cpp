@@ -39,6 +39,26 @@ void Interfaces::index(Context *c, const QString &hostId)
     }
     c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));
 
-    const QVector<Interface *> ifaces = conn->interfaces(0, c);
+    const QVector<Interface *> ifaces = conn->interfaces(
+                VIR_CONNECT_LIST_INTERFACES_INACTIVE | VIR_CONNECT_LIST_INTERFACES_ACTIVE, c);
     c->setStash(QStringLiteral("ifaces_all"), QVariant::fromValue(ifaces));
+}
+
+void Interfaces::interface(Context *c, const QString &hostId, const QString &ifaceName)
+{
+    c->setStash(QStringLiteral("template"), QStringLiteral("interface.html"));
+    c->setStash(QStringLiteral("host_id"), hostId);
+    c->setStash(QStringLiteral("time_refresh"), 8000);
+
+    Connection *conn = m_virtlyst->connection(hostId);
+    if (conn == nullptr) {
+        fprintf(stderr, "Failed to open connection to qemu:///system\n");
+        return;
+    }
+    c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));
+
+    Interface *iface = conn->getInterface(ifaceName, c);
+    if (iface) {
+        c->setStash(QStringLiteral("iface"), QVariant::fromValue(iface));
+    }
 }

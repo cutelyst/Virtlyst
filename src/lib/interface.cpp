@@ -17,6 +17,8 @@
  */
 #include "interface.h"
 
+#include <QLoggingCategory>
+
 Interface::Interface(virInterfacePtr iface, Connection *conn, QObject *parent) : QObject(parent)
   , m_iface(iface)
   , m_conn(conn)
@@ -29,18 +31,91 @@ Interface::~Interface()
     virInterfaceFree(m_iface);
 }
 
-QString Interface::name() const
+QString Interface::name()
 {
-    return QString::fromUtf8(virInterfaceGetName(m_iface));
-}
-
-QString Interface::type() const
-{
-    return QStringLiteral("ethernet");
+    return xml()
+            .documentElement()
+            .attribute(QStringLiteral("name"));
 }
 
 QString Interface::mac() const
 {
     return QString::fromUtf8(virInterfaceGetMACString(m_iface));
+}
 
+QString Interface::ipv4()
+{
+    return xmlGetAddress(QStringLiteral("ipv4"));
+}
+
+QString Interface::ipv4Type()
+{
+    if (ipv4().isEmpty()) {
+        return QStringLiteral("dhcp");
+    } else {
+        return QStringLiteral("static");
+    }
+}
+
+QString Interface::ipv6()
+{
+    return xmlGetAddress(QStringLiteral("ipv6"));
+}
+
+QString Interface::ipv6Type()
+{
+    if (ipv6().isEmpty()) {
+        return QStringLiteral("dhcp");
+    } else {
+        return QStringLiteral("static");
+    }
+}
+
+QString Interface::type()
+{
+    return xml()
+            .documentElement()
+            .attribute(QStringLiteral("type"));
+}
+
+QString Interface::startMode()
+{
+    return QString();
+}
+
+QDomDocument Interface::xml()
+{
+    if (m_xml.isNull()) {
+        char *xml = virInterfaceGetXMLDesc(m_iface, 0);
+        const QString xmlString = QString::fromUtf8(xml);
+//        qDebug() << "XML" << xml;
+        QString error;
+        if (!m_xml.setContent(xmlString, &error)) {
+            qWarning() << "Failed to parse XML from interface" << error;
+        }
+        free(xml);
+    }
+    return m_xml;
+}
+
+QString Interface::xmlGetAddress(const QString &family)
+{
+    QDomElement protocol = xml().documentElement().firstChildElement(QStringLiteral("protocol"));
+    while (!protocol.isNull()) {
+        if (protocol.attribute(QStringLiteral("family")) == family) {
+            QDomElement ip = protocol.firstChildElement(QStringLiteral("ip"));
+            while (!ip.isNull()) {
+                if (ip.hasAttribute(QStringLiteral("address"))) {
+                    const QString address = ip.attribute(QStringLiteral("address"));
+                    if (ip.hasAttribute(QStringLiteral("prefix"))) {
+                        return address + QLatin1Char('/') + ip.attribute(QStringLiteral("prefix"));
+                    }
+                    return address;
+                }
+                ip = ip.nextSiblingElement(QStringLiteral("ip"));
+            }
+        }
+        protocol = protocol.nextSiblingElement(QStringLiteral("protocol"));
+    }
+    return QString();
 }

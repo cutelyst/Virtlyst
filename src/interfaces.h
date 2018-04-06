@@ -31,6 +31,9 @@ public:
     C_ATTR(index, :Path :AutoArgs)
     void index(Context *c, const QString &hostId);
 
+    C_ATTR(interface, :Path :AutoArgs)
+    void interface(Context *c, const QString &hostId, const QString &ifaceName);
+
 private:
     Virtlyst *m_virtlyst;
 };

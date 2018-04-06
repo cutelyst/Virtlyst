@@ -29,10 +29,52 @@
 
 Q_LOGGING_CATEGORY(VIRT_CONN, "virt.connection")
 
+static int authCreds[] = {
+    VIR_CRED_AUTHNAME,
+    VIR_CRED_PASSPHRASE,
+};
+
+static int authCb(virConnectCredentialPtr cred, unsigned int ncred, void *cbdata)
+{
+    int i;
+    char buf[1024];
+
+    for (i = 0; i < ncred; i++) {
+        if (cred[i].type == VIR_CRED_AUTHNAME) {
+            printf("%s: ", cred[i].prompt);
+            fflush(stdout);
+            fgets(buf, sizeof(buf), stdin);
+            buf[strlen(buf) - 1] = '\0';
+            cred[i].result = strdup(buf);
+            if (cred[i].result == NULL)
+                return -1;
+            cred[i].resultlen = strlen(cred[i].result);
+        }
+        else if (cred[i].type == VIR_CRED_PASSPHRASE) {
+            printf("%s: ", cred[i].prompt);
+            fflush(stdout);
+            fgets(buf, sizeof(buf), stdin);
+            buf[strlen(buf) - 1] = '\0';
+            cred[i].result = strdup(buf);
+            if (cred[i].result == NULL)
+                return -1;
+            cred[i].resultlen = strlen(cred[i].result);
+        }
+    }
+
+    return 0;
+}
+
 Connection::Connection(const QString &name, QObject *parent) : QObject(parent)
   , m_uri(name)
 {
-    m_conn = virConnectOpen(name.toUtf8().constData());
+    virConnectAuth auth;
+    auth.credtype = authCreds;
+    auth.ncredtype = sizeof(authCreds)/sizeof(int);
+    auth.cb = authCb;
+    auth.cbdata = this;
+
+    m_conn = virConnectOpenAuth(name.toUtf8().constData(), &auth, 0);
     if (m_conn == NULL) {
         qCWarning(VIRT_CONN) << "Failed to open connection to" << name;
         return;
@@ -167,6 +209,15 @@ QVector<Interface *> Connection::interfaces(uint flags, QObject *parent)
         free(ifaces);
     }
     return ret;
+}
+
+Interface *Connection::getInterface(const QString &name, QObject *parent)
+{
+    virInterfacePtr iface = virInterfaceLookupByName(m_conn, name.toUtf8().constData());
+    if (!iface) {
+        return nullptr;
+    }
+    return new Interface(iface, this, parent);
 }
 
 QVector<Network *> Connection::networks(uint flags, QObject *parent)

@@ -58,6 +58,8 @@ public:
 
     QVector<Domain *> domains(int flags, QObject *parent = nullptr);
     QVector<Interface *> interfaces(uint flags, QObject *parent = nullptr);
+    Interface *getInterface(const QString &name, QObject *parent = nullptr);
+
     QVector<Network *> networks(uint flags, QObject *parent = nullptr);
     QVector<Secret *> secrets(uint flags, QObject *parent = nullptr);
 

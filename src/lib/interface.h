@@ -19,6 +19,7 @@
 #define INTERFACE_H
 
 #include <QObject>
+#include <QDomDocument>
 #include <libvirt/libvirt.h>
 
 class Connection;
@@ -28,15 +29,31 @@ class Interface : public QObject
     Q_PROPERTY(QString name READ name CONSTANT)
     Q_PROPERTY(QString type READ type CONSTANT)
     Q_PROPERTY(QString mac READ mac CONSTANT)
+    Q_PROPERTY(QString ipv4 READ ipv4 CONSTANT)
+    Q_PROPERTY(QString ipv4Type READ ipv4Type CONSTANT)
+    Q_PROPERTY(QString ipv6 READ ipv6 CONSTANT)
+    Q_PROPERTY(QString ipv6Type READ ipv6Type CONSTANT)
+    Q_PROPERTY(QString type READ type CONSTANT)
+    Q_PROPERTY(QString startMode READ startMode CONSTANT)
 public:
     explicit Interface(virInterfacePtr iface, Connection *conn, QObject *parent = nullptr);
     ~Interface();
 
-    QString name() const;
-    QString type() const;
+    QString name();
     QString mac() const;
 
+    QString ipv4();
+    QString ipv4Type();
+    QString ipv6();
+    QString ipv6Type();
+    QString type();
+    QString startMode();
+
 private:
+    QDomDocument xml();
+    QString xmlGetAddress(const QString &family);
+
+    QDomDocument m_xml;
     virInterfacePtr m_iface;
     Connection *m_conn;
 };

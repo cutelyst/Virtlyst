@@ -15,46 +15,46 @@
             <tbody>
                 <tr>
                     <td>{% i18n "Interface" %}</td>
-                    <td><strong>{{ iface }}</strong></td>
+                    <td><strong>{{ iface.name }}</strong></td>
                 </tr>
                 <tr>
-                    <td>{% i18n "IPv4" %} ({% ifequal ipv4 None %}None{% else %}{{ ipv4_type }}{% endifequal %})</td>
-                    <td>{{ ipv4 }}</td>
+                    <td>{% i18n "IPv4" %} ({{ iface.ipv4Type }})</td>
+                    <td>{{ iface.ipv4 }}</td>
                 </tr>
                 <tr>
-                    <td>{% i18n "IPv6" %} ({% ifequal ipv6 None %}None{% else %}{{ ipv6_type }}{% endifequal %})</td>
-                    <td>{{ ipv6 }}</td>
+                    <td>{% i18n "IPv6" %} ({{ iface.ipv6Type }})</td>
+                    <td>{{ iface.ipv6 }}</td>
                 </tr>
                 <tr>
                     <td>{% i18n "MAC Adress" %}</td>
-                    <td>{{ mac }}</td>
+                    <td>{{ iface.mac }}</td>
                 </tr>
                 <tr>
                     <td>{% i18n "Interface type" %}</td>
-                    <td>{{ itype }}</td>
+                    <td>{{ iface.type }}</td>
                 </tr>
-                {% ifequal itype 'bridge' %}
+                {% if iface.type == 'bridge' %}
                     <tr>
                         <td>{% i18n "Bridge device" %}</td>
-                        <td>{{ bridge }}</td>
+                        <td>{{ iface.bridge }}</td>
                     </tr>
-                {% endifequal %}
+                {% endif %}
                 <tr>
                     <td>{% i18n "Boot mode" %}</td>
-                    <td>{{ start_mode }}</td>
+                    <td>{{ iface.start_mode }}</td>
                 </tr>
                 <tr>
                     <td>{% i18n "State" %}</td>
                     <td>
-                        <form action="" method="post" role="form">{% csrf_token %}
-                            {% ifequal state 0 %}
+                        <form action="" method="post" role="form">{{ csrf_token }}
+                            {% if iface.state == 0 %}
                                 <input type="submit" class="btn btn-xs btn-default" name="start" value="{% i18n "Start" %}">
                                 <input type="submit" class="btn btn-xs btn-default" name="delete" value="{% i18n "Delete" %}"
                                        onclick="return confirm('{% i18n "Are you sure?" %}')">
                             {% else %}
                                 <input type="submit" class="btn btn-xs btn-default" name="stop" value="{% i18n "Stop" %}"
                                        onclick="return confirm('{% i18n "Are you sure?" %}')">
-                            {% endifequal %}
+                            {% endif %}
                         </form>
                     </td>
                 </tr>
