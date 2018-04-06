@@ -560,7 +560,7 @@
             {% endif %}
         </div>
         <form id="viewXMLform" class="form-horizontal" method="post" role="form" style="display: none">{{ csrf_token }}
-            <textarea id="xmltextarea" name="inst_xml">{{ domain.inst_xml }}</textarea>
+            <textarea id="xmltextarea" name="inst_xml">{{ domain.xml }}</textarea>
             <button type="button" class="btn btn-lg btn-default"
                     onclick="javascript:$('#viewXMLpre').show();$('#viewXMLform').hide();">{% i18n "Close" %}</button>
             <button type="submit" class="btn btn-lg btn-danger pull-right" name="change_xml">{% i18n "Save" %}</button>
