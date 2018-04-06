@@ -1,18 +1,19 @@
 /*
  * Copyright (C) 2018 Daniel Nicoletti <dantti12@gmail.com>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 #include "connection.h"
 
@@ -21,6 +22,8 @@
 #include "interface.h"
 #include "network.h"
 #include "secret.h"
+
+#include <QXmlStreamWriter>
 
 #include <QLoggingCategory>
 
@@ -199,6 +202,55 @@ QVector<Secret *> Connection::secrets(uint flags, QObject *parent)
 virConnectPtr Connection::raw() const
 {
     return m_conn;
+}
+
+void Connection::createSecret(const QString &ephemeral, const QString &usageType, const QString &priv,  const QString &data)
+{
+    QByteArray output;
+    QXmlStreamWriter stream(&output);
+
+    stream.writeStartElement(QStringLiteral("secret"));
+    if (!ephemeral.isEmpty()) {
+        stream.writeAttribute(QStringLiteral("ephemeral"), ephemeral);
+    }
+    if (!priv.isEmpty()) {
+        stream.writeAttribute(QStringLiteral("private"), priv);
+    }
+
+    stream.writeStartElement(QStringLiteral("usage"));
+    stream.writeAttribute(QStringLiteral("type"), usageType);
+    if (usageType == QLatin1String("ceph")) {
+        stream.writeTextElement(QStringLiteral("name"), data);
+    } else if (usageType == QLatin1String("volume")) {
+        stream.writeTextElement(usageType, data);
+    } else if (usageType == QLatin1String("iscsi")) {
+        stream.writeTextElement(QStringLiteral("target"), data);
+    }
+    stream.writeEndElement(); // usage
+
+    stream.writeEndElement(); // secret
+    qDebug() << "XML output" << output;
+//    xml.appendChild();
+    virSecretPtr secret = virSecretDefineXML(m_conn, output.constData(), 0);
+    virSecretFree(secret);
+}
+
+Secret *Connection::getSecretByUuid(const QString &uuid, QObject *parent)
+{
+    virSecretPtr secret = virSecretLookupByUUIDString(m_conn, uuid.toLatin1().constData());
+    if (!secret) {
+        return nullptr;
+    }
+    return new Secret(secret, this, parent);
+}
+
+bool Connection::deleteSecretByUuid(const QString &uuid)
+{
+    virSecretPtr secret = virSecretLookupByUUIDString(m_conn, uuid.toLatin1().constData());
+    if (!secret) {
+        return true;
+    }
+    return virSecretUndefine(secret) == 0;
 }
 
 void Connection::loadNodeInfo()
