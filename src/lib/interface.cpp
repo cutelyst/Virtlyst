@@ -80,7 +80,10 @@ QString Interface::ipv6Type()
 
 QString Interface::startMode()
 {
-    return QString();
+    return xml()
+            .documentElement()
+            .firstChildElement(QStringLiteral("start"))
+            .attribute(QStringLiteral("mode"));
 }
 
 QDomDocument Interface::xml()
