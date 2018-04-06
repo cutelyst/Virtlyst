@@ -43,6 +43,13 @@ QString Interface::mac() const
     return QString::fromUtf8(virInterfaceGetMACString(m_iface));
 }
 
+QString Interface::type()
+{
+    return xml()
+            .documentElement()
+            .attribute(QStringLiteral("type"));
+}
+
 QString Interface::ipv4()
 {
     return xmlGetAddress(QStringLiteral("ipv4"));
@@ -69,13 +76,6 @@ QString Interface::ipv6Type()
     } else {
         return QStringLiteral("static");
     }
-}
-
-QString Interface::type()
-{
-    return xml()
-            .documentElement()
-            .attribute(QStringLiteral("type"));
 }
 
 QString Interface::startMode()
