@@ -109,9 +109,21 @@ void Console::ws(Context *c, const QString &hostId, const QString &uuid)
         qWarning() << "Console Proxy socket disconnected";
         c->response()->webSocketClose(Response::CloseCodeAbnormalDisconnection, sock->errorString());
     });
+    auto buf = new QByteArray;//this will leak
+    connect(sock, &QTcpSocket::connected, c, [=] {
+        qWarning() << "Console Proxy socket connected";
+        if (!buf->isNull()) {
+            sock->write(*buf);
+            sock->flush();
+        }
+    });
 
     connect(c->request(), &Request::webSocketBinaryFrame, c, [=] (const QByteArray &message) {
 //        qWarning() << "Console Proxy ws data" << message.size();
+        if (sock->state() != QAbstractSocket::ConnectedState) {
+            buf->append(message);
+            return;
+        }
         sock->write(message);
         sock->flush();
     });
