@@ -22,6 +22,7 @@
 #include "interface.h"
 #include "network.h"
 #include "secret.h"
+#include "nodedevice.h"
 
 #include <QXmlStreamWriter>
 
@@ -196,6 +197,28 @@ QVector<Domain *> Connection::domains(int flags, QObject *parent)
     return ret;
 }
 
+Domain *Connection::getDomainByUuid(const QString &uuid, QObject *parent)
+{
+    virDomainPtr domain = virDomainLookupByUUIDString(m_conn, uuid.toUtf8().constData());
+    if (!domain) {
+        return nullptr;
+    }
+    auto dom = new Domain(domain, this, parent);
+    dom->loadXml();
+    return dom;
+}
+
+Domain *Connection::getDomainByName(const QString &name, QObject *parent)
+{
+    virDomainPtr domain = virDomainLookupByName(m_conn, name.toUtf8().constData());
+    if (!domain) {
+        return nullptr;
+    }
+    auto dom = new Domain(domain, this, parent);
+    dom->loadXml();
+    return dom;
+}
+
 QVector<Interface *> Connection::interfaces(uint flags, QObject *parent)
 {
     QVector<Interface *> ret;
@@ -220,6 +243,88 @@ Interface *Connection::getInterface(const QString &name, QObject *parent)
     return new Interface(iface, this, parent);
 }
 
+void Connection::createInterface(const QString &name, const QString &netdev, const QString &type,
+                                 const QString &startMode, int delay, bool stp,
+                                 const QString &ipv4Addr, const QString &ipv4Gw, const QString &ipv4Type,
+                                 const QString &ipv6Addr, const QString &ipv6Gw, const QString &ipv6Type)
+{
+    QByteArray output;
+    QXmlStreamWriter stream(&output);
+
+    stream.writeStartElement(QStringLiteral("interface"));
+    if (!name.isEmpty()) {
+        stream.writeAttribute(QStringLiteral("name"), name);
+    }
+    if (!type.isEmpty()) {
+        stream.writeAttribute(QStringLiteral("type"), type);
+    }
+
+    stream.writeStartElement(QStringLiteral("start"));
+    stream.writeAttribute(QStringLiteral("mode"), startMode);
+    stream.writeEndElement(); // start
+
+    if (ipv4Type == QLatin1String("dhcp")) {
+        stream.writeStartElement(QStringLiteral("protocol"));
+        stream.writeAttribute(QStringLiteral("family"), QStringLiteral("ipv4"));
+        stream.writeStartElement(QStringLiteral("dhcp"));
+        stream.writeEndElement(); // dhcp
+        stream.writeEndElement(); // protocol
+    } else if (ipv4Type == QLatin1String("static")) {
+        const QString address = ipv4Addr.section(QLatin1Char('/'), 0, 0);
+        const QString prefix = ipv4Addr.section(QLatin1Char('/'), -1);
+        stream.writeStartElement(QStringLiteral("protocol"));
+        stream.writeAttribute(QStringLiteral("family"), QStringLiteral("ipv4"));
+        stream.writeStartElement(QStringLiteral("ip"));
+        stream.writeAttribute(QStringLiteral("address"), address);
+        stream.writeAttribute(QStringLiteral("prefix"), prefix);
+        stream.writeEndElement(); // ip
+        stream.writeStartElement(QStringLiteral("route"));
+        stream.writeAttribute(QStringLiteral("gateway"), ipv4Gw);
+        stream.writeEndElement(); // route
+        stream.writeEndElement(); // protocol
+    }
+
+    if (ipv6Type == QLatin1String("dhcp")) {
+        stream.writeStartElement(QStringLiteral("protocol"));
+        stream.writeAttribute(QStringLiteral("family"), QStringLiteral("ipv6"));
+        stream.writeStartElement(QStringLiteral("dhcp"));
+        stream.writeEndElement(); // dhcp
+        stream.writeEndElement(); // protocol
+    } else if (ipv6Type == QLatin1String("static")) {
+        const QString address = ipv6Addr.section(QLatin1Char('/'), 0, 0);
+        const QString prefix = ipv6Addr.section(QLatin1Char('/'), -1);
+        stream.writeStartElement(QStringLiteral("protocol"));
+        stream.writeAttribute(QStringLiteral("family"), QStringLiteral("ipv6"));
+        stream.writeStartElement(QStringLiteral("ip"));
+        stream.writeAttribute(QStringLiteral("address"), address);
+        stream.writeAttribute(QStringLiteral("prefix"), prefix);
+        stream.writeEndElement(); // ip
+        stream.writeStartElement(QStringLiteral("route"));
+        stream.writeAttribute(QStringLiteral("gateway"), ipv6Gw);
+        stream.writeEndElement(); // route
+        stream.writeEndElement(); // protocol
+    }
+
+    if (type == QLatin1String("bridge")) {
+        stream.writeStartElement(QStringLiteral("bridge"));
+        if (stp) {
+            stream.writeAttribute(QStringLiteral("stp"), QStringLiteral("on"));
+        }
+        stream.writeAttribute(QStringLiteral("delay"), QString::number(delay));
+        stream.writeStartElement(QStringLiteral("interface"));
+        stream.writeAttribute(QStringLiteral("name"), netdev);
+        stream.writeAttribute(QStringLiteral("type"), QStringLiteral("ethernet"));
+        stream.writeEndElement(); // interface
+        stream.writeEndElement(); // bridge
+    }
+
+    stream.writeEndElement(); // interface
+    qDebug() << "XML output" << output;
+
+    virInterfacePtr iface = virInterfaceDefineXML(m_conn, output.constData(), 0);
+    virInterfaceFree(iface);
+}
+
 QVector<Network *> Connection::networks(uint flags, QObject *parent)
 {
     QVector<Network *> ret;
@@ -235,6 +340,68 @@ QVector<Network *> Connection::networks(uint flags, QObject *parent)
     return ret;
 }
 
+Network *Connection::getNetwork(const QString &name, QObject *parent)
+{
+    virNetworkPtr network = virNetworkLookupByName(m_conn, name.toUtf8().constData());
+    if (!network) {
+        return nullptr;
+    }
+    return new Network(network, this, parent);
+}
+
+bool Connection::createNetwork(const QString &name, const QString &forward, const QString &gateway, const QString &mask,
+                               const QString &bridge, bool dhcp, bool openvswitch, bool fixed)
+{
+    QByteArray output;
+    QXmlStreamWriter stream(&output);
+
+    stream.writeStartElement(QStringLiteral("network"));
+
+    stream.writeTextElement(QStringLiteral("name"), name);
+
+    bool isForward = QStringList{ QStringLiteral("nat"), QStringLiteral("route"), QStringLiteral("bridge")}
+            .contains(forward);
+    if (isForward) {
+        stream.writeStartElement(QStringLiteral("forward"));
+        stream.writeAttribute(QStringLiteral("mode"), forward);
+        stream.writeEndElement(); // forward
+    }
+
+    bool isForwardStp = QStringList{ QStringLiteral("nat"), QStringLiteral("route"), QStringLiteral("none")}
+            .contains(forward);
+    stream.writeStartElement(QStringLiteral("bridge"));
+    if (isForwardStp) {
+        stream.writeAttribute(QStringLiteral("stp"), QStringLiteral("on"));
+        stream.writeAttribute(QStringLiteral("delay"), QStringLiteral("0"));
+    } else if (forward == QLatin1String("bridge")) {
+        stream.writeAttribute(QStringLiteral("name"), bridge);
+    }
+    stream.writeEndElement(); // bridge
+
+    if (openvswitch) {
+        stream.writeStartElement(QStringLiteral("virtualport"));
+        stream.writeAttribute(QStringLiteral("type"), QStringLiteral("openvswitch"));
+        stream.writeEndElement(); // virtualport
+    }
+
+    if (forward != QLatin1String("bridge")) {
+        stream.writeStartElement(QStringLiteral("ip"));
+        stream.writeAttribute(QStringLiteral("address"), gateway);
+        stream.writeAttribute(QStringLiteral("netmask"), mask);
+        if (dhcp) {
+            stream.writeStartElement(QStringLiteral("dhcp"));
+            stream.writeEndElement(); // dhcp
+        }
+
+        stream.writeEndElement(); // ip
+    }
+
+    stream.writeEndElement(); // network
+    qDebug() << "XML output" << output;
+    virNetworkPtr net = virNetworkDefineXML(m_conn, output.constData());
+    virNetworkFree(net);
+}
+
 QVector<Secret *> Connection::secrets(uint flags, QObject *parent)
 {
     QVector<Secret *> ret;
@@ -248,11 +415,6 @@ QVector<Secret *> Connection::secrets(uint flags, QObject *parent)
         free(secrets);
     }
     return ret;
-}
-
-virConnectPtr Connection::raw() const
-{
-    return m_conn;
 }
 
 void Connection::createSecret(const QString &ephemeral, const QString &usageType, const QString &priv,  const QString &data)
@@ -302,6 +464,21 @@ bool Connection::deleteSecretByUuid(const QString &uuid)
         return true;
     }
     return virSecretUndefine(secret) == 0;
+}
+
+QVector<NodeDevice *> Connection::nodeDevices(uint flags, QObject *parent)
+{
+    QVector<NodeDevice *> ret;
+    virNodeDevicePtr *nodes;
+    int count = virConnectListAllNodeDevices(m_conn, &nodes, flags);
+    if (count > 0) {
+        for (int i = 0; i < count; ++i) {
+            auto node = new NodeDevice(nodes[i], this, parent);
+            ret.append(node);
+        }
+        free(nodes);
+    }
+    return ret;
 }
 
 void Connection::loadNodeInfo()

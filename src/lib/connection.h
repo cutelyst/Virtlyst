@@ -26,6 +26,7 @@ class Domain;
 class Interface;
 class Network;
 class Secret;
+class NodeDevice;
 class Connection : public QObject
 {
     Q_OBJECT
@@ -57,17 +58,28 @@ public:
     bool domainDefineXml(const QString &xml);
 
     QVector<Domain *> domains(int flags, QObject *parent = nullptr);
+    Domain *getDomainByUuid(const QString &uuid, QObject *parent = nullptr);
+    Domain *getDomainByName(const QString &name, QObject *parent = nullptr);
+
     QVector<Interface *> interfaces(uint flags, QObject *parent = nullptr);
     Interface *getInterface(const QString &name, QObject *parent = nullptr);
+    void createInterface(const QString &name, const QString &netdev, const QString &type,
+                         const QString &startMode, int delay, bool stp,
+                         const QString &ipv4Addr, const QString &ipv4Gw, const QString &ipv4Type,
+                         const QString &ipv6Addr, const QString &ipv6Gw, const QString &ipv6Type);
 
     QVector<Network *> networks(uint flags, QObject *parent = nullptr);
-    QVector<Secret *> secrets(uint flags, QObject *parent = nullptr);
+    Network *getNetwork(const QString &name, QObject *parent = nullptr);
+    bool createNetwork(const QString &name, const QString &forward, const QString &gateway, const QString &mask,
+                       const QString &bridge, bool dhcp, bool openvswitch, bool fixed = false);
 
-    virConnectPtr raw() const;
+    QVector<Secret *> secrets(uint flags, QObject *parent = nullptr);
 
     void createSecret(const QString &ephemeral, const QString &usageType, const QString &priv, const QString &data);
     Secret *getSecretByUuid(const QString &uuid, QObject *parent = nullptr);
     bool deleteSecretByUuid(const QString &uuid);
+
+    QVector<NodeDevice *> nodeDevices(uint flags, QObject *parent = nullptr);
 
 private:
     void loadNodeInfo();

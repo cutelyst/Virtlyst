@@ -17,11 +17,14 @@
  */
 #include "network.h"
 
+#include <QHostAddress>
+#include <QLoggingCategory>
+
 Network::Network(virNetworkPtr net, Connection *conn, QObject *parent) : QObject(parent)
   , m_net(net)
   , m_conn(conn)
 {
-
+xmlDoc();
 }
 
 Network::~Network()
@@ -39,4 +42,115 @@ QString Network::bridgeName() const
     char *name = virNetworkGetBridgeName(m_net);
     const QString ret = QString::fromUtf8(name);
     return ret;
+}
+
+bool Network::autostart()
+{
+    int autostart;
+    if (virNetworkGetAutostart(m_net, &autostart) == 0) {
+        return autostart == 1;
+    }
+    return false;
+}
+
+void Network::setAutostart(bool enable)
+{
+    virNetworkSetAutostart(m_net, enable ? 1 : 0);
+}
+
+bool Network::active()
+{
+    return virNetworkIsActive(m_net) == 1;
+}
+
+void Network::start()
+{
+    virNetworkCreate(m_net);
+}
+
+void Network::stop()
+{
+    virNetworkDestroy(m_net);
+}
+
+void Network::undefine()
+{
+    virNetworkUndefine(m_net);
+}
+
+QString Network::forwardMode()
+{
+    return xmlDoc()
+            .documentElement()
+            .firstChildElement(QStringLiteral("forward"))
+            .attribute(QStringLiteral("mode"));
+}
+
+QString Network::ipAddress()
+{
+    QDomElement ip = xmlDoc()
+            .documentElement()
+            .firstChildElement(QStringLiteral("ip"));
+
+    QPair<QHostAddress, int> pair =
+            QHostAddress::parseSubnet(
+                ip.attribute(QStringLiteral("address")) + QLatin1Char('/') + ip.attribute(QStringLiteral("netmask")));
+    if (pair.first.isNull()) {
+        return QStringLiteral("None");
+    }
+    return pair.first.toString() + QLatin1Char('/') + QString::number(pair.second);
+}
+
+QString Network::ipDhcpRangeStart()
+{
+    return xmlDoc()
+            .documentElement()
+            .firstChildElement(QStringLiteral("ip"))
+            .firstChildElement(QStringLiteral("dhcp"))
+            .firstChildElement(QStringLiteral("range"))
+            .attribute(QStringLiteral("start"));
+}
+
+QString Network::ipDhcpRangeEnd()
+{
+    return xmlDoc()
+            .documentElement()
+            .firstChildElement(QStringLiteral("ip"))
+            .firstChildElement(QStringLiteral("dhcp"))
+            .firstChildElement(QStringLiteral("range"))
+            .attribute(QStringLiteral("end"));
+}
+
+QVariantList Network::ipDhcpHosts()
+{
+    QVariantList ret;
+    QDomElement host = xmlDoc()
+                .documentElement()
+                .firstChildElement(QStringLiteral("ip"))
+                .firstChildElement(QStringLiteral("dhcp"))
+                .firstChildElement(QStringLiteral("host"));
+    while (!host.isNull()) {
+        QMap<QString, QString> map{
+            {QStringLiteral("ip"), host.attribute(QStringLiteral("ip"))},
+            {QStringLiteral("mac"), host.attribute(QStringLiteral("mac"))},
+        };
+        ret.append(QVariant::fromValue(map));
+        host = host.nextSiblingElement(QStringLiteral("host"));
+    }
+    return ret;
+}
+
+QDomDocument Network::xmlDoc()
+{
+    if (m_xml.isNull()) {
+        char *xml = virNetworkGetXMLDesc(m_net, 0);
+        const QString xmlString = QString::fromUtf8(xml);
+        qDebug() << "XML" << xml;
+        QString error;
+        if (!m_xml.setContent(xmlString, &error)) {
+            qWarning() << "Failed to parse XML from interface" << error;
+        }
+        free(xml);
+    }
+    return m_xml;
 }

@@ -46,14 +46,12 @@ void Console::index(Context *c, const QString &hostId, const QString &uuid)
     }
     c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));
 
-    virDomainPtr domain = virDomainLookupByUUIDString(conn->raw(), uuid.toUtf8().constData());
-    if (!domain) {
+    Domain *dom = conn->getDomainByUuid(uuid, c);
+    if (!dom) {
         errors.append(QStringLiteral("Domain not found: no domain with matching name '%1'").arg(uuid));
         c->setStash(QStringLiteral("errors"), errors);
         return;
     }
-    auto dom = new Domain(domain, conn, c);
-    dom->loadXml();
 
     const QString type = dom->consoleType();
     if (type == QLatin1String("spice")) {
@@ -80,13 +78,11 @@ void Console::ws(Context *c, const QString &hostId, const QString &uuid)
         return;
     }
 
-    virDomainPtr domain = virDomainLookupByUUIDString(conn->raw(), uuid.toUtf8().constData());
-    if (!domain) {
+    Domain *dom = conn->getDomainByUuid(uuid, c);
+    if (!dom) {
         qDebug() << "Domain not found: no domain with matching name '%1'" << uuid;
         return;
     }
-    auto dom = new Domain(domain, conn, c);
-    dom->loadXml();
 
     if (!c->response()->webSocketHandshake(QString(), QString(), QStringLiteral("binary"))) {
         qWarning() << "Failed to estabilish websocket handshake";

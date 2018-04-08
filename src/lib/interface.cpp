@@ -50,6 +50,11 @@ QString Interface::type()
             .attribute(QStringLiteral("type"));
 }
 
+bool Interface::active() const
+{
+    return virInterfaceIsActive(m_iface) == 1;
+}
+
 QString Interface::ipv4()
 {
     return xmlGetAddress(QStringLiteral("ipv4"));
@@ -84,6 +89,21 @@ QString Interface::startMode()
             .documentElement()
             .firstChildElement(QStringLiteral("start"))
             .attribute(QStringLiteral("mode"));
+}
+
+bool Interface::start()
+{
+    return virInterfaceCreate(m_iface, 0) == 0;
+}
+
+bool Interface::stop()
+{
+    return virInterfaceDestroy(m_iface, 0) == 0;
+}
+
+bool Interface::undefine()
+{
+    return virInterfaceUndefine(m_iface) == 0;
 }
 
 QDomDocument Interface::xml()

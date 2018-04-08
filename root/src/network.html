@@ -11,30 +11,22 @@
                 </div>
             {% endfor %}
         {% endif %}
-        {% if device %}
+        {% if not network %}
             <table class="table table-hover table-nolines" role="main">
                 <tbody>
                     <tr>
                         <td>{% i18n "Network name" %}</td>
-                        <td>
-                            [{% for net in networks %}
-                                {% ifequal net pool %}
-                                    <b>{{ net }}</b>
-                                {% else %}
-                                    <a href="{% url 'network' host_id net %}">{{ net }}</a>
-                                {% endifequal %}
-                            {% endfor %} ]
-                        </td>
+                        <td><b>{{ network.name }}</b></td>
                     </tr>
                     <tr>
                         <td>{% i18n "Device" %}</td>
-                        <td>{{ device }}</td>
+                        <td>{{ network.bridgeName }}</td>
                     </tr>
                     <tr>
                         <td>{% i18n "State" %}</td>
                         <td>
-                            <form action="" method="post" role="form">{% csrf_token %}
-                                {% ifequal state 0 %}
+                            <form action="" method="post" role="form">{{ csrf_token }}
+                                {% if not network.active %}
                                     <input type="submit" class="btn btn-xs btn-default" name="start"
                                            value="{% i18n "Start" %}">
                                     <input type="submit" class="btn btn-xs btn-default" name="delete"
@@ -42,22 +34,22 @@
                                 {% else %}
                                     <input type="submit" class="btn btn-xs btn-default" name="stop" value="{% i18n "Stop" %}"
                                            onclick="return confirm('{% i18n "Are you sure?" %}')">
-                                {% endifequal %}
+                                {% endif %}
                             </form>
                         </td>
                     </tr>
                     <tr>
                         <td>{% i18n "Autostart" %}</td>
                         <td>
-                            <form action="" method="post" role="form">{% csrf_token %}
-                                {% ifequal autostart 0 %}
+                            <form action="" method="post" role="form">{{ csrf_token }}
+                                {% if not network.autostart %}
                                     <input type="submit" class="btn btn-xs btn-default" name="set_autostart"
                                            value="{% i18n "Enable" %}">
                                 {% else %}
                                     <input type="submit" class="btn btn-xs btn-default" name="unset_autostart"
                                            onclick="return confirm('{% i18n "Are you sure?" %}')"
                                            value="{% i18n "Disable" %}">
-                                {% endifequal %}
+                                {% endif %}
                             </form>
                         </td>
                     </tr>
@@ -71,48 +63,45 @@
                     <tr>
                         <td>{% i18n "IPv4 Forwarding" %}</td>
                         <td>
-                            {% ifequal ipv4_forward.0 'nat' %}
+                            {% if network.forwardMode == 'nat' %}
                                 {% i18n "NAT" %}
-                            {% endifequal %}
-                            {% ifequal ipv4_forward.0 'route' %}
+                            {% elif network.forwardMode == 'route' %}
                                 {% i18n "ROUTE" %}
-                            {% endifequal %}
-                            {% ifequal ipv4_forward.0 'bridge' %}
+                            {% elif network.forwardMode == 'bridge' %}
                                 {% i18n "BRIDGE" %}
-                            {% endifequal %}
-                            {% if not ipv4_forward.0 %}
+                            {% elif not network.forwardMode %}
                                 {% i18n "ISOLATE" %}
                             {% endif %}
                         </td>
                     </tr>
                     <tr>
                         <td>{% i18n "Network" %}</td>
-                        <td>{{ ipv4_network }}</td>
+                        <td>{{ network.ipAddress }}</td>
                     </tr>
                     <tr>
                         <td>{% i18n "DHCP" %}</td>
                         <td>
-                            {% if ipv4_dhcp_range_start and ipv4_dhcp_range_end %}
+                            {% if network.ipDhcpRangeStart and network.ipDhcpRangeEnd %}
                                 <span class="label label-success">{% i18n "ON" %}</span>
                             {% else %}
                                 <span class="label label-danger">{% i18n "OFF" %}</span>
                             {% endif %}
                         </td>
                     </tr>
-                    {% if ipv4_dhcp_range_start and ipv4_dhcp_range_end %}
+                    {% if network.ipDhcpRangeStart and network.ipDhcpRangeEnd %}
                         <tr>
                             <td>{% i18n "Start" %}</td>
-                            <td>{{ ipv4_dhcp_range_start }}</td>
+                            <td>{{ network.ipDhcpRangeStart }}</td>
                         </tr>
                         <tr>
                             <td>{% i18n "End" %}</td>
-                            <td>{{ ipv4_dhcp_range_end }}</td>
+                            <td>{{ network.ipDhcpRangeEnd }}</td>
                         </tr>
                     {% endif %}
                 </tbody>
             </table>
 
-            {% if fixed_address %}
+            {% if network.ipDhcpHosts %}
                 <h3>{% i18n "Fixed Address" %}</h3>
                 <hr>
                 <div class="panel-group" id="accordion">
@@ -140,9 +129,9 @@
                                     </tr>
                                     </thead>
                                     <tbody style="text-align: center">
-                                    {% for fix in fixed_address %}
+                                    {% for fix in network.ipDhcpHosts %}
                                         <tr>
-                                            <td>{{ fix.host }}</td>
+                                            <td>{{ fix.ip }}</td>
                                             <td>{{ fix.mac }}</td>
                                         </tr>
                                     {% endfor %}

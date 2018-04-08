@@ -36,20 +36,8 @@ Domain::~Domain()
     virDomainFree(m_domain);
 }
 
-bool Domain::loadXml(bool secure)
+bool Domain::loadXml()
 {
-    char *xml = virDomainGetXMLDesc(m_domain, secure ? VIR_DOMAIN_XML_SECURE : 0);
-    const QString xmlString = QString::fromUtf8(xml);
-    free(xml);
-
-    QString errorString;
-    if (!m_xmlDoc.setContent(xmlString, &errorString)) {
-        qCCritical(VIRT_DOM) << "error" << m_xmlDoc.isNull() << m_xmlDoc.toString();
-        return false;
-    }
-    //    qCCritical(VIRT_DOM) << "LOADED" << m_xmlDoc.isNull() << m_xmlDoc.toString();
-    qCCritical(VIRT_DOM) << "LOADED" << memory() << currentMemory();
-
     if (virDomainGetInfo(m_domain, &m_info) < 0) {
         qCWarning(VIRT_DOM) << "Failed to get info for domain" << name();
     }
@@ -59,13 +47,13 @@ bool Domain::loadXml(bool secure)
 
 bool Domain::saveXml()
 {
-    qCCritical(VIRT_DOM) << m_xmlDoc.toString();
-    return m_conn->domainDefineXml(m_xmlDoc.toString(0));
+    qCCritical(VIRT_DOM) << xmlDoc().toString();
+    return m_conn->domainDefineXml(xmlDoc().toString(0));
 }
 
-QString Domain::xml() const
+QString Domain::xml()
 {
-    return m_xmlDoc.toString(2);
+    return xmlDoc().toString(2);
 }
 
 QString Domain::name() const
@@ -78,12 +66,12 @@ QString Domain::name() const
     return QString::fromUtf8(name);
 }
 
-QString Domain::uuid() const
+QString Domain::uuid()
 {
     return dataFromSimpleNode(QStringLiteral("uuid"));
 }
 
-QString Domain::title() const
+QString Domain::title()
 {
     return dataFromSimpleNode(QStringLiteral("title"));
 }
@@ -93,7 +81,7 @@ void Domain::setTitle(const QString &title)
     setDataToSimpleNode(QStringLiteral("title"), title);
 }
 
-QString Domain::description() const
+QString Domain::description()
 {
     return dataFromSimpleNode(QStringLiteral("description"));
 }
@@ -108,9 +96,9 @@ int Domain::status() const
     return m_info.state;
 }
 
-int Domain::currentVcpu() const
+int Domain::currentVcpu()
 {
-    QDomElement docElem = m_xmlDoc.documentElement();
+    QDomElement docElem = xmlDoc().documentElement();
     QDomElement node = docElem.firstChildElement(QStringLiteral("vcpu"));
     if (node.hasAttribute(QStringLiteral("current"))) {
         return node.attribute(QStringLiteral("current")).toInt();
@@ -121,12 +109,12 @@ int Domain::currentVcpu() const
 
 void Domain::setCurrentVcpu(int number)
 {
-    QDomElement docElem = m_xmlDoc.documentElement();
+    QDomElement docElem = xmlDoc().documentElement();
     QDomElement node = docElem.firstChildElement(QStringLiteral("vcpu"));
     node.setAttribute(QStringLiteral("current"), number);
 }
 
-int Domain::vcpu() const
+int Domain::vcpu()
 {
     return dataFromSimpleNode(QStringLiteral("vcpu")).toULongLong();
 }
@@ -136,7 +124,7 @@ void Domain::setVcpu(int number)
     setDataToSimpleNode(QStringLiteral("vcpu"), QString::number(number));
 }
 
-quint64 Domain::memory() const
+quint64 Domain::memory()
 {
     return dataFromSimpleNode(QStringLiteral("memory")).toULongLong();
 }
@@ -146,12 +134,12 @@ void Domain::setMemory(quint64 kBytes)
     setDataToSimpleNode(QStringLiteral("memory"), QString::number(kBytes));
 }
 
-int Domain::memoryMiB() const
+int Domain::memoryMiB()
 {
     return memory() / 1024;
 }
 
-quint64 Domain::currentMemory() const
+quint64 Domain::currentMemory()
 {
     return dataFromSimpleNode(QStringLiteral("currentMemory")).toULongLong();
 }
@@ -162,12 +150,12 @@ void Domain::setCurrentMemory(quint64 kBytes)
     setDataToSimpleNode(QStringLiteral("currentMemory"), QString::number(kBytes));
 }
 
-int Domain::currentMemoryMiB() const
+int Domain::currentMemoryMiB()
 {
     return currentMemory() / 1024;
 }
 
-QString Domain::currentMemoryPretty() const
+QString Domain::currentMemoryPretty()
 {
     return Virtlyst::prettyKibiBytes(currentMemory());
 }
@@ -186,9 +174,9 @@ bool Domain::autostart() const
     return autostart;
 }
 
-QString Domain::consoleType() const
+QString Domain::consoleType()
 {
-    return m_xmlDoc.documentElement()
+    return xmlDoc().documentElement()
             .firstChildElement(QStringLiteral("devices"))
             .firstChildElement(QStringLiteral("graphics"))
             .attribute(QStringLiteral("type"));
@@ -196,15 +184,15 @@ QString Domain::consoleType() const
 
 void Domain::setConsoleType(const QString &type)
 {
-    m_xmlDoc.documentElement()
+    xmlDoc().documentElement()
             .firstChildElement(QStringLiteral("devices"))
             .firstChildElement(QStringLiteral("graphics"))
             .setAttribute(QStringLiteral("type"), type);
 }
 
-QString Domain::consolePassword() const
+QString Domain::consolePassword()
 {
-    return m_xmlDoc.documentElement()
+    return xmlDoc().documentElement()
             .firstChildElement(QStringLiteral("devices"))
             .firstChildElement(QStringLiteral("graphics"))
             .attribute(QStringLiteral("passwd"));
@@ -212,28 +200,28 @@ QString Domain::consolePassword() const
 
 void Domain::setConsolePassword(const QString &password)
 {
-    m_xmlDoc.documentElement()
+    xmlDoc().documentElement()
             .firstChildElement(QStringLiteral("devices"))
             .firstChildElement(QStringLiteral("graphics"))
             .setAttribute(QStringLiteral("passwd"), password);
 }
 
-quint32 Domain::consolePort() const
+quint32 Domain::consolePort()
 {
-    return m_xmlDoc.documentElement()
+    return xmlDoc().documentElement()
             .firstChildElement(QStringLiteral("devices"))
             .firstChildElement(QStringLiteral("graphics"))
             .attribute(QStringLiteral("port")).toUInt();
 }
 
-QString Domain::consoleListenAddress() const
+QString Domain::consoleListenAddress()
 {
-    QString ret = m_xmlDoc.documentElement()
+    QString ret = xmlDoc().documentElement()
                 .firstChildElement(QStringLiteral("devices"))
                 .firstChildElement(QStringLiteral("graphics"))
                 .attribute(QStringLiteral("listen"));
     if (ret.isEmpty()) {
-        ret = m_xmlDoc.documentElement()
+        ret = xmlDoc().documentElement()
                 .firstChildElement(QStringLiteral("devices"))
                 .firstChildElement(QStringLiteral("graphics"))
                 .firstChildElement(QStringLiteral("listen"))
@@ -245,17 +233,77 @@ QString Domain::consoleListenAddress() const
     return ret;
 }
 
-QString Domain::consoleKeymap() const
+QString Domain::consoleKeymap()
 {
-    return m_xmlDoc.documentElement()
+    return xmlDoc().documentElement()
             .firstChildElement(QStringLiteral("devices"))
             .firstChildElement(QStringLiteral("graphics"))
             .attribute(QStringLiteral("keymap"));
 }
 
-QString Domain::dataFromSimpleNode(const QString &element) const
+void Domain::start()
 {
-    return m_xmlDoc.documentElement()
+    virDomainCreate(m_domain);
+}
+
+void Domain::shutdown()
+{
+    virDomainShutdown(m_domain);
+}
+
+void Domain::suspend()
+{
+    virDomainSuspend(m_domain);
+}
+
+void Domain::resume()
+{
+    virDomainResume(m_domain);
+}
+
+void Domain::destroy()
+{
+    virDomainDestroy(m_domain);
+}
+
+void Domain::undefine()
+{
+    virDomainUndefine(m_domain);
+}
+
+void Domain::managedSave()
+{
+    virDomainManagedSave(m_domain, 0);
+}
+
+void Domain::managedSaveRemove()
+{
+    virDomainManagedSaveRemove(m_domain, 0);
+}
+
+void Domain::setAutostart(bool enable)
+{
+    virDomainSetAutostart(m_domain, enable ? 1 : 0);
+}
+
+QDomDocument Domain::xmlDoc()
+{
+    if (m_xml.isNull()) {
+        char *xml = virDomainGetXMLDesc(m_domain, VIR_DOMAIN_XML_SECURE);
+        const QString xmlString = QString::fromUtf8(xml);
+//        qDebug() << "XML" << xml;
+        QString error;
+        if (!m_xml.setContent(xmlString, &error)) {
+            qWarning() << "Failed to parse XML from interface" << error;
+        }
+        free(xml);
+    }
+    return m_xml;
+}
+
+QString Domain::dataFromSimpleNode(const QString &element)
+{
+    return xmlDoc().documentElement()
             .firstChildElement(element)
             .firstChild()
             .nodeValue();
@@ -263,7 +311,7 @@ QString Domain::dataFromSimpleNode(const QString &element) const
 
 void Domain::setDataToSimpleNode(const QString &element, const QString &data)
 {
-    m_xmlDoc.documentElement()
+    xmlDoc().documentElement()
             .firstChildElement(element)
             .firstChild()
             .setNodeValue(data);

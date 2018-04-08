@@ -38,7 +38,6 @@
 
 #include "infrastructure.h"
 #include "instances.h"
-#include "instance.h"
 #include "info.h"
 #include "overview.h"
 #include "storages.h"
@@ -68,7 +67,6 @@ bool Virtlyst::init()
     new Root(this);
     new Infrastructure(this);
     new Instances(this);
-    new Instance(this);
     new Info(this);
     new Overview(this);
     new Networks(this);

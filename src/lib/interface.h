@@ -29,6 +29,7 @@ class Interface : public QObject
     Q_PROPERTY(QString name READ name CONSTANT)
     Q_PROPERTY(QString type READ type CONSTANT)
     Q_PROPERTY(QString mac READ mac CONSTANT)
+    Q_PROPERTY(bool active READ active CONSTANT)
     Q_PROPERTY(QString ipv4 READ ipv4 CONSTANT)
     Q_PROPERTY(QString ipv4Type READ ipv4Type CONSTANT)
     Q_PROPERTY(QString ipv6 READ ipv6 CONSTANT)
@@ -42,11 +43,17 @@ public:
     QString mac() const;
     QString type();
 
+    bool active() const;
+
     QString ipv4();
     QString ipv4Type();
     QString ipv6();
     QString ipv6Type();
     QString startMode();
+
+    bool start();
+    bool stop();
+    bool undefine();
 
 private:
     QDomDocument xml();

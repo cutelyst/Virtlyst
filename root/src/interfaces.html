@@ -18,7 +18,7 @@
             <div class="row" role="main">
             {% for iface in ifaces_all %}
                 <div class="col-xs-12 col-sm-4">
-                    <div class="panel {% ifequal iface.state 1 %}panel-success{% else %}panel-danger{% endifequal %} panel-data">
+                    <div class="panel {% if iface.active %}panel-success{% else %}panel-danger{% endif %} panel-data">
                         <div class="panel-heading">
                             <h3 class="panel-title"><a href="/interfaces/{{ host_id }}/{{ iface.name }}">{{ iface.name }}</a>
                             </h3>
@@ -70,7 +70,7 @@
                             <div class="col-sm-6">
                                 <select name="netdev" class="form-control">
                                     {% for dev in netdevs %}
-                                        <option value="{{ dev }}">{{ dev }}</option>
+                                        <option value="{{ dev.capabilityInterface }}">{{ dev.capabilityInterface }}</option>
                                     {% endfor %}
                                 </select>
                             </div>

@@ -49,59 +49,70 @@ public:
     explicit Domain(virDomainPtr domain, Connection *conn, QObject *parent = nullptr);
     ~Domain();
 
-    bool loadXml(bool secure = true);
+    bool loadXml();
     bool saveXml();
 
-    QString xml() const;
+    QString xml();
 
     QString name() const;
-    QString uuid() const;
+    QString uuid();
 
-    QString title() const;
+    QString title();
     void setTitle(const QString &title);
 
-    QString description() const;
+    QString description();
     void setDescription(const QString &description);
 
     int status() const;
 
-    int currentVcpu() const;
+    int currentVcpu();
     void setCurrentVcpu(int number);
 
-    int vcpu() const;
+    int vcpu();
     void setVcpu(int number);
 
-    quint64 memory() const;
+    quint64 memory();
     void setMemory(quint64 kBytes);
-    int memoryMiB() const;
+    int memoryMiB();
 
-    quint64 currentMemory() const;
+    quint64 currentMemory();
     void setCurrentMemory(quint64 kBytes);
-    int currentMemoryMiB() const;
+    int currentMemoryMiB();
 
-    QString currentMemoryPretty() const;
+    QString currentMemoryPretty();
 
     bool hasManagedSaveImage() const;
     bool autostart() const;
 
-    QString consoleType() const;
+    QString consoleType();
     void setConsoleType(const QString &type);
 
-    QString consolePassword() const;
+    QString consolePassword();
     void setConsolePassword(const QString &password);
 
-    quint32 consolePort() const;
-    QString consoleListenAddress() const;
-    QString consoleKeymap() const;
+    quint32 consolePort();
+    QString consoleListenAddress();
+    QString consoleKeymap();
+
+    void start();
+    void shutdown();
+    void suspend();
+    void resume();
+    void destroy();
+    void undefine();
+    void managedSave();
+    void managedSaveRemove();
+    void setAutostart(bool enable);
 
 private:
-    QString dataFromSimpleNode(const QString &element) const;
+    QDomDocument xmlDoc();
+    QString dataFromSimpleNode(const QString &element);
     void setDataToSimpleNode(const QString &element, const QString &data);
 
     Connection *m_conn;
     virDomainPtr m_domain;
     virDomainInfo m_info;
-    QDomDocument m_xmlDoc;
+    QDomDocument m_xml;
 };
 
 #endif // DOMAIN_H

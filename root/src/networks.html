@@ -46,14 +46,14 @@
             <div class="row" role="main">
                 {% for pool in networks %}
                     <div class="col-xs-12 col-sm-4">
-                        <div class="panel {% if pool.status %}panel-success{% else %}panel-danger{% endif %} panel-data">
+                        <div class="panel {% if pool.active %}panel-success{% else %}panel-danger{% endif %} panel-data">
                             <div class="panel-heading">
-                                <h3 class="panel-title"><a href="/network/{{ host_id }}/{{ pool.name }}">{{ pool.name }}</a></h3>
+                                <h3 class="panel-title"><a href="/networks/{{ host_id }}/{{ pool.name }}">{{ pool.name }}</a></h3>
                             </div>
                             <div class="panel-body">
                                 <p>{% i18n "Device" %}: {{ pool.device }}{{ pool.bridgeName }}</p>
 
-                                <p>{% i18n "Forward" %}: {{ pool.forward|upper }}</p>
+                                <p>{% i18n "Forward" %}: {{ pool.forwardMode|upper }}</p>
                             </div>
                         </div>
                     </div>
@@ -92,14 +92,14 @@
                         <label class="col-sm-4 control-label">{% i18n "DHCP" %}</label>
 
                         <div class="col-sm-6">
-                            <input type="checkbox" name="dhcp" value="true" checked>
+                            <input type="checkbox" name="dhcp" checked>
                         </div>
                     </div>
                     <div class="form-group bridge_name_form_group_dhcp">
                         <label class="col-sm-4 control-label">{% i18n "Fixed Address" %}</label>
 
                         <div class="col-sm-6">
-                            <input type="checkbox" name="fixed" value="true">
+                            <input type="checkbox" name="fixed">
                         </div>
                     </div>
                     <div class="form-group">
@@ -126,7 +126,7 @@
                         <label class="col-sm-4 control-label">{% i18n "Open vSwitch" %}</label>
 
                         <div class="col-sm-6">
-                            <input type="checkbox" name="openvswitch" value="true">
+                            <input type="checkbox" name="openvswitch">
                         </div>
                     </div>
                     <div class="modal-footer">

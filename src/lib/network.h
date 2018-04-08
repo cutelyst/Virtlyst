@@ -19,6 +19,7 @@
 #define NETWORK_H
 
 #include <QObject>
+#include <QDomDocument>
 #include <libvirt/libvirt.h>
 
 class Connection;
@@ -27,6 +28,13 @@ class Network : public QObject
     Q_OBJECT
     Q_PROPERTY(QString name READ name CONSTANT)
     Q_PROPERTY(QString bridgeName READ bridgeName CONSTANT)
+    Q_PROPERTY(bool autostart READ autostart CONSTANT)
+    Q_PROPERTY(bool active READ active CONSTANT)
+    Q_PROPERTY(QString forwardMode READ forwardMode CONSTANT)
+    Q_PROPERTY(QString ipAddress READ ipAddress CONSTANT)
+    Q_PROPERTY(QString ipDhcpRangeStart READ ipDhcpRangeStart CONSTANT)
+    Q_PROPERTY(QString ipDhcpRangeEnd READ ipDhcpRangeEnd CONSTANT)
+    Q_PROPERTY(QVariantList ipDhcpHosts READ ipDhcpHosts CONSTANT)
 public:
     explicit Network(virNetworkPtr net, Connection *conn, QObject *parent = nullptr);
     ~Network();
@@ -34,9 +42,26 @@ public:
     QString name() const;
     QString bridgeName() const;
 
+    bool autostart();
+    void setAutostart(bool enable);
+
+    bool active();
+    void start();
+    void stop();
+    void undefine();
+
+    QString forwardMode();
+    QString ipAddress();
+    QString ipDhcpRangeStart();
+    QString ipDhcpRangeEnd();
+    QVariantList ipDhcpHosts();
+
 private:
+    QDomDocument xmlDoc();
+
     virNetworkPtr m_net;
     Connection *m_conn;
+    QDomDocument m_xml;
 };
 
 #endif // NETWORK_H
