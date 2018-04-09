@@ -19,6 +19,8 @@ QString StorageVol::type()
 {
     return xmlDoc()
             .documentElement()
+            .firstChildElement(QStringLiteral("target"))
+            .firstChildElement(QStringLiteral("format"))
             .attribute(QStringLiteral("type"));
 }
 
