@@ -27,6 +27,7 @@ class Interface;
 class Network;
 class Secret;
 class NodeDevice;
+class StoragePool;
 class Connection : public QObject
 {
     Q_OBJECT
@@ -78,6 +79,10 @@ public:
     void createSecret(const QString &ephemeral, const QString &usageType, const QString &priv, const QString &data);
     Secret *getSecretByUuid(const QString &uuid, QObject *parent = nullptr);
     bool deleteSecretByUuid(const QString &uuid);
+
+    QVector<StoragePool *> storagePools(int flags, QObject *parent = nullptr);
+    void createStoragePool(const QString &name, const QString &type, const QString &source, const QString &target);
+    StoragePool *getStoragePoll(const QString &name, QObject *parent = nullptr);
 
     QVector<NodeDevice *> nodeDevices(uint flags, QObject *parent = nullptr);
 

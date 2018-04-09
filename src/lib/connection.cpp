@@ -23,6 +23,7 @@
 #include "network.h"
 #include "secret.h"
 #include "nodedevice.h"
+#include "storagepool.h"
 
 #include <QXmlStreamWriter>
 
@@ -464,6 +465,74 @@ bool Connection::deleteSecretByUuid(const QString &uuid)
         return true;
     }
     return virSecretUndefine(secret) == 0;
+}
+
+QVector<StoragePool *> Connection::storagePools(int flags, QObject *parent)
+{
+    QVector<StoragePool *> ret;
+    virStoragePoolPtr *storagePools;
+    int count = virConnectListAllStoragePools(m_conn, &storagePools, flags);
+    if (count > 0) {
+        for (int i = 0; i < count; ++i) {
+            auto storagePool = new StoragePool(storagePools[i], this, parent);
+            ret.append(storagePool);
+        }
+        free(storagePools);
+    }
+    return ret;
+}
+
+void Connection::createStoragePool(const QString &name, const QString &type, const QString &source, const QString &target)
+{
+    QByteArray output;
+    QXmlStreamWriter stream(&output);
+
+    stream.writeStartElement(QStringLiteral("pool"));
+    stream.writeAttribute(QStringLiteral("type"), type);
+    stream.writeTextElement(QStringLiteral("name"), name);
+
+
+    if (type == QLatin1String("logical")) {
+        stream.writeStartElement(QStringLiteral("source"));
+
+        stream.writeStartElement(QStringLiteral("device"));
+        stream.writeAttribute(QStringLiteral("path"), source);
+        stream.writeEndElement(); // device
+
+        stream.writeTextElement(QStringLiteral("name"), name);
+
+        stream.writeStartElement(QStringLiteral("format"));
+        stream.writeAttribute(QStringLiteral("type"), QStringLiteral("lvm2"));
+        stream.writeEndElement(); // format
+
+        stream.writeEndElement(); // source
+
+
+    }
+
+    stream.writeStartElement(QStringLiteral("target"));
+    if (type == QLatin1String("logical")) {
+        stream.writeTextElement(QStringLiteral("path"), QLatin1String("/dev/") + name);
+    } else {
+        stream.writeTextElement(QStringLiteral("path"), target);
+    }
+    stream.writeEndElement(); // target
+
+    stream.writeEndElement(); // pool
+    qDebug() << "XML output" << output;
+
+    virStoragePoolPtr pool = virStoragePoolDefineXML(m_conn, output.constData(), 0);
+    virStoragePoolFree(pool);
+}
+
+StoragePool *Connection::getStoragePoll(const QString &name, QObject *parent)
+{
+
+    virStoragePoolPtr pool = virStoragePoolLookupByName(m_conn, name.toUtf8().constData());
+    if (!pool) {
+        return nullptr;
+    }
+    return new StoragePool(pool, this, parent);
 }
 
 QVector<NodeDevice *> Connection::nodeDevices(uint flags, QObject *parent)

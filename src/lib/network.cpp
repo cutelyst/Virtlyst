@@ -39,9 +39,7 @@ QString Network::name() const
 
 QString Network::bridgeName() const
 {
-    char *name = virNetworkGetBridgeName(m_net);
-    const QString ret = QString::fromUtf8(name);
-    return ret;
+    return QString::fromUtf8(virNetworkGetBridgeName(m_net));
 }
 
 bool Network::autostart()
