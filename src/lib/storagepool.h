@@ -20,6 +20,7 @@
 
 #include <QObject>
 #include <QDomDocument>
+#include <QVector>
 #include <libvirt/libvirt.h>
 
 class StorageVol;
@@ -36,8 +37,9 @@ class StoragePool : public QObject
     Q_PROPERTY(QString status READ status CONSTANT)
     Q_PROPERTY(bool active READ active CONSTANT)
     Q_PROPERTY(bool autostart READ autostart CONSTANT)
-    Q_PROPERTY(int volumes READ volumes CONSTANT)
+    Q_PROPERTY(int volumeCount READ volumeCount CONSTANT)
     Q_PROPERTY(QString path READ path CONSTANT)
+    Q_PROPERTY(QVariant volumes READ volumes CONSTANT)
 public:
     explicit StoragePool(virStoragePoolPtr storage, Connection *conn, QObject *parent = nullptr);
 
@@ -50,7 +52,7 @@ public:
     QString status();
     bool active();
     bool autostart();
-    int volumes();
+    int volumeCount();
 
     QString path();
 
@@ -59,7 +61,8 @@ public:
     void undefine();
     void setAutostart(bool enable);
 
-    QVector<StorageVol *> volumes();
+    QVariant volumes();
+    QVector<StorageVol *> storageVols(unsigned int flags = 0);
 
 private:
     QDomDocument xmlDoc();
@@ -68,7 +71,9 @@ private:
     QDomDocument m_xml;
     virStoragePoolPtr m_storage;
     Connection *m_conn;
+    QVector<StorageVol *> m_vols;
     virStoragePoolInfo m_info;
+    bool m_gotVols = false;
     bool m_gotInfo = false;
 };
 

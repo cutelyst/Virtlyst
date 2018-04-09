@@ -75,8 +75,8 @@
                 </tr>
             </tbody>
         </table>
-        {% if storage.state %}
-            {% ifequal pool "iso" %}
+        {% if storage.state != 0 %}
+            {% if storage.type == "iso" %}
                 <h3>{% i18n "Images" %}</h3>
                 <hr>
                 {% if storage.state != 0 %}
@@ -84,7 +84,7 @@
                     <br>
                 {% endif %}
 
-                {% if volumes %}
+                {% if storage.volumes.size %}
                     <div class="table-responsive">
                         <table class="table table-striped table-bordered" id="sortTable">
                             <thead>
@@ -97,7 +97,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for volume in volumes %}
+                                {% for volume in storage.volumes %}
                                     <tr>
                                         <td>{{ forloop.counter }}</td>
                                         <td>{{ volume.name }}</td>
@@ -128,7 +128,7 @@
                     <a href="#AddImage" class="btn btn-success" data-toggle="modal">{% i18n "Add Image" %}</a><br><br>
                 {% endif %}
 
-                {% if volumes %}
+                {% if storage.volumes.size %}
                     <div class="table-responsive">
                         <table class="table table-striped table-bordered" id="sortTable">
                             <thead>
@@ -141,7 +141,7 @@
                             </tr>
                             </thead>
                             <tbody>
-                            {% for volume in volumes %}
+                            {% for volume in storage.volumes %}
                                 <tr>
                                     <td>{{ forloop.counter }}</td>
                                     <td>{{ volume.name }}</td>
@@ -236,7 +236,7 @@
                         <h4>{% i18n "You do not have any volumes or storage pools active" %}</h4>
                     </div>
                 {% endif %}
-            {% endifequal %}
+            {% endif %}
         {% endif %}
     </div>
 

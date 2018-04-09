@@ -106,7 +106,7 @@ bool StoragePool::autostart()
     return false;
 }
 
-int StoragePool::volumes()
+int StoragePool::volumeCount()
 {
     return virStoragePoolNumOfVolumes(m_storage);
 }
@@ -140,20 +140,27 @@ void StoragePool::setAutostart(bool enable)
     virStoragePoolSetAutostart(m_storage, enable ? 1 : 0);
 }
 
-QVector<StorageVol *> StoragePool::volumes()
+QVariant StoragePool::volumes()
 {
+    return QVariant::fromValue(storageVols(0));
+}
 
-    QVector<NodeDevice *> ret;
-    virNodeDevicePtr *nodes;
-    int count = virConnectListAllNodeDevices(m_conn, &nodes, flags);
-    if (count > 0) {
-        for (int i = 0; i < count; ++i) {
-            auto node = new NodeDevice(nodes[i], this, parent);
-            ret.append(node);
+QVector<StorageVol *> StoragePool::storageVols(unsigned int flags)
+{
+    if (!m_gotVols) {
+        virStorageVolPtr *vols;
+        int count = virStoragePoolListAllVolumes(m_storage, &vols, flags);
+        if (count > 0) {
+            for (int i = 0; i < count; ++i) {
+                auto vol = new StorageVol(vols[i], this);
+                m_vols.append(vol);
+            }
+            free(vols);
         }
-        free(nodes);
+        m_gotVols = true;
     }
-    return ret;
+
+    return m_vols;
 }
 
 QDomDocument StoragePool::xmlDoc()
