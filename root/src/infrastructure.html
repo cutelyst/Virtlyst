@@ -62,7 +62,7 @@
                                     <tr data-status="{{ vm.status }}">
                                         <td></td>
                                         <td>{{ forloop.counter }} &emsp; <a
-                                                href="/instance/{{ host.id }}/{{ vm.name }}">{{ vm.name }}</a></td>
+                                                href="/instances/{{ host.id }}/{{ vm.name }}">{{ vm.name }}</a></td>
                                         <td>{% if vm.status == 1 %}<span class="label label-success">{% i18n "Running" %}
                                             </span>{% endif %}
                                             {% if vm.status == 3 %}<span class="label label-warning">{% i18n "Suspend" %}
