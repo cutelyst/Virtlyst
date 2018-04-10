@@ -82,6 +82,8 @@ public:
 
     QVector<StoragePool *> storagePools(int flags, QObject *parent = nullptr);
     void createStoragePool(const QString &name, const QString &type, const QString &source, const QString &target);
+    void createStoragePoolCeph(const QString &name, const QString &ceph_pool, const QString &ceph_host, const QString &ceph_user, const QString &secret_uuid);
+    void createStoragePoolNetFs(const QString &name, const QString &netfs_host, const QString &source, const QString &source_format, const QString &target);
     StoragePool *getStoragePoll(const QString &name, QObject *parent = nullptr);
 
     QVector<NodeDevice *> nodeDevices(uint flags, QObject *parent = nullptr);

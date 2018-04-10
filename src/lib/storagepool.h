@@ -64,12 +64,18 @@ public:
     QVariant volumes();
     QVector<StorageVol *> storageVols(unsigned int flags = 0);
 
+    void build(int flags);
+    void create(int flags);
+    void createStorageVolume(const QString &name, const QString &format, const QString &size, int flags);
+    void cloneStorageVolume(const QString &volName, const QString &name, const QString &format, int flags);
+    StorageVol *getVolume(const QString &name);
+
 private:
     QDomDocument xmlDoc();
     bool getInfo();
 
     QDomDocument m_xml;
-    virStoragePoolPtr m_storage;
+    virStoragePoolPtr m_pool;
     Connection *m_conn;
     QVector<StorageVol *> m_vols;
     virStoragePoolInfo m_info;

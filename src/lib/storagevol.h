@@ -19,6 +19,8 @@ public:
     QString type();
     QString size();
 
+    void undefine();
+
 private:
     bool getInfo();
     QDomDocument xmlDoc();

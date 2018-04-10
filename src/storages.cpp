@@ -16,10 +16,11 @@
  */
 #include "storages.h"
 
+#include "lib/connection.h"
 #include "lib/storagepool.h"
+#include "lib/storagevol.h"
 
 #include "virtlyst.h"
-#include "lib/connection.h"
 
 Storages::Storages(Virtlyst *parent) : Controller(parent)
   , m_virtlyst(parent)
@@ -42,14 +43,41 @@ void Storages::index(Context *c, const QString &hostId)
 
     if (c->request()->isPost()) {
         const ParamsMultiMap params = c->request()->bodyParameters();
-        const QString name = params[QStringLiteral("name")];
-        const QString type = params[QStringLiteral("stg_type")];
-
         if (params.contains(QStringLiteral("create"))) {
-            conn->createStoragePool(name,
-                                    type,
-                                    params[QStringLiteral("source")],
-                                    params[QStringLiteral("target")]);
+            QStringList errors;
+            const QString name = params[QStringLiteral("name")];
+            const QString type = params[QStringLiteral("stg_type")];
+            if (type == QLatin1String("rbd")) {
+                const QString ceph_pool = params[QStringLiteral("ceph_pool")];
+                const QString ceph_host = params[QStringLiteral("ceph_host")];
+                const QString ceph_user = params[QStringLiteral("ceph_user")];
+                const QString secret = params[QStringLiteral("secret")];
+                if (secret.isEmpty()) {
+                    errors << QStringLiteral("You need create secret for pool");
+                }
+
+                if (errors.isEmpty()) {
+                    conn->createStoragePoolCeph(name,
+                                                ceph_pool,
+                                                ceph_host,
+                                                ceph_user,
+                                                secret);
+                }
+            } else if (type ==  QLatin1String("netfs")) {
+                const QString netfs_host = params[QStringLiteral("netfs_host")];
+                const QString source = params[QStringLiteral("source")];
+                const QString source_format = params[QStringLiteral("source_format")];
+                const QString target = params[QStringLiteral("target")];
+                conn->createStoragePoolNetFs(name,
+                                             netfs_host,
+                                             source,
+                                             source_format,
+                                             target);
+            } else {
+                const QString source = params[QStringLiteral("source")];
+                const QString target = params[QStringLiteral("target")];
+                conn->createStoragePool(name, type, source, target);
+            }
         }
 
         c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("index")), QStringList{ hostId }));
@@ -92,6 +120,33 @@ void Storages::storage(Context *c, const QString &hostId, const QString &pool)
             storage->setAutostart(true);
         } else if (params.contains(QStringLiteral("unset_autostart"))) {
             storage->setAutostart(false);
+        } else if (params.contains(QStringLiteral("add_volume"))) {
+            const QString name = params[QStringLiteral("name")];
+            const QString size = params[QStringLiteral("size")];
+            const QString format = params[QStringLiteral("format")];
+            int flags = 0;
+            if (params.contains(QStringLiteral("meta_prealloc")) && format == QLatin1String("qcow2")) {
+                flags = VIR_STORAGE_VOL_CREATE_PREALLOC_METADATA;
+            }
+            storage->createStorageVolume(name, format, size, flags);
+        } else if (params.contains(QStringLiteral("del_volume"))) {
+            const QString name = params[QStringLiteral("volname")];
+            StorageVol *vol = storage->getVolume(name);
+            if (vol) {
+                vol->undefine();
+            }
+        } else if (params.contains(QStringLiteral("cln_volume"))) {
+            QString imageName = params[QStringLiteral("name")] + QLatin1String(".img");
+            const QString volName = params[QStringLiteral("image")];
+            QString format;
+            int flags = 0;
+            if (params.contains(QStringLiteral("convert"))) {
+                format = params[QStringLiteral("format")];
+                if (params.contains(QStringLiteral("meta_prealloc")) && format == QLatin1String("qcow2")) {
+                    flags = VIR_STORAGE_VOL_CREATE_PREALLOC_METADATA;
+                }
+            }
+            storage->cloneStorageVolume(volName, imageName, format, flags);
         }
     }
     c->setStash(QStringLiteral("storage"), QVariant::fromValue(storage));

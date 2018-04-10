@@ -522,7 +522,100 @@ void Connection::createStoragePool(const QString &name, const QString &type, con
     qDebug() << "XML output" << output;
 
     virStoragePoolPtr pool = virStoragePoolDefineXML(m_conn, output.constData(), 0);
-    virStoragePoolFree(pool);
+    if (!pool) {
+        qDebug() << "virStoragePoolDefineXML" << output;
+        return;
+    }
+    StoragePool storage(pool, this);
+    if (type == QLatin1String("logical")) {
+        storage.build(0);
+    }
+    storage.create(0);
+    storage.setAutostart(true);
+}
+
+void Connection::createStoragePoolCeph(const QString &name, const QString &ceph_pool, const QString &ceph_host, const QString &ceph_user, const QString &secret_uuid)
+{
+    QByteArray output;
+    QXmlStreamWriter stream(&output);
+
+    stream.writeStartElement(QStringLiteral("pool"));
+    stream.writeAttribute(QStringLiteral("type"), QStringLiteral("rbd"));
+    stream.writeTextElement(QStringLiteral("name"), name);
+
+    stream.writeStartElement(QStringLiteral("source"));
+
+    stream.writeStartElement(QStringLiteral("host"));
+    stream.writeAttribute(QStringLiteral("name"), ceph_host);
+    stream.writeAttribute(QStringLiteral("port"), QStringLiteral("6789"));
+    stream.writeEndElement(); // host
+
+    stream.writeTextElement(QStringLiteral("name"), ceph_pool);
+
+    stream.writeStartElement(QStringLiteral("auth"));
+    stream.writeAttribute(QStringLiteral("username"), ceph_user);
+    stream.writeAttribute(QStringLiteral("type"), QStringLiteral("ceph"));
+
+    stream.writeStartElement(QStringLiteral("secret"));
+    stream.writeAttribute(QStringLiteral("uuid"), secret_uuid);
+    stream.writeEndElement(); // secret
+    stream.writeEndElement(); // auth
+
+    stream.writeEndElement(); // source
+
+    stream.writeEndElement(); // pool
+    qDebug() << "XML output" << output;
+
+    virStoragePoolPtr pool = virStoragePoolDefineXML(m_conn, output.constData(), 0);
+    if (!pool) {
+        qDebug() << "virStoragePoolDefineXML" << output;
+        return;
+    }
+    StoragePool storage(pool, this);
+    storage.create(0);
+    storage.setAutostart(true);
+}
+
+void Connection::createStoragePoolNetFs(const QString &name, const QString &netfs_host, const QString &source, const QString &source_format, const QString &target)
+{
+    QByteArray output;
+    QXmlStreamWriter stream(&output);
+
+    stream.writeStartElement(QStringLiteral("pool"));
+    stream.writeAttribute(QStringLiteral("type"), QStringLiteral("netfs"));
+    stream.writeTextElement(QStringLiteral("name"), name);
+
+    stream.writeStartElement(QStringLiteral("source"));
+
+    stream.writeStartElement(QStringLiteral("host"));
+    stream.writeAttribute(QStringLiteral("name"), netfs_host);
+    stream.writeEndElement(); // host
+
+    stream.writeStartElement(QStringLiteral("dir"));
+    stream.writeAttribute(QStringLiteral("path"), source);
+    stream.writeEndElement(); // dir
+
+    stream.writeStartElement(QStringLiteral("format"));
+    stream.writeAttribute(QStringLiteral("type"), source_format);
+    stream.writeEndElement(); // format
+
+    stream.writeEndElement(); // source
+
+    stream.writeStartElement(QStringLiteral("target"));
+    stream.writeTextElement(QStringLiteral("path"), target);
+    stream.writeEndElement(); // target
+
+    stream.writeEndElement(); // pool
+    qDebug() << "XML output" << output;
+
+    virStoragePoolPtr pool = virStoragePoolDefineXML(m_conn, output.constData(), 0);
+    if (!pool) {
+        qDebug() << "virStoragePoolDefineXML" << output;
+        return;
+    }
+    StoragePool storage(pool, this);
+    storage.create(0);
+    storage.setAutostart(true);
 }
 
 StoragePool *Connection::getStoragePoll(const QString &name, QObject *parent)

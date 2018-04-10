@@ -32,6 +32,11 @@ QString StorageVol::size()
     return QString();
 }
 
+void StorageVol::undefine()
+{
+    virStorageVolDelete(m_vol, 0);
+}
+
 bool StorageVol::getInfo()
 {
     if (!m_gotInfo && virStorageVolGetInfo(m_vol, &m_info) == 0) {

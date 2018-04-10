@@ -20,10 +20,11 @@
 #include "virtlyst.h"
 #include "storagevol.h"
 
+#include <QXmlStreamWriter>
 #include <QLoggingCategory>
 
 StoragePool::StoragePool(virStoragePoolPtr storage, Connection *conn, QObject *parent) : QObject(parent)
-  , m_storage(storage)
+  , m_pool(storage)
   , m_conn(conn)
 {
 
@@ -31,7 +32,7 @@ StoragePool::StoragePool(virStoragePoolPtr storage, Connection *conn, QObject *p
 
 QString StoragePool::name()
 {
-    return QString::fromUtf8(virStoragePoolGetName(m_storage));
+    return QString::fromUtf8(virStoragePoolGetName(m_pool));
 }
 
 QString StoragePool::type()
@@ -94,13 +95,13 @@ QString StoragePool::status()
 
 bool StoragePool::active()
 {
-    return virStoragePoolIsActive(m_storage) == 1;
+    return virStoragePoolIsActive(m_pool) == 1;
 }
 
 bool StoragePool::autostart()
 {
     int autostart;
-    if (virStoragePoolGetAutostart(m_storage, &autostart) == 0) {
+    if (virStoragePoolGetAutostart(m_pool, &autostart) == 0) {
         return autostart == 1;
     }
     return false;
@@ -108,7 +109,7 @@ bool StoragePool::autostart()
 
 int StoragePool::volumeCount()
 {
-    return virStoragePoolNumOfVolumes(m_storage);
+    return virStoragePoolNumOfVolumes(m_pool);
 }
 
 QString StoragePool::path()
@@ -122,22 +123,22 @@ QString StoragePool::path()
 
 void StoragePool::start()
 {
-    virStoragePoolCreate(m_storage, 0);
+    virStoragePoolCreate(m_pool, 0);
 }
 
 void StoragePool::stop()
 {
-    virStoragePoolDestroy(m_storage);
+    virStoragePoolDestroy(m_pool);
 }
 
 void StoragePool::undefine()
 {
-    virStoragePoolUndefine(m_storage);
+    virStoragePoolUndefine(m_pool);
 }
 
 void StoragePool::setAutostart(bool enable)
 {
-    virStoragePoolSetAutostart(m_storage, enable ? 1 : 0);
+    virStoragePoolSetAutostart(m_pool, enable ? 1 : 0);
 }
 
 QVariant StoragePool::volumes()
@@ -148,8 +149,10 @@ QVariant StoragePool::volumes()
 QVector<StorageVol *> StoragePool::storageVols(unsigned int flags)
 {
     if (!m_gotVols) {
+        virStoragePoolRefresh(m_pool, 0);
+
         virStorageVolPtr *vols;
-        int count = virStoragePoolListAllVolumes(m_storage, &vols, flags);
+        int count = virStoragePoolListAllVolumes(m_pool, &vols, flags);
         if (count > 0) {
             for (int i = 0; i < count; ++i) {
                 auto vol = new StorageVol(vols[i], this);
@@ -163,10 +166,98 @@ QVector<StorageVol *> StoragePool::storageVols(unsigned int flags)
     return m_vols;
 }
 
+void StoragePool::build(int flags)
+{
+    virStoragePoolBuild(m_pool, flags);
+}
+
+void StoragePool::create(int flags)
+{
+    virStoragePoolCreate(m_pool, flags);
+}
+
+void StoragePool::createStorageVolume(const QString &name, const QString &format, const QString &size, int flags)
+{
+    QByteArray output;
+    QXmlStreamWriter stream(&output);
+
+    QString localName(name);
+    QString localFormat(format);
+    int sizeInt = size.toInt() * 1073741824;
+    int alloc = sizeInt;
+    if (format == QLatin1String("unknown")) {
+        localFormat = QStringLiteral("raw");
+    }
+    if (format == QLatin1String("dir")) {
+        localName.append(QLatin1String(".img"));
+        alloc = 0;
+    }
+
+    stream.writeStartElement(QStringLiteral("volume"));
+    stream.writeTextElement(QStringLiteral("name"), localName);
+    stream.writeTextElement(QStringLiteral("capacity"), QString::number(sizeInt));
+    stream.writeTextElement(QStringLiteral("allocation"), QString::number(alloc));
+
+    stream.writeStartElement(QStringLiteral("target"));
+    stream.writeStartElement(QStringLiteral("format"));
+    stream.writeAttribute(QStringLiteral("type"), format);
+    stream.writeEndElement(); // format
+    stream.writeEndElement(); // target
+
+    stream.writeEndElement(); // volume
+    qDebug() << "XML output" << output;
+
+    virStorageVolPtr vol = virStorageVolCreateXML(m_pool, output.constData(), flags);
+    virStorageVolFree(vol);
+}
+
+void StoragePool::cloneStorageVolume(const QString &volName, const QString &name, const QString &format, int flags)
+{
+    virStorageVolPtr cloneVol = virStorageVolLookupByName(m_pool, volName.toUtf8().constData());
+    if (!cloneVol) {
+        return;
+    }
+    StorageVol tmp(cloneVol);
+
+    QByteArray output;
+    QXmlStreamWriter stream(&output);
+
+    QString localFormat = format;
+    if (localFormat.isEmpty()) {
+        localFormat = tmp.type();
+    }
+
+    stream.writeStartElement(QStringLiteral("volume"));
+    stream.writeTextElement(QStringLiteral("name"), name);
+    stream.writeTextElement(QStringLiteral("capacity"), QStringLiteral("0"));
+    stream.writeTextElement(QStringLiteral("allocation"), QStringLiteral("0"));
+
+    stream.writeStartElement(QStringLiteral("target"));
+    stream.writeStartElement(QStringLiteral("format"));
+    stream.writeAttribute(QStringLiteral("type"), localFormat);
+    stream.writeEndElement(); // format
+    stream.writeEndElement(); // target
+
+    stream.writeEndElement(); // volume
+    qDebug() << "XML output" << output;
+
+    virStorageVolPtr vol = virStorageVolCreateXMLFrom(m_pool, output.constData(), cloneVol, flags);
+    virStorageVolFree(vol);
+}
+
+StorageVol *StoragePool::getVolume(const QString &name)
+{
+    virStorageVolPtr vol = virStorageVolLookupByName(m_pool, name.toUtf8().constData());
+    if (!vol) {
+        return nullptr;
+    }
+    return new StorageVol(vol, this);
+}
+
 QDomDocument StoragePool::xmlDoc()
 {
     if (m_xml.isNull()) {
-        char *xml = virStoragePoolGetXMLDesc(m_storage, 0);
+        char *xml = virStoragePoolGetXMLDesc(m_pool, 0);
         const QString xmlString = QString::fromUtf8(xml);
         qDebug() << "XML" << xml;
         QString error;
@@ -180,7 +271,7 @@ QDomDocument StoragePool::xmlDoc()
 
 bool StoragePool::getInfo()
 {
-    if (virStoragePoolGetInfo(m_storage, &m_info) == 0) {
+    if (virStoragePoolGetInfo(m_pool, &m_info) == 0) {
         m_gotInfo = true;
     }
     return m_gotInfo;

@@ -85,10 +85,14 @@ QString Interface::ipv6Type()
 
 QString Interface::startMode()
 {
-    return xml()
+    const QString ret = xml()
             .documentElement()
             .firstChildElement(QStringLiteral("start"))
             .attribute(QStringLiteral("mode"));
+    if (ret.isEmpty()) {
+        return QStringLiteral("None");
+    }
+    return ret;
 }
 
 bool Interface::start()
