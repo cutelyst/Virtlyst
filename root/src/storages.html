@@ -201,9 +201,9 @@
 
                                 <div class="col-sm-6">
                                     <select name="secret" class="form-control">
-                                        {% if secrets %}
+                                        {% if secrets.size %}
                                             {% for secret in secrets %}
-                                                <option value="{{ secret }}">{{ secret }}</option>
+                                                <option value="{{ secret.uuid }}">{{ secret.usage }}</option>
                                             {% endfor %}
                                         {% else %}
                                             <option value="None">{% i18n "None" %}</option>

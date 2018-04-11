@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{% i18n "Create Instance" %}{% endblock %}
 {% block style %}
-    <link href="{% static "css/bootstrap-multiselect.css" %}" rel="stylesheet">
+    <link href="{static/css/bootstrap-multiselect.css" %}" rel="stylesheet">
 {% endblock %}
 {% block content %}
     {% include 'sidebar.html' %}
@@ -93,7 +93,7 @@
                                                 <h4 class="modal-title">{% i18n "Create Virtual Machine" %}
                                                     ({{ flavor.label }})</h4>
                                             </div>
-                                            <form class="form-horizontal" method="post" role="form">{% csrf_token %}
+                                            <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
                                                 <div class="form-group">
                                                     <label class="col-sm-3 control-label">{% i18n "Name" %}</label>
 
@@ -181,7 +181,7 @@
                                    class="btn btn-sm btn-success">{% i18n "Create" %}</a>
                             </td>
                             <td style="width:5px;">
-                                <form class="form-horizontal" action="" method="post" role="form">{% csrf_token %}
+                                <form class="form-horizontal" action="" method="post" role="form">{{ csrf_token }}
                                     <input type="hidden" name="flavor" value="{{ flavor.id }}">
                                     <input type="submit" class="btn btn-sm btn-danger" name="delete_flavor"
                                            value="{% i18n "Delete" %}"
@@ -209,7 +209,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                     <h4 class="modal-title">{% i18n "Create Custom Instance" %}</h4>
                 </div>
-                <form class="form-horizontal" method="post" role="form">{% csrf_token %}
+                <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
                     <div class="form-group">
                         <label class="col-sm-3 control-label">{% i18n "Name" %}</label>
 
@@ -321,7 +321,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                     <h4 class="modal-title">{% i18n "Add New Flavor" %}</h4>
                 </div>
-                <form class="form-horizontal" method="post" role="form">{% csrf_token %}
+                <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
                     <div class="form-group">
                         <label class="col-sm-3 control-label">{% i18n "Name" %}</label>
 
@@ -376,7 +376,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                     <h4 class="modal-title">{% i18n "Create Instance From Template Image" %}</h4>
                 </div>
-                <form class="form-horizontal" method="post" role="form">{% csrf_token %}
+                <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
                     <div class="form-group">
                         <label class="col-sm-3 control-label">{% i18n "Name" %}</label>
 
@@ -487,7 +487,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                     <h4 class="modal-title">{% i18n "Create Instance From XML" %}</h4>
                 </div>
-                <form class="form-horizontal" method="post" role="form">{% csrf_token %}
+                <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
                     <div class="form-group">
                         <div class="col-sm-12">
                             <textarea id="xmltextarea" name="from_xml"></textarea>
@@ -506,7 +506,7 @@
 
 {% endblock %}
 {% block script %}
-    <script src="{% static "js/bootstrap-multiselect.js" %}"></script>
+    <script src="/static/js/bootstrap-multiselect.js"></script>
     <script>
         function toggleValue(string, updated_value, checked) {
             var result = '';

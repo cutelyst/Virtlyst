@@ -17,6 +17,7 @@
 #include "storages.h"
 
 #include "lib/connection.h"
+#include "lib/secret.h"
 #include "lib/storagepool.h"
 #include "lib/storagevol.h"
 
@@ -86,6 +87,9 @@ void Storages::index(Context *c, const QString &hostId)
 
     const QVector<StoragePool *> storages = conn->storagePools(0, c);
     c->setStash(QStringLiteral("storages"), QVariant::fromValue(storages));
+
+    const QVector<Secret *> secrets = conn->secrets(0, c);
+    c->setStash(QStringLiteral("secrets"), QVariant::fromValue(secrets));
 }
 
 void Storages::storage(Context *c, const QString &hostId, const QString &pool)

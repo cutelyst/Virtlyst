@@ -45,6 +45,7 @@
 #include "interfaces.h"
 #include "secrets.h"
 #include "console.h"
+#include "create.h"
 #include "root.h"
 
 #include "sqluserstore.h"
@@ -74,6 +75,7 @@ bool Virtlyst::init()
     new Secrets(this);
     new Storages(this);
     new Console(this);
+    new Create(this);
 
     bool production = config(QStringLiteral("production")).toBool();
     qDebug() << "Production" << production;
