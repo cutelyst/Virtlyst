@@ -36,15 +36,6 @@ Domain::~Domain()
     virDomainFree(m_domain);
 }
 
-bool Domain::loadXml()
-{
-    if (virDomainGetInfo(m_domain, &m_info) < 0) {
-        qCWarning(VIRT_DOM) << "Failed to get info for domain" << name();
-    }
-
-    return true;
-}
-
 bool Domain::saveXml()
 {
     qCCritical(VIRT_DOM) << xmlDoc().toString();
@@ -91,8 +82,15 @@ void Domain::setDescription(const QString &description)
     setDataToSimpleNode(QStringLiteral("description"), description);
 }
 
-int Domain::status() const
+int Domain::status()
 {
+    if (!m_gotInfo) {
+        if (virDomainGetInfo(m_domain, &m_info) < 0) {
+            qCWarning(VIRT_DOM) << "Failed to get info for domain" << name();
+            return -1;
+        }
+        m_gotInfo = true;
+    }
     return m_info.state;
 }
 

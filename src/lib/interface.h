@@ -56,7 +56,7 @@ public:
     bool undefine();
 
 private:
-    QDomDocument xml();
+    QDomDocument xmlDoc();
     QString xmlGetAddress(const QString &family);
 
     QDomDocument m_xml;

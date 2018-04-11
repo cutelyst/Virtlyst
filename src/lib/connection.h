@@ -28,6 +28,7 @@ class Network;
 class Secret;
 class NodeDevice;
 class StoragePool;
+class StorageVol;
 class Connection : public QObject
 {
     Q_OBJECT
@@ -56,6 +57,9 @@ public:
     QString arch();
     QString cpuVendor();
 
+    QVector<QVariantList> getCacheModes() const;
+
+    QString lastError();
     bool domainDefineXml(const QString &xml);
 
     QVector<Domain *> domains(int flags, QObject *parent = nullptr);
@@ -64,7 +68,7 @@ public:
 
     QVector<Interface *> interfaces(uint flags, QObject *parent = nullptr);
     Interface *getInterface(const QString &name, QObject *parent = nullptr);
-    void createInterface(const QString &name, const QString &netdev, const QString &type,
+    bool createInterface(const QString &name, const QString &netdev, const QString &type,
                          const QString &startMode, int delay, bool stp,
                          const QString &ipv4Addr, const QString &ipv4Gw, const QString &ipv4Type,
                          const QString &ipv6Addr, const QString &ipv6Gw, const QString &ipv6Type);
@@ -76,21 +80,22 @@ public:
 
     QVector<Secret *> secrets(uint flags, QObject *parent = nullptr);
 
-    void createSecret(const QString &ephemeral, const QString &usageType, const QString &priv, const QString &data);
+    bool createSecret(const QString &ephemeral, const QString &usageType, const QString &priv, const QString &data);
     Secret *getSecretByUuid(const QString &uuid, QObject *parent = nullptr);
     bool deleteSecretByUuid(const QString &uuid);
 
     QVector<StoragePool *> storagePools(int flags, QObject *parent = nullptr);
-    void createStoragePool(const QString &name, const QString &type, const QString &source, const QString &target);
-    void createStoragePoolCeph(const QString &name, const QString &ceph_pool, const QString &ceph_host, const QString &ceph_user, const QString &secret_uuid);
-    void createStoragePoolNetFs(const QString &name, const QString &netfs_host, const QString &source, const QString &source_format, const QString &target);
+    bool createStoragePool(const QString &name, const QString &type, const QString &source, const QString &target);
+    bool createStoragePoolCeph(const QString &name, const QString &ceph_pool, const QString &ceph_host, const QString &ceph_user, const QString &secret_uuid);
+    bool createStoragePoolNetFs(const QString &name, const QString &netfs_host, const QString &source, const QString &source_format, const QString &target);
     StoragePool *getStoragePoll(const QString &name, QObject *parent = nullptr);
+    QVector<StorageVol *> getStorageImages(QObject *parent = nullptr);
 
     QVector<NodeDevice *> nodeDevices(uint flags, QObject *parent = nullptr);
 
 private:
     void loadNodeInfo();
-    void loadDomainCapabilities();
+    bool loadDomainCapabilities();
     QString dataFromSimpleNode(const QString &element) const;
 
     QString m_uri;

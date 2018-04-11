@@ -1,18 +1,16 @@
 {% extends "base.html" %}
 {% block title %}{% i18n "Create Instance" %}{% endblock %}
 {% block style %}
-    <link href="{static/css/bootstrap-multiselect.css" %}" rel="stylesheet">
+    <link href="/static/css/bootstrap-multiselect.css" rel="stylesheet">
 {% endblock %}
 {% block content %}
     {% include 'sidebar.html' %}
     <div class="main col-xs-12 col-sm-9">
-        {% if errors %}
-            {% for error in errors %}
+        {% if error_msg %}
                 <div class="alert alert-danger">
                     <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                    {{ error }}
+                    {{ error_msg }}
                 </div>
-            {% endfor %}
         {% endif %}
         {% if form.label.errors %}
             <div class="alert alert-danger">
@@ -80,8 +78,8 @@
                             <td>{{ forloop.counter }}</td>
                             <td>{{ flavor.label }}</td>
                             <td>{{ flavor.vcpu }}</td>
-                            <td>{{ flavor.memory }} {% i18n "MB" %}</td>
-                            <td>{{ flavor.disk }} {% i18n "GB" %}</td>
+                            <td>{{ flavor.memory }} {% i18n "MiB" %}</td>
+                            <td>{{ flavor.disk }} {% i18n "GiB" %}</td>
                             <td style="width:5px;">
                                 <div class="modal fade" id="addVMflavor{{ forloop.counter }}" tabindex="-1" role="dialog"
                                      aria-labelledby="addVMFlavorLabel" aria-hidden="true">
@@ -111,7 +109,7 @@
 
                                                     <div class="col-sm-6">
                                                         <select name="storage" class="form-control">
-                                                            {% if storages %}
+                                                            {% if storages.size %}
                                                                 {% for storage in storages %}
                                                                     <option value="{{ storage }}">{{ storage }}</option>
                                                                 {% endfor %}
@@ -166,7 +164,7 @@
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-default"
                                                             data-dismiss="modal">{% i18n "Close" %}</button>
-                                                    {% if storages %}
+                                                    {% if storages.size %}
                                                         <button type="submit" class="btn btn-primary"
                                                                 name="create">{% i18n "Create" %}</button>
                                                     {% else %}
@@ -241,7 +239,7 @@
                             <input type="text" class="form-control" name="memory" value="512" maxlength="5" required
                                    pattern="[0-9]+">
                         </div>
-                        <label class="col-sm-1 control-label">{% i18n "MB" %}</label>
+                        <label class="col-sm-1 control-label">{% i18n "MiB" %}</label>
                     </div>
                     <div class="form-group">
                         <label class="col-sm-3 control-label">{% i18n "HDD" %}</label>
@@ -252,9 +250,9 @@
                             </ul>
                             <input id="images" name="images" type="hidden" value=""/>
                             <select id="image-control" name="image-control" class="form-control" multiple="multiple">
-                                {% if get_images %}
-                                    {% for name in get_images %}
-                                        <option value="{{ name }}">{{ name }}</option>
+                                {% if get_images.size %}
+                                    {% for img in get_images %}
+                                        <option value="{{ img.name }}">{{ img.name }}</option>
                                     {% endfor %}
                                 {% else %}
                                     <option value="">{% i18n "None" %}</option>
@@ -268,7 +266,7 @@
                         <div class="col-sm-6">
                             <select id="cache_mode" name="cache_mode" class="form-control">
                                 {% for mode, name in cache_modes %}
-                                    <option value="{{ mode }}">{% i18n name %}</option>
+                                    <option value="{{ mode }}">{{name}}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -284,7 +282,7 @@
                             <select id="network-control" name="network-control" class="form-control"
                                     multiple="multiple">
                                 {% for network in networks %}
-                                    <option value="{{ network }}">{{ network }}</option>
+                                    <option value="{{ network.name }}">{{ network.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -298,7 +296,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">{% i18n "Close" %}</button>
-                        {% if storages %}
+                        {% if storages.size %}
                             <button type="submit" class="btn btn-primary" name="create"
                                     value="1">{% i18n "Create" %}</button>
                         {% else %}
@@ -345,7 +343,7 @@
                             <input type="text" class="form-control" name="memory" value="512" maxlength="5" required
                                    pattern="[0-9]+">
                         </div>
-                        <label class="col-sm-1 control-label">{% i18n "MB" %}</label>
+                        <label class="col-sm-1 control-label">{% i18n "MiB" %}</label>
                     </div>
                     <div class="form-group">
                         <label class="col-sm-3 control-label">{% i18n "HDD" %}</label>
@@ -354,7 +352,7 @@
                             <input type="text" class="form-control" name="disk" value="10" maxlength="3" required
                                    pattern="[0-9]+">
                         </div>
-                        <label class="col-sm-1 control-label">{% i18n "GB" %}</label>
+                        <label class="col-sm-1 control-label">{% i18n "GiB" %}</label>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">{% i18n "Close" %}</button>
@@ -408,16 +406,16 @@
                             <input type="text" class="form-control" name="memory" value="512" maxlength="5" required
                                    pattern="[0-9]+">
                         </div>
-                        <label class="col-sm-1 control-label">{% i18n "MB" %}</label>
+                        <label class="col-sm-1 control-label">{% i18n "MiB" %}</label>
                     </div>
                     <div class="form-group">
                         <label class="col-sm-3 control-label">{% i18n "HDD" %}</label>
 
                         <div class="col-sm-6">
                             <select name="template" class="form-control">
-                                {% if get_images %}
-                                    {% for name in get_images %}
-                                        <option value="{{ name }}">{{ name }}</option>
+                                {% if get_images.size %}
+                                    {% for img in get_images %}
+                                        <option value="{{ img.name }}">{{ img.name }}</option>
                                     {% endfor %}
                                 {% else %}
                                     <option value="">{% i18n "None" %}</option>
@@ -431,7 +429,7 @@
                         <div class="col-sm-6">
                             <select id="cache_mode" name="cache_mode" class="form-control">
                                 {% for mode, name in cache_modes %}
-                                    <option value="{{ mode }}">{% i18n name %}</option>
+                                    <option value="{{ mode }}">{{ name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -464,7 +462,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">{% i18n "Close" %}</button>
-                        {% if storages %}
+                        {% if storages.size %}
                             <button type="submit" class="btn btn-primary" name="create"
                                     value="1">{% i18n "Create" %}</button>
                         {% else %}

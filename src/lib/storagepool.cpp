@@ -121,24 +121,24 @@ QString StoragePool::path()
             .firstChild().nodeValue();
 }
 
-void StoragePool::start()
+bool StoragePool::start()
 {
-    virStoragePoolCreate(m_pool, 0);
+    return virStoragePoolCreate(m_pool, 0) == 0;
 }
 
-void StoragePool::stop()
+bool StoragePool::stop()
 {
-    virStoragePoolDestroy(m_pool);
+    return virStoragePoolDestroy(m_pool) == 0;
 }
 
-void StoragePool::undefine()
+bool StoragePool::undefine()
 {
-    virStoragePoolUndefine(m_pool);
+    return virStoragePoolUndefine(m_pool) == 0;
 }
 
-void StoragePool::setAutostart(bool enable)
+bool StoragePool::setAutostart(bool enable)
 {
-    virStoragePoolSetAutostart(m_pool, enable ? 1 : 0);
+    return virStoragePoolSetAutostart(m_pool, enable ? 1 : 0) == 0;
 }
 
 QVariant StoragePool::volumes()
@@ -155,7 +155,7 @@ QVector<StorageVol *> StoragePool::storageVols(unsigned int flags)
         int count = virStoragePoolListAllVolumes(m_pool, &vols, flags);
         if (count > 0) {
             for (int i = 0; i < count; ++i) {
-                auto vol = new StorageVol(vols[i], this);
+                auto vol = new StorageVol(vols[i], m_pool, this);
                 m_vols.append(vol);
             }
             free(vols);
@@ -166,17 +166,17 @@ QVector<StorageVol *> StoragePool::storageVols(unsigned int flags)
     return m_vols;
 }
 
-void StoragePool::build(int flags)
+bool StoragePool::build(int flags)
 {
-    virStoragePoolBuild(m_pool, flags);
+    return virStoragePoolBuild(m_pool, flags) == 0;
 }
 
-void StoragePool::create(int flags)
+bool StoragePool::create(int flags)
 {
-    virStoragePoolCreate(m_pool, flags);
+    return virStoragePoolCreate(m_pool, flags) == 0;
 }
 
-void StoragePool::createStorageVolume(const QString &name, const QString &format, const QString &size, int flags)
+bool StoragePool::createStorageVolume(const QString &name, const QString &format, const QString &size, int flags)
 {
     QByteArray output;
     QXmlStreamWriter stream(&output);
@@ -208,42 +208,50 @@ void StoragePool::createStorageVolume(const QString &name, const QString &format
     qDebug() << "XML output" << output;
 
     virStorageVolPtr vol = virStorageVolCreateXML(m_pool, output.constData(), flags);
-    virStorageVolFree(vol);
+    if (vol) {
+        virStorageVolFree(vol);
+        return true;
+    }
+    return false;
 }
 
-void StoragePool::cloneStorageVolume(const QString &volName, const QString &name, const QString &format, int flags)
-{
-    virStorageVolPtr cloneVol = virStorageVolLookupByName(m_pool, volName.toUtf8().constData());
-    if (!cloneVol) {
-        return;
-    }
-    StorageVol tmp(cloneVol);
+//bool StoragePool::cloneStorageVolume(const QString &volName, const QString &name, const QString &format, int flags)
+//{
+//    virStorageVolPtr cloneVol = virStorageVolLookupByName(m_pool, volName.toUtf8().constData());
+//    if (!cloneVol) {
+//        return false;
+//    }
+//    StorageVol tmp(cloneVol);
 
-    QByteArray output;
-    QXmlStreamWriter stream(&output);
+//    QByteArray output;
+//    QXmlStreamWriter stream(&output);
 
-    QString localFormat = format;
-    if (localFormat.isEmpty()) {
-        localFormat = tmp.type();
-    }
+//    QString localFormat = format;
+//    if (localFormat.isEmpty()) {
+//        localFormat = tmp.type();
+//    }
 
-    stream.writeStartElement(QStringLiteral("volume"));
-    stream.writeTextElement(QStringLiteral("name"), name);
-    stream.writeTextElement(QStringLiteral("capacity"), QStringLiteral("0"));
-    stream.writeTextElement(QStringLiteral("allocation"), QStringLiteral("0"));
+//    stream.writeStartElement(QStringLiteral("volume"));
+//    stream.writeTextElement(QStringLiteral("name"), name);
+//    stream.writeTextElement(QStringLiteral("capacity"), QStringLiteral("0"));
+//    stream.writeTextElement(QStringLiteral("allocation"), QStringLiteral("0"));
 
-    stream.writeStartElement(QStringLiteral("target"));
-    stream.writeStartElement(QStringLiteral("format"));
-    stream.writeAttribute(QStringLiteral("type"), localFormat);
-    stream.writeEndElement(); // format
-    stream.writeEndElement(); // target
+//    stream.writeStartElement(QStringLiteral("target"));
+//    stream.writeStartElement(QStringLiteral("format"));
+//    stream.writeAttribute(QStringLiteral("type"), localFormat);
+//    stream.writeEndElement(); // format
+//    stream.writeEndElement(); // target
 
-    stream.writeEndElement(); // volume
-    qDebug() << "XML output" << output;
+//    stream.writeEndElement(); // volume
+//    qDebug() << "XML output" << output;
 
-    virStorageVolPtr vol = virStorageVolCreateXMLFrom(m_pool, output.constData(), cloneVol, flags);
-    virStorageVolFree(vol);
-}
+//    virStorageVolPtr vol = virStorageVolCreateXMLFrom(m_pool, output.constData(), cloneVol, flags);
+//    if (vol) {
+//        virStorageVolFree(vol);
+//        return true;
+//    }
+//    return false;
+//}
 
 StorageVol *StoragePool::getVolume(const QString &name)
 {
@@ -251,7 +259,7 @@ StorageVol *StoragePool::getVolume(const QString &name)
     if (!vol) {
         return nullptr;
     }
-    return new StorageVol(vol, this);
+    return new StorageVol(vol, m_pool, this);
 }
 
 QDomDocument StoragePool::xmlDoc()

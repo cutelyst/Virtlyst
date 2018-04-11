@@ -2,10 +2,12 @@
 
 #include "virtlyst.h"
 
+#include <QXmlStreamWriter>
 #include <QLoggingCategory>
 
-StorageVol::StorageVol(virStorageVolPtr vol, QObject *parent) : QObject(parent)
+StorageVol::StorageVol(virStorageVolPtr vol, virStoragePoolPtr pool, QObject *parent) : QObject(parent)
   , m_vol(vol)
+  , m_pool(pool)
 {
 
 }
@@ -35,6 +37,38 @@ QString StorageVol::size()
 void StorageVol::undefine()
 {
     virStorageVolDelete(m_vol, 0);
+}
+
+bool StorageVol::clone(const QString &name, const QString &format, int flags)
+{
+    QByteArray output;
+    QXmlStreamWriter stream(&output);
+
+    QString localFormat = format;
+    if (localFormat.isEmpty()) {
+        localFormat = type();
+    }
+
+    stream.writeStartElement(QStringLiteral("volume"));
+    stream.writeTextElement(QStringLiteral("name"), name);
+    stream.writeTextElement(QStringLiteral("capacity"), QStringLiteral("0"));
+    stream.writeTextElement(QStringLiteral("allocation"), QStringLiteral("0"));
+
+    stream.writeStartElement(QStringLiteral("target"));
+    stream.writeStartElement(QStringLiteral("format"));
+    stream.writeAttribute(QStringLiteral("type"), localFormat);
+    stream.writeEndElement(); // format
+    stream.writeEndElement(); // target
+
+    stream.writeEndElement(); // volume
+    qDebug() << "XML output" << output;
+
+    virStorageVolPtr vol = virStorageVolCreateXMLFrom(m_pool, output.constData(), m_vol, flags);
+    if (vol) {
+        virStorageVolFree(vol);
+        return true;
+    }
+    return false;
 }
 
 bool StorageVol::getInfo()

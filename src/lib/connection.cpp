@@ -24,7 +24,9 @@
 #include "secret.h"
 #include "nodedevice.h"
 #include "storagepool.h"
+#include "storagevol.h"
 
+#include <libvirt/virterror.h>
 #include <QXmlStreamWriter>
 
 #include <QLoggingCategory>
@@ -175,11 +177,34 @@ QString Connection::cpuVendor()
     return node.text();
 }
 
+QVector<QVariantList> Connection::getCacheModes() const
+{
+    static QVector<QVariantList> cacheModes = {
+        {QStringLiteral("default"), QStringLiteral("Default")},
+        {QStringLiteral("none"), QStringLiteral("Disabled")},
+        {QStringLiteral("writethrough"), QStringLiteral("Write through")},
+        {QStringLiteral("writeback"), QStringLiteral("Write back")},
+        {QStringLiteral("directsync"), QStringLiteral("Direct sync")},  // since libvirt 0.9.5
+        {QStringLiteral("unsafe"), QStringLiteral("Unsafe")},  // since libvirt 0.9.7
+    };
+    return cacheModes;
+}
+
+QString Connection::lastError()
+{
+    virErrorPtr err = virGetLastError();
+    const QString error = QString::fromUtf8(err->message);
+    return error;
+}
+
 bool Connection::domainDefineXml(const QString &xml)
 {
     virDomainPtr dom = virDomainDefineXML(m_conn, xml.toUtf8().constData());
-    virDomainFree(dom);
-    return dom != NULL;
+    if (dom) {
+        virDomainFree(dom);
+        return true;
+    }
+    return false;
 }
 
 QVector<Domain *> Connection::domains(int flags, QObject *parent)
@@ -190,7 +215,6 @@ QVector<Domain *> Connection::domains(int flags, QObject *parent)
     if (count > 0) {
         for (int i = 0; i < count; i++) {
             auto domain = new Domain(domains[i], this, parent);
-            domain->loadXml();
             ret.append(domain);
         }
         free(domains);
@@ -205,7 +229,6 @@ Domain *Connection::getDomainByUuid(const QString &uuid, QObject *parent)
         return nullptr;
     }
     auto dom = new Domain(domain, this, parent);
-    dom->loadXml();
     return dom;
 }
 
@@ -216,7 +239,6 @@ Domain *Connection::getDomainByName(const QString &name, QObject *parent)
         return nullptr;
     }
     auto dom = new Domain(domain, this, parent);
-    dom->loadXml();
     return dom;
 }
 
@@ -244,7 +266,7 @@ Interface *Connection::getInterface(const QString &name, QObject *parent)
     return new Interface(iface, this, parent);
 }
 
-void Connection::createInterface(const QString &name, const QString &netdev, const QString &type,
+bool Connection::createInterface(const QString &name, const QString &netdev, const QString &type,
                                  const QString &startMode, int delay, bool stp,
                                  const QString &ipv4Addr, const QString &ipv4Gw, const QString &ipv4Type,
                                  const QString &ipv6Addr, const QString &ipv6Gw, const QString &ipv6Type)
@@ -323,7 +345,11 @@ void Connection::createInterface(const QString &name, const QString &netdev, con
     qDebug() << "XML output" << output;
 
     virInterfacePtr iface = virInterfaceDefineXML(m_conn, output.constData(), 0);
-    virInterfaceFree(iface);
+    if (iface) {
+        virInterfaceFree(iface);
+        return true;
+    }
+    return false;
 }
 
 QVector<Network *> Connection::networks(uint flags, QObject *parent)
@@ -400,7 +426,11 @@ bool Connection::createNetwork(const QString &name, const QString &forward, cons
     stream.writeEndElement(); // network
     qDebug() << "XML output" << output;
     virNetworkPtr net = virNetworkDefineXML(m_conn, output.constData());
-    virNetworkFree(net);
+    if (net) {
+        virNetworkFree(net);
+        return true;
+    }
+    return false;
 }
 
 QVector<Secret *> Connection::secrets(uint flags, QObject *parent)
@@ -418,7 +448,7 @@ QVector<Secret *> Connection::secrets(uint flags, QObject *parent)
     return ret;
 }
 
-void Connection::createSecret(const QString &ephemeral, const QString &usageType, const QString &priv,  const QString &data)
+bool Connection::createSecret(const QString &ephemeral, const QString &usageType, const QString &priv,  const QString &data)
 {
     QByteArray output;
     QXmlStreamWriter stream(&output);
@@ -446,7 +476,11 @@ void Connection::createSecret(const QString &ephemeral, const QString &usageType
     qDebug() << "XML output" << output;
 //    xml.appendChild();
     virSecretPtr secret = virSecretDefineXML(m_conn, output.constData(), 0);
-    virSecretFree(secret);
+    if (secret) {
+        virSecretFree(secret);
+        return true;
+    }
+    return false;
 }
 
 Secret *Connection::getSecretByUuid(const QString &uuid, QObject *parent)
@@ -482,7 +516,7 @@ QVector<StoragePool *> Connection::storagePools(int flags, QObject *parent)
     return ret;
 }
 
-void Connection::createStoragePool(const QString &name, const QString &type, const QString &source, const QString &target)
+bool Connection::createStoragePool(const QString &name, const QString &type, const QString &source, const QString &target)
 {
     QByteArray output;
     QXmlStreamWriter stream(&output);
@@ -519,22 +553,25 @@ void Connection::createStoragePool(const QString &name, const QString &type, con
     stream.writeEndElement(); // target
 
     stream.writeEndElement(); // pool
-    qDebug() << "XML output" << output;
+//    qDebug() << "XML output" << output;
 
     virStoragePoolPtr pool = virStoragePoolDefineXML(m_conn, output.constData(), 0);
     if (!pool) {
         qDebug() << "virStoragePoolDefineXML" << output;
-        return;
+        return false;
     }
+
     StoragePool storage(pool, this);
     if (type == QLatin1String("logical")) {
         storage.build(0);
     }
     storage.create(0);
     storage.setAutostart(true);
+
+    return true;
 }
 
-void Connection::createStoragePoolCeph(const QString &name, const QString &ceph_pool, const QString &ceph_host, const QString &ceph_user, const QString &secret_uuid)
+bool Connection::createStoragePoolCeph(const QString &name, const QString &ceph_pool, const QString &ceph_host, const QString &ceph_user, const QString &secret_uuid)
 {
     QByteArray output;
     QXmlStreamWriter stream(&output);
@@ -569,14 +606,16 @@ void Connection::createStoragePoolCeph(const QString &name, const QString &ceph_
     virStoragePoolPtr pool = virStoragePoolDefineXML(m_conn, output.constData(), 0);
     if (!pool) {
         qDebug() << "virStoragePoolDefineXML" << output;
-        return;
+        return false;
     }
+
     StoragePool storage(pool, this);
     storage.create(0);
     storage.setAutostart(true);
+    return true;
 }
 
-void Connection::createStoragePoolNetFs(const QString &name, const QString &netfs_host, const QString &source, const QString &source_format, const QString &target)
+bool Connection::createStoragePoolNetFs(const QString &name, const QString &netfs_host, const QString &source, const QString &source_format, const QString &target)
 {
     QByteArray output;
     QXmlStreamWriter stream(&output);
@@ -611,11 +650,13 @@ void Connection::createStoragePoolNetFs(const QString &name, const QString &netf
     virStoragePoolPtr pool = virStoragePoolDefineXML(m_conn, output.constData(), 0);
     if (!pool) {
         qDebug() << "virStoragePoolDefineXML" << output;
-        return;
+        return false;
     }
+
     StoragePool storage(pool, this);
     storage.create(0);
     storage.setAutostart(true);
+    return true;
 }
 
 StoragePool *Connection::getStoragePoll(const QString &name, QObject *parent)
@@ -626,6 +667,21 @@ StoragePool *Connection::getStoragePoll(const QString &name, QObject *parent)
         return nullptr;
     }
     return new StoragePool(pool, this, parent);
+}
+
+QVector<StorageVol *> Connection::getStorageImages(QObject *parent)
+{
+    QVector<StorageVol *> images;
+    const QVector<StoragePool *> pools = storagePools(VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE, parent);
+    for (StoragePool *pool : pools) {
+        const QVector<StorageVol *> vols = pool->storageVols(0);
+        for (StorageVol * vol : vols) {
+            if (!vol->name().endsWith(QLatin1String(".iso"))) {
+                images.append(vol);
+            }
+        }
+    }
+    return images;
 }
 
 QVector<NodeDevice *> Connection::nodeDevices(uint flags, QObject *parent)
@@ -649,12 +705,12 @@ void Connection::loadNodeInfo()
     virNodeGetInfo(m_conn, &m_nodeInfo);
 }
 
-void Connection::loadDomainCapabilities()
+bool Connection::loadDomainCapabilities()
 {
     char *xml = virConnectGetDomainCapabilities(m_conn, NULL, NULL, NULL, NULL, 0);
     if (!xml) {
         qCWarning(VIRT_CONN) << "Failed to load domain capabilities";
-        return;
+        return false;
     }
     const QString xmlString = QString::fromUtf8(xml);
     qDebug() << xml;
@@ -663,10 +719,11 @@ void Connection::loadDomainCapabilities()
     QString errorString;
     if (!m_xmlCapsDoc.setContent(xmlString, &errorString)) {
         qCCritical(VIRT_CONN) << "error" << m_xmlCapsDoc.isNull() << m_xmlCapsDoc.toString();
-        return;
+        return false;
     }
 
     m_domainCapabilitiesLoaded = true;
+    return true;
 }
 
 QString Connection::dataFromSimpleNode(const QString &element) const

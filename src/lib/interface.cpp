@@ -33,7 +33,7 @@ Interface::~Interface()
 
 QString Interface::name()
 {
-    return xml()
+    return xmlDoc()
             .documentElement()
             .attribute(QStringLiteral("name"));
 }
@@ -45,7 +45,7 @@ QString Interface::mac() const
 
 QString Interface::type()
 {
-    return xml()
+    return xmlDoc()
             .documentElement()
             .attribute(QStringLiteral("type"));
 }
@@ -85,7 +85,7 @@ QString Interface::ipv6Type()
 
 QString Interface::startMode()
 {
-    const QString ret = xml()
+    const QString ret = xmlDoc()
             .documentElement()
             .firstChildElement(QStringLiteral("start"))
             .attribute(QStringLiteral("mode"));
@@ -110,7 +110,7 @@ bool Interface::undefine()
     return virInterfaceUndefine(m_iface) == 0;
 }
 
-QDomDocument Interface::xml()
+QDomDocument Interface::xmlDoc()
 {
     if (m_xml.isNull()) {
         char *xml = virInterfaceGetXMLDesc(m_iface, 0);
@@ -127,7 +127,7 @@ QDomDocument Interface::xml()
 
 QString Interface::xmlGetAddress(const QString &family)
 {
-    QDomElement protocol = xml().documentElement().firstChildElement(QStringLiteral("protocol"));
+    QDomElement protocol = xmlDoc().documentElement().firstChildElement(QStringLiteral("protocol"));
     while (!protocol.isNull()) {
         if (protocol.attribute(QStringLiteral("family")) == family) {
             QDomElement ip = protocol.firstChildElement(QStringLiteral("ip"));

@@ -56,18 +56,18 @@ public:
 
     QString path();
 
-    void start();
-    void stop();
-    void undefine();
-    void setAutostart(bool enable);
+    bool start();
+    bool stop();
+    bool undefine();
+    bool setAutostart(bool enable);
 
     QVariant volumes();
     QVector<StorageVol *> storageVols(unsigned int flags = 0);
 
-    void build(int flags);
-    void create(int flags);
-    void createStorageVolume(const QString &name, const QString &format, const QString &size, int flags);
-    void cloneStorageVolume(const QString &volName, const QString &name, const QString &format, int flags);
+    bool build(int flags);
+    bool create(int flags);
+    bool createStorageVolume(const QString &name, const QString &format, const QString &size, int flags);
+//    bool cloneStorageVolume(StorageVol *volume, const QString &name, const QString &format, int flags);
     StorageVol *getVolume(const QString &name);
 
 private:

@@ -49,7 +49,6 @@ public:
     explicit Domain(virDomainPtr domain, Connection *conn, QObject *parent = nullptr);
     ~Domain();
 
-    bool loadXml();
     bool saveXml();
 
     QString xml();
@@ -63,7 +62,7 @@ public:
     QString description();
     void setDescription(const QString &description);
 
-    int status() const;
+    int status();
 
     int currentVcpu();
     void setCurrentVcpu(int number);
@@ -113,6 +112,7 @@ private:
     virDomainPtr m_domain;
     virDomainInfo m_info;
     QDomDocument m_xml;
+    bool m_gotInfo = false;
 };
 
 #endif // DOMAIN_H

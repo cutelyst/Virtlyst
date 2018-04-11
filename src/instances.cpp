@@ -139,7 +139,9 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
             if (params.contains(QStringLiteral("delete_disk"))) {
                 //TODO
             }
-            redir = true;
+
+            c->response()->redirect(c->uriFor(CActionFor("index"), QStringList{ hostId }));
+            return;
         } else if (params.contains(QStringLiteral("change_xml"))) {
             const QString xml = params.value(QStringLiteral("inst_xml"));
             conn->domainDefineXml(xml);

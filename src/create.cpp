@@ -2,6 +2,15 @@
 
 #include "virtlyst.h"
 #include "lib/connection.h"
+#include "lib/storagepool.h"
+#include "lib/storagevol.h"
+#include "lib/network.h"
+#include "lib/domain.h"
+
+#include <Cutelyst/Plugins/StatusMessage>
+
+#include <QDomDocument>
+#include <QLoggingCategory>
 
 using namespace Cutelyst;
 
@@ -13,6 +22,7 @@ Create::Create(Virtlyst *parent)
 
 void Create::index(Context *c, const QString &hostId)
 {
+    StatusMessage::load(c);
     Connection *conn = m_virtlyst->connection(hostId);
     if (conn == nullptr) {
         fprintf(stderr, "Failed to open connection to qemu:///system\n");
@@ -23,4 +33,62 @@ void Create::index(Context *c, const QString &hostId)
     c->setStash(QStringLiteral("time_refresh"), 8000);
     c->setStash(QStringLiteral("template"), QStringLiteral("create.html"));
 
+    const QVector<Domain *> domains = conn->domains(
+                VIR_CONNECT_LIST_DOMAINS_ACTIVE | VIR_CONNECT_LIST_DOMAINS_INACTIVE, c);
+    c->setStash(QStringLiteral("instances"), QVariant::fromValue(domains));
+
+    if (c->request()->isPost()) {
+        QStringList errors;
+        const ParamsMultiMap params = c->request()->bodyParameters();
+        if (params.contains(QStringLiteral("create_flavor"))) {
+
+        } else if (params.contains(QStringLiteral("delete_flavor"))) {
+
+        } else if (params.contains(QStringLiteral("create_xml"))) {
+            const QString xml = params[QStringLiteral("from_xml")];
+            QDomDocument xmlDoc;
+            if (xmlDoc.setContent(xml)) {
+                const QString name = xmlDoc
+                        .documentElement()
+                        .firstChildElement(QStringLiteral("name"))
+                        .firstChild()
+                        .nodeValue();
+                bool found = false;
+                for (Domain *dom : domains) {
+                    if (dom->name() == name) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    if (conn->domainDefineXml(xml)) {
+                        c->response()->redirect(c->uriFor(QStringLiteral("/instances"), QStringList{ hostId, name }));
+                        return;
+                    }
+                    errors.append(QStringLiteral("Failed to create virtual machine:"));
+                    errors.append(conn->lastError());
+                } else {
+                    errors.append(QStringLiteral("A virtual machine with this name already exists"));
+                }
+            } else {
+                errors.append(QStringLiteral("Invalid XML"));
+            }
+        } else if (params.contains(QStringLiteral("create"))) {
+
+        }
+
+        c->response()->redirect(c->uriFor(CActionFor("index"),
+                                          QStringList(),
+                                          QStringList{ hostId },
+                                          StatusMessage::errorQuery(c, errors.join(QLatin1String("\n")))));
+    }
+
+    const QVector<StoragePool *> storages = conn->storagePools(0, c);
+    c->setStash(QStringLiteral("storages"), QVariant::fromValue(storages));
+    const QVector<Network *> networks = conn->networks(0, c);
+    c->setStash(QStringLiteral("networks"), QVariant::fromValue(networks));
+//    const QVector<Domain *> domains = conn->domains(VIR_CONNECT_LIST_DOMAINS_ACTIVE, c);
+//    c->setStash(QStringLiteral("instances"), QVariant::fromValue(domains));
+    c->setStash(QStringLiteral("get_images"), QVariant::fromValue(conn->getStorageImages(c)));
+    c->setStash(QStringLiteral("cache_modes"), QVariant::fromValue(conn->getCacheModes()));
 }

@@ -150,7 +150,10 @@ void Storages::storage(Context *c, const QString &hostId, const QString &pool)
                     flags = VIR_STORAGE_VOL_CREATE_PREALLOC_METADATA;
                 }
             }
-            storage->cloneStorageVolume(volName, imageName, format, flags);
+            StorageVol *vol = storage->getVolume(volName);
+            if (vol) {
+                vol->clone(imageName, format, flags);
+            }
         }
     }
     c->setStash(QStringLiteral("storage"), QVariant::fromValue(storage));
