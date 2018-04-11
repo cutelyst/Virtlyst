@@ -207,6 +207,58 @@ bool Connection::domainDefineXml(const QString &xml)
     return false;
 }
 
+bool Connection::createDomain(const QString &name, const QString &memory, const QString &vcpu, bool hostModel, const QString &uuid, const QString &images, const QString &cacheMode, const QString &networks, const QString &virtIO, const QString &mac)
+{
+    QByteArray output;
+    QXmlStreamWriter stream(&output);
+
+    stream.writeStartElement(QStringLiteral("domain"));
+
+    stream.writeTextElement(QStringLiteral("name"), name);
+    stream.writeTextElement(QStringLiteral("uuid"), uuid);
+    stream.writeTextElement(QStringLiteral("vcpu"), vcpu);
+
+    stream.writeStartElement(QStringLiteral("memory"));
+    stream.writeAttribute(QStringLiteral("unit"), QStringLiteral("KiB"));
+    stream.writeCharacters(memory);
+    stream.writeEndElement(); // memory
+
+    if (hostModel) {
+        stream.writeStartElement(QStringLiteral("cpu"));
+        stream.writeAttribute(QStringLiteral("mode"), QStringLiteral("host-model"));
+        stream.writeEndElement(); // cpu
+    }
+
+    stream.writeStartElement(QStringLiteral("os"));
+    stream.writeStartElement(QStringLiteral("type"));
+    stream.writeAttribute(QStringLiteral("arch"), QStringLiteral("get_host_arch"));//TODO
+    stream.writeCharacters(QStringLiteral("get_os_type")); //TODO
+    stream.writeStartElement(QStringLiteral("boot"));
+    stream.writeAttribute(QStringLiteral("dev"), QStringLiteral("hd"));
+    stream.writeEndElement(); // boot
+    stream.writeStartElement(QStringLiteral("boot"));
+    stream.writeAttribute(QStringLiteral("dev"), QStringLiteral("cdrom"));
+    stream.writeEndElement(); // boot
+    stream.writeEndElement(); // os
+
+    stream.writeStartElement(QStringLiteral("features"));
+    stream.writeEmptyElement(QStringLiteral("acpi"));
+    stream.writeEmptyElement(QStringLiteral("apic"));
+    stream.writeEmptyElement(QStringLiteral("pae"));
+    stream.writeEndElement(); // features
+
+
+
+    stream.writeEndElement(); // domain
+    qDebug() << "XML output" << output;
+    virNetworkPtr net = virNetworkDefineXML(m_conn, output.constData());
+    if (net) {
+        virNetworkFree(net);
+        return true;
+    }
+    return false;
+}
+
 QVector<Domain *> Connection::domains(int flags, QObject *parent)
 {
     QVector<Domain *> ret;

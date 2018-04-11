@@ -61,6 +61,9 @@ public:
 
     QString lastError();
     bool domainDefineXml(const QString &xml);
+    bool createDomain(const QString &name, const QString &memory, const QString &vcpu, bool hostModel,
+                      const QString &uuid, const QString &images, const QString &cacheMode, const QString &networks,
+                      const QString &virtIO, const QString &mac);
 
     QVector<Domain *> domains(int flags, QObject *parent = nullptr);
     Domain *getDomainByUuid(const QString &uuid, QObject *parent = nullptr);
