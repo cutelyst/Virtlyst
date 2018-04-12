@@ -62,7 +62,7 @@ public:
     QString lastError();
     bool domainDefineXml(const QString &xml);
     bool createDomain(const QString &name, const QString &memory, const QString &vcpu, bool hostModel,
-                      const QString &uuid, const QVector<StorageVol *> &images, const QString &cacheMode, const QString &networks,
+                      const QString &uuid, const QVector<StorageVol *> &images, const QString &cacheMode, const QVector<Network *> &networks,
                       bool virtIO, const QString &mac);
 
     QVector<Domain *> domains(int flags, QObject *parent = nullptr);

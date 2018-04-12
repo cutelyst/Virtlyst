@@ -252,7 +252,7 @@
                             <select id="image-control" name="image-control" class="form-control" multiple="multiple">
                                 {% if get_images.size %}
                                     {% for img in get_images %}
-                                        <option value="{{ img.name }}">{{ img.name }}</option>
+                                        <option value="{{ img.path }}">{{ img.name }}</option>
                                     {% endfor %}
                                 {% else %}
                                     <option value="">{% i18n "None" %}</option>

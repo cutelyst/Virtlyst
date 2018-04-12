@@ -34,6 +34,11 @@ QString StorageVol::size()
     return QString();
 }
 
+QString StorageVol::path()
+{
+    return QString::fromUtf8(virStorageVolGetPath(m_vol));
+}
+
 void StorageVol::undefine()
 {
     virStorageVolDelete(m_vol, 0);

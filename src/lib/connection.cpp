@@ -207,7 +207,7 @@ bool Connection::domainDefineXml(const QString &xml)
     return false;
 }
 
-bool Connection::createDomain(const QString &name, const QString &memory, const QString &vcpu, bool hostModel, const QString &uuid, const QVector<StorageVol *> &images, const QString &cacheMode, const QString &networks, bool virtIO, const QString &mac)
+bool Connection::createDomain(const QString &name, const QString &memory, const QString &vcpu, bool hostModel, const QString &uuid, const QVector<StorageVol *> &images, const QString &cacheMode, const QVector<Network *> &networks, bool virtIO, const QString &mac)
 {
     QByteArray output;
     QXmlStreamWriter stream(&output);
@@ -276,19 +276,34 @@ bool Connection::createDomain(const QString &name, const QString &memory, const 
                 stream.writeAttribute(QStringLiteral("cache"), cacheMode);
 
                 stream.writeEmptyElement(QStringLiteral("source"));
-                stream.writeAttribute(QStringLiteral("file"), vol->name());
+                stream.writeAttribute(QStringLiteral("file"), vol->path());
             }
 
             stream.writeEmptyElement(QStringLiteral("target"));
             if (virtIO) {
                 stream.writeAttribute(QStringLiteral("bus"), QStringLiteral("virtio"));
-                stream.writeAttribute(QStringLiteral("dev"), QLatin1String("vd") + QLatin1Char(letters.takeLast()));
+                stream.writeAttribute(QStringLiteral("dev"), QLatin1String("vd") + QLatin1Char(letters.takeFirst()));
             } else {
                 stream.writeAttribute(QStringLiteral("bus"), QStringLiteral("ide"));
-                stream.writeAttribute(QStringLiteral("dev"), QLatin1String("sd") + QLatin1Char(letters.takeLast()));
+                stream.writeAttribute(QStringLiteral("dev"), QLatin1String("sd") + QLatin1Char(letters.takeFirst()));
             }
 
             stream.writeEndElement(); // disk
+        }
+
+        for (Network *net : networks) {
+            stream.writeStartElement(QStringLiteral("interface"));
+            stream.writeAttribute(QStringLiteral("type"), QStringLiteral("network"));
+
+            stream.writeEmptyElement(QStringLiteral("source"));
+            stream.writeAttribute(QStringLiteral("network"), net->name());
+
+            if (virtIO) {
+                stream.writeEmptyElement(QStringLiteral("model"));
+                stream.writeAttribute(QStringLiteral("type"), QStringLiteral("virtio"));
+            }
+
+            stream.writeEndElement(); // interface
         }
 
         stream.writeStartElement(QStringLiteral("disk"));
@@ -355,12 +370,12 @@ bool Connection::createDomain(const QString &name, const QString &memory, const 
     stream.writeEndElement(); // devices
 
     stream.writeEndElement(); // domain
-    qDebug() << "XML output" << output;
-    virNetworkPtr net = virNetworkDefineXML(m_conn, output.constData());
-    if (net) {
-        virNetworkFree(net);
-        return true;
-    }
+    qDebug() << "XML output" << output.constData();
+//    virNetworkPtr net = virNetworkDefineXML(m_conn, output.constData());
+//    if (net) {
+//        virNetworkFree(net);
+//        return true;
+//    }
     return false;
 }
 
