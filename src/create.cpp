@@ -81,8 +81,10 @@ void Create::index(Context *c, const QString &hostId)
             const bool hostModel = params.contains(QStringLiteral("host_model"));
             const QString cacheMode = params[QStringLiteral("cache_mode")];
             const bool virtio = params.contains(QStringLiteral("virtio"));
-            const QString mac = params[QStringLiteral("mac")];
+            const QString consoleType = QStringLiteral("spice");
+            const QStringList networks = params.values(QStringLiteral("network-control"));
             const QStringList imageControl = params.values(QStringLiteral("image-control"));
+
             QVector<StorageVol *> images;
             for (const QString &image : imageControl) {
                 StorageVol *vol = conn->getStorageVolByPath(image, c);
@@ -91,18 +93,12 @@ void Create::index(Context *c, const QString &hostId)
                 }
             }
 
-            const QStringList networkControl = params.values(QStringLiteral("network-control"));
-            QVector<Network *> networks;
-            for (const QString &network : networkControl) {
-                Network *net = conn->getNetwork(network, c);
-                if (net) {
-                    networks << net;
-                }
-            }
-            qDebug() << "iamgesNetwork" << networks;
             const QString uuid = QUuid::createUuid().toString().remove(0, 1).remove(QLatin1Char('}'));
-            if (conn->createDomain(name, memory, vcpu, hostModel, uuid, images, cacheMode, networks, virtio, mac)) {
+            if (conn->createDomain(name, memory, vcpu, hostModel, uuid, images, cacheMode, networks, virtio, consoleType)) {
                 c->response()->redirect(c->uriFor(QStringLiteral("/instances"), QStringList{ hostId, name }));
+                return;
+            } else {
+                errors.append(conn->lastError());
             }
         }
 
@@ -110,6 +106,7 @@ void Create::index(Context *c, const QString &hostId)
                                           QStringList(),
                                           QStringList{ hostId },
                                           StatusMessage::errorQuery(c, errors.join(QLatin1String("\n")))));
+        return;
     }
 
     const QVector<StoragePool *> storages = conn->storagePools(0, c);

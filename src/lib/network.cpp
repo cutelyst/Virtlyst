@@ -24,7 +24,7 @@ Network::Network(virNetworkPtr net, Connection *conn, QObject *parent) : QObject
   , m_net(net)
   , m_conn(conn)
 {
-xmlDoc();
+
 }
 
 Network::~Network()
@@ -143,7 +143,7 @@ QDomDocument Network::xmlDoc()
     if (m_xml.isNull()) {
         char *xml = virNetworkGetXMLDesc(m_net, 0);
         const QString xmlString = QString::fromUtf8(xml);
-        qDebug() << "XML" << xml;
+//        qDebug() << "XML" << xml;
         QString error;
         if (!m_xml.setContent(xmlString, &error)) {
             qWarning() << "Failed to parse XML from interface" << error;

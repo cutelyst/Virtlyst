@@ -19,11 +19,15 @@ QString StorageVol::name()
 
 QString StorageVol::type()
 {
-    return xmlDoc()
+    const QString ret = xmlDoc()
             .documentElement()
             .firstChildElement(QStringLiteral("target"))
             .firstChildElement(QStringLiteral("format"))
             .attribute(QStringLiteral("type"));
+    if (ret == QLatin1String("unknown") || ret.isEmpty()) {
+        return QStringLiteral("raw");
+    }
+    return ret;
 }
 
 QString StorageVol::size()

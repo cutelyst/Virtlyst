@@ -38,7 +38,7 @@ class Connection : public QObject
     Q_PROPERTY(QString memoryPretty READ memoryPretty CONSTANT)
     Q_PROPERTY(uint cpus READ cpus CONSTANT)
     Q_PROPERTY(QString arch READ arch CONSTANT)
-    Q_PROPERTY(QString cpuVendor READ cpuVendor CONSTANT)
+    Q_PROPERTY(QString modelCpu READ modelCpu CONSTANT)
 public:
     explicit Connection(const QString &uri, QObject *parent = nullptr);
     ~Connection();
@@ -55,15 +55,17 @@ public:
     int maxVcpus() const;
 
     QString arch();
-    QString cpuVendor();
+    QString osType();
+    QString modelCpu();
+    bool kvmSupported();
 
     QVector<QVariantList> getCacheModes() const;
 
     QString lastError();
     bool domainDefineXml(const QString &xml);
     bool createDomain(const QString &name, const QString &memory, const QString &vcpu, bool hostModel,
-                      const QString &uuid, const QVector<StorageVol *> &images, const QString &cacheMode, const QVector<Network *> &networks,
-                      bool virtIO, const QString &mac);
+                      const QString &uuid, const QVector<StorageVol *> &images, const QString &cacheMode,
+                      const QStringList &networks, bool virtIO, const QString &consoleType);
 
     QVector<Domain *> domains(int flags, QObject *parent = nullptr);
     Domain *getDomainByUuid(const QString &uuid, QObject *parent = nullptr);
