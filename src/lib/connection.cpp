@@ -148,7 +148,7 @@ int Connection::maxVcpus() const
     return virConnectGetMaxVcpus(m_conn, NULL);
 }
 
-QString Connection::arch()
+QString Connection::cpuArch()
 {
     if (!m_domainCapabilitiesLoaded) {
         loadDomainCapabilities();
@@ -158,6 +158,34 @@ QString Connection::arch()
             .firstChildElement(QStringLiteral("host"))
             .firstChildElement(QStringLiteral("cpu"))
             .firstChildElement(QStringLiteral("arch"))
+            .firstChild()
+            .nodeValue();
+}
+
+QString Connection::cpuVendor()
+{
+    if (!m_domainCapabilitiesLoaded) {
+        loadDomainCapabilities();
+    }
+    return  m_xmlCapsDoc
+            .documentElement()
+            .firstChildElement(QStringLiteral("host"))
+            .firstChildElement(QStringLiteral("cpu"))
+            .firstChildElement(QStringLiteral("vendor"))
+            .firstChild()
+            .nodeValue();
+}
+
+QString Connection::cpuModel()
+{
+    if (!m_domainCapabilitiesLoaded) {
+        loadDomainCapabilities();
+    }
+    return  m_xmlCapsDoc
+            .documentElement()
+            .firstChildElement(QStringLiteral("host"))
+            .firstChildElement(QStringLiteral("cpu"))
+            .firstChildElement(QStringLiteral("model"))
             .firstChild()
             .nodeValue();
 }
@@ -171,20 +199,6 @@ QString Connection::osType()
             .documentElement()
             .firstChildElement(QStringLiteral("guest"))
             .firstChildElement(QStringLiteral("os_type"))
-            .firstChild()
-            .nodeValue();
-}
-
-QString Connection::modelCpu()
-{
-    if (!m_domainCapabilitiesLoaded) {
-        loadDomainCapabilities();
-    }
-    return  m_xmlCapsDoc
-            .documentElement()
-            .firstChildElement(QStringLiteral("host"))
-            .firstChildElement(QStringLiteral("cpu"))
-            .firstChildElement(QStringLiteral("arch"))
             .firstChild()
             .nodeValue();
 }
@@ -270,7 +284,7 @@ bool Connection::createDomain(const QString &name, const QString &memory, const 
 
     stream.writeStartElement(QStringLiteral("os"));
     stream.writeStartElement(QStringLiteral("type"));
-    stream.writeAttribute(QStringLiteral("arch"), arch());
+    stream.writeAttribute(QStringLiteral("arch"), cpuArch());
     stream.writeCharacters(osType());
     stream.writeEndElement(); // type
 

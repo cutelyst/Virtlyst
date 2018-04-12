@@ -37,8 +37,9 @@ class Connection : public QObject
     Q_PROPERTY(QString hypervisor READ hypervisor CONSTANT)
     Q_PROPERTY(QString memoryPretty READ memoryPretty CONSTANT)
     Q_PROPERTY(uint cpus READ cpus CONSTANT)
-    Q_PROPERTY(QString arch READ arch CONSTANT)
-    Q_PROPERTY(QString modelCpu READ modelCpu CONSTANT)
+    Q_PROPERTY(QString cpuArch READ cpuArch CONSTANT)
+    Q_PROPERTY(QString cpuVendor READ cpuVendor CONSTANT)
+    Q_PROPERTY(QString cpuModel READ cpuModel CONSTANT)
 public:
     explicit Connection(const QString &uri, QObject *parent = nullptr);
     ~Connection();
@@ -54,7 +55,9 @@ public:
 
     int maxVcpus() const;
 
-    QString arch();
+    QString cpuArch();
+    QString cpuVendor();
+    QString cpuModel();
     QString osType();
     QString modelCpu();
     bool kvmSupported();

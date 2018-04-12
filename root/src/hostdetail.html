@@ -37,11 +37,11 @@
                 </tr>
                 <tr>
                     <td>{% i18n "Processor" %}</td>
-                    <td>{{ host.cpuVendor }}</td>
+                    <td>{{ host.cpuVendor }} - {{ host.cpuModel }}</td>
                 </tr>
                 <tr>
                     <td>{% i18n "Architecture" %}</td>
-                    <td>{{ host.arch }}</td>
+                    <td>{{ host.cpuArch }}</td>
                 </tr>
             </tbody>
         </table>
