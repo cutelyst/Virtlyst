@@ -23,7 +23,7 @@ public:
     QString path();
 
     void undefine();
-    bool clone(const QString &name, const QString &format, int flags);
+    StorageVol *clone(const QString &name, const QString &format, int flags);
 
 private:
     bool getInfo();

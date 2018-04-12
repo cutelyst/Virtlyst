@@ -85,20 +85,43 @@ void Create::index(Context *c, const QString &hostId)
             const QStringList networks = params.values(QStringLiteral("network-control"));
             const QStringList imageControl = params.values(QStringLiteral("image-control"));
 
-            QVector<StorageVol *> images;
-            for (const QString &image : imageControl) {
-                StorageVol *vol = conn->getStorageVolByPath(image, c);
+            QVector<StorageVol *> volumes;
+            if (params.contains(QStringLiteral("hdd_size"))) {
+
+            } else if (params.contains(QStringLiteral("template"))) {
+                const QString templ = params[QStringLiteral("template")];
+                StorageVol *vol = conn->getStorageVolByPath(templ, c);
                 if (vol) {
-                    images << vol;
+                    int flags = 0;
+                    if (params.contains(QStringLiteral("meta_prealloc"))) {
+                        flags = VIR_STORAGE_VOL_CREATE_PREALLOC_METADATA;
+                    }
+
+                    StorageVol *cloned = vol->clone(name, vol->type(), flags);
+                    if (cloned) {
+                        volumes << cloned;
+                    } else {
+                        errors.append(conn->lastError());
+                    }
+                }
+            } else {
+
+                for (const QString &image : imageControl) {
+                    StorageVol *vol = conn->getStorageVolByPath(image, c);
+                    if (vol) {
+                        volumes << vol;
+                    }
                 }
             }
 
-            const QString uuid = QUuid::createUuid().toString().remove(0, 1).remove(QLatin1Char('}'));
-            if (conn->createDomain(name, memory, vcpu, hostModel, uuid, images, cacheMode, networks, virtio, consoleType)) {
-                c->response()->redirect(c->uriFor(QStringLiteral("/instances"), QStringList{ hostId, name }));
-                return;
-            } else {
-                errors.append(conn->lastError());
+            if (errors.isEmpty()) {
+                const QString uuid = QUuid::createUuid().toString().remove(0, 1).remove(QLatin1Char('}'));
+                if (conn->createDomain(name, memory, vcpu, hostModel, uuid, volumes, cacheMode, networks, virtio, consoleType)) {
+                    c->response()->redirect(c->uriFor(QStringLiteral("/instances"), QStringList{ hostId, name }));
+                    return;
+                } else {
+                    errors.append(conn->lastError());
+                }
             }
         }
 

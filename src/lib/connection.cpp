@@ -952,14 +952,12 @@ void Connection::loadNodeInfo()
 bool Connection::loadDomainCapabilities()
 {
     char *xml = virConnectGetCapabilities(m_conn);
-
-//    char *xml = virConnectGetDomainCapabilities(m_conn, NULL, NULL, NULL, NULL, 0);
     if (!xml) {
         qCWarning(VIRT_CONN) << "Failed to load domain capabilities";
         return false;
     }
     const QString xmlString = QString::fromUtf8(xml);
-    qDebug() << "Caps" << xml;
+//    qDebug() << "Caps" << xml;
     free(xml);
 
     QString errorString;
