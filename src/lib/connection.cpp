@@ -207,7 +207,7 @@ bool Connection::domainDefineXml(const QString &xml)
     return false;
 }
 
-bool Connection::createDomain(const QString &name, const QString &memory, const QString &vcpu, bool hostModel, const QString &uuid, const QString &images, const QString &cacheMode, const QString &networks, const QString &virtIO, const QString &mac)
+bool Connection::createDomain(const QString &name, const QString &memory, const QString &vcpu, bool hostModel, const QString &uuid, const QVector<StorageVol *> &images, const QString &cacheMode, const QString &networks, bool virtIO, const QString &mac)
 {
     QByteArray output;
     QXmlStreamWriter stream(&output);
@@ -233,12 +233,13 @@ bool Connection::createDomain(const QString &name, const QString &memory, const 
     stream.writeStartElement(QStringLiteral("type"));
     stream.writeAttribute(QStringLiteral("arch"), QStringLiteral("get_host_arch"));//TODO
     stream.writeCharacters(QStringLiteral("get_os_type")); //TODO
-    stream.writeStartElement(QStringLiteral("boot"));
+    stream.writeEndElement(); // type
+
+    stream.writeEmptyElement(QStringLiteral("boot"));
     stream.writeAttribute(QStringLiteral("dev"), QStringLiteral("hd"));
-    stream.writeEndElement(); // boot
-    stream.writeStartElement(QStringLiteral("boot"));
+
+    stream.writeEmptyElement(QStringLiteral("boot"));
     stream.writeAttribute(QStringLiteral("dev"), QStringLiteral("cdrom"));
-    stream.writeEndElement(); // boot
     stream.writeEndElement(); // os
 
     stream.writeStartElement(QStringLiteral("features"));
@@ -247,7 +248,111 @@ bool Connection::createDomain(const QString &name, const QString &memory, const 
     stream.writeEmptyElement(QStringLiteral("pae"));
     stream.writeEndElement(); // features
 
+    stream.writeEmptyElement(QStringLiteral("clock"));
+    stream.writeAttribute(QStringLiteral("offset"), QStringLiteral("utc"));
 
+    stream.writeTextElement(QStringLiteral("on_poweroff"), QStringLiteral("destroy"));
+    stream.writeTextElement(QStringLiteral("on_reboot"), QStringLiteral("restart"));
+    stream.writeTextElement(QStringLiteral("on_crash"), QStringLiteral("restart"));
+
+    stream.writeStartElement(QStringLiteral("devices"));
+    {
+        QVector<char> letters = { 'a', 'b', 'c', 'd', 'e'};//....
+        for (StorageVol *vol : images) {
+            const QString type = vol->type();
+
+            stream.writeStartElement(QStringLiteral("disk"));
+            stream.writeAttribute(QStringLiteral("device"), QStringLiteral("disk"));
+
+            if (type == QLatin1String("rbd")) {
+                stream.writeAttribute(QStringLiteral("type"), QStringLiteral("network"));
+
+            } else {
+                stream.writeAttribute(QStringLiteral("type"), QStringLiteral("disk"));
+
+                stream.writeEmptyElement(QStringLiteral("driver"));
+                stream.writeAttribute(QStringLiteral("name"), QStringLiteral("qemu"));
+                //            stream.writeAttribute(QStringLiteral("type"), vol->type());
+                stream.writeAttribute(QStringLiteral("cache"), cacheMode);
+
+                stream.writeEmptyElement(QStringLiteral("source"));
+                stream.writeAttribute(QStringLiteral("file"), vol->name());
+            }
+
+            stream.writeEmptyElement(QStringLiteral("target"));
+            if (virtIO) {
+                stream.writeAttribute(QStringLiteral("bus"), QStringLiteral("virtio"));
+                stream.writeAttribute(QStringLiteral("dev"), QLatin1String("vd") + QLatin1Char(letters.takeLast()));
+            } else {
+                stream.writeAttribute(QStringLiteral("bus"), QStringLiteral("ide"));
+                stream.writeAttribute(QStringLiteral("dev"), QLatin1String("sd") + QLatin1Char(letters.takeLast()));
+            }
+
+            stream.writeEndElement(); // disk
+        }
+
+        stream.writeStartElement(QStringLiteral("disk"));
+        stream.writeAttribute(QStringLiteral("type"), QStringLiteral("file"));
+        stream.writeAttribute(QStringLiteral("device"), QStringLiteral("cdrom"));
+        {
+
+            stream.writeEmptyElement(QStringLiteral("driver"));
+            stream.writeAttribute(QStringLiteral("name"), QStringLiteral("qemu"));
+            stream.writeAttribute(QStringLiteral("type"), QStringLiteral("raw"));
+
+            stream.writeEmptyElement(QStringLiteral("source"));
+            stream.writeAttribute(QStringLiteral("file"), QStringLiteral(""));
+
+            stream.writeEmptyElement(QStringLiteral("target"));
+            stream.writeAttribute(QStringLiteral("dev"), QStringLiteral("hda"));
+            stream.writeAttribute(QStringLiteral("bus"), QStringLiteral("ide"));
+
+            stream.writeEmptyElement(QStringLiteral("readonly"));
+
+            stream.writeEmptyElement(QStringLiteral("address"));
+            stream.writeAttribute(QStringLiteral("type"), QStringLiteral("drive"));
+            stream.writeAttribute(QStringLiteral("controller"), QStringLiteral("0"));
+            stream.writeAttribute(QStringLiteral("bus"), QStringLiteral("1"));
+            stream.writeAttribute(QStringLiteral("target"), QStringLiteral("0"));
+            stream.writeAttribute(QStringLiteral("unit"), QStringLiteral("1"));
+        }
+        stream.writeEndElement(); // disk
+
+        stream.writeEmptyElement(QStringLiteral("input"));
+        stream.writeAttribute(QStringLiteral("type"), QStringLiteral("mouse"));
+        stream.writeAttribute(QStringLiteral("bus"), QStringLiteral("ps2"));
+
+        stream.writeEmptyElement(QStringLiteral("input"));
+        stream.writeAttribute(QStringLiteral("type"), QStringLiteral("tablet"));
+        stream.writeAttribute(QStringLiteral("bus"), QStringLiteral("usb"));
+
+        stream.writeStartElement(QStringLiteral("graphics"));
+        stream.writeAttribute(QStringLiteral("type"), QStringLiteral("QEMU_CONSOLE_DEFAULT_TYPE"));
+        stream.writeAttribute(QStringLiteral("port"), QStringLiteral("-1"));
+        stream.writeAttribute(QStringLiteral("autoport"), QStringLiteral("yes"));
+        stream.writeAttribute(QStringLiteral("listen"), QStringLiteral("127.0.0.1"));
+        {
+            stream.writeEmptyElement(QStringLiteral("listen"));
+            stream.writeAttribute(QStringLiteral("type"), QStringLiteral("address"));
+            stream.writeAttribute(QStringLiteral("address"), QStringLiteral("127.0.0.1"));
+        }
+        stream.writeEndElement(); // graphics
+
+        stream.writeEmptyElement(QStringLiteral("console"));
+        stream.writeAttribute(QStringLiteral("type"), QStringLiteral("pty"));
+
+        stream.writeStartElement(QStringLiteral("video"));
+        {
+            stream.writeEmptyElement(QStringLiteral("model"));
+            stream.writeAttribute(QStringLiteral("type"), QStringLiteral("cirrus"));
+        }
+        stream.writeEndElement(); // video
+
+        stream.writeEmptyElement(QStringLiteral("memballoon"));
+        stream.writeAttribute(QStringLiteral("model"), QStringLiteral("virtio"));
+
+    }
+    stream.writeEndElement(); // devices
 
     stream.writeEndElement(); // domain
     qDebug() << "XML output" << output;
@@ -734,6 +839,15 @@ QVector<StorageVol *> Connection::getStorageImages(QObject *parent)
         }
     }
     return images;
+}
+
+StorageVol *Connection::getStorageVolByPath(const QString &path, QObject *parent)
+{
+    virStorageVolPtr vol = virStorageVolLookupByPath(m_conn, path.toUtf8().constData());
+    if (!vol) {
+        return nullptr;
+    }
+    return new StorageVol(vol, nullptr, parent);
 }
 
 QVector<NodeDevice *> Connection::nodeDevices(uint flags, QObject *parent)

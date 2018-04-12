@@ -62,8 +62,8 @@ public:
     QString lastError();
     bool domainDefineXml(const QString &xml);
     bool createDomain(const QString &name, const QString &memory, const QString &vcpu, bool hostModel,
-                      const QString &uuid, const QString &images, const QString &cacheMode, const QString &networks,
-                      const QString &virtIO, const QString &mac);
+                      const QString &uuid, const QVector<StorageVol *> &images, const QString &cacheMode, const QString &networks,
+                      bool virtIO, const QString &mac);
 
     QVector<Domain *> domains(int flags, QObject *parent = nullptr);
     Domain *getDomainByUuid(const QString &uuid, QObject *parent = nullptr);
@@ -93,6 +93,8 @@ public:
     bool createStoragePoolNetFs(const QString &name, const QString &netfs_host, const QString &source, const QString &source_format, const QString &target);
     StoragePool *getStoragePoll(const QString &name, QObject *parent = nullptr);
     QVector<StorageVol *> getStorageImages(QObject *parent = nullptr);
+
+    StorageVol *getStorageVolByPath(const QString &path, QObject *parent = nullptr);
 
     QVector<NodeDevice *> nodeDevices(uint flags, QObject *parent = nullptr);
 

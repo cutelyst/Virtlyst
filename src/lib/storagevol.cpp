@@ -41,6 +41,10 @@ void StorageVol::undefine()
 
 bool StorageVol::clone(const QString &name, const QString &format, int flags)
 {
+    if (m_pool == nullptr) {
+        return false;
+    }
+
     QByteArray output;
     QXmlStreamWriter stream(&output);
 

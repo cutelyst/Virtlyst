@@ -9,6 +9,7 @@
 
 #include <Cutelyst/Plugins/StatusMessage>
 
+#include <QUuid>
 #include <QDomDocument>
 #include <QLoggingCategory>
 
@@ -74,7 +75,19 @@ void Create::index(Context *c, const QString &hostId)
                 errors.append(QStringLiteral("Invalid XML"));
             }
         } else if (params.contains(QStringLiteral("create"))) {
-
+            const QString name = params[QStringLiteral("name")];
+            const QString memory = params[QStringLiteral("memory")];
+            const QString vcpu = params[QStringLiteral("vcpu")];
+            const bool hostModel = params.contains(QStringLiteral("host_model"));
+            const QString cacheMode = params[QStringLiteral("cache_mode")];
+            const QString networks = params[QStringLiteral("networks")];
+            const bool virtio = params.contains(QStringLiteral("virtio"));
+            const QString mac = params[QStringLiteral("mac")];
+            QVector<StorageVol *> images;
+            const QString uuid = QUuid::createUuid().toString().remove(0, 1).remove(QLatin1Char('}'));
+            if (conn->createDomain(name, memory, vcpu, hostModel, uuid, images, cacheMode, networks, virtio, mac)) {
+                c->response()->redirect(c->uriFor(QStringLiteral("/instances"), QStringList{ hostId, name }));
+            }
         }
 
         c->response()->redirect(c->uriFor(CActionFor("index"),
