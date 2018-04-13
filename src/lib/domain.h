@@ -106,6 +106,12 @@ public:
     void managedSaveRemove();
     void setAutostart(bool enable);
 
+    bool attachDevice(const QString &xml);
+    bool updateDevice(const QString &xml, int flags);
+
+    void mountIso(const QString &dev, const QString &image);
+    void umountIso(const QString &dev, const QString &image);
+
 private:
     QDomDocument xmlDoc();
     QString dataFromSimpleNode(const QString &element);

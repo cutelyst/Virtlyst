@@ -22,6 +22,9 @@
 #include "storagepool.h"
 #include "storagevol.h"
 
+#include <QTextStream>
+#include <QDomElement>
+
 #include <QLoggingCategory>
 
 Q_LOGGING_CATEGORY(VIRT_DOM, "virt.domain")
@@ -40,8 +43,10 @@ Domain::~Domain()
 
 bool Domain::saveXml()
 {
-    qCCritical(VIRT_DOM) << xmlDoc().toString();
-    return m_conn->domainDefineXml(xmlDoc().toString(0));
+    const QString xmlData = xmlDoc().toString(0);
+    m_xml.clear();
+//    qCDebug(VIRT_DOM) << xmlData;
+    return m_conn->domainDefineXml(xmlData);
 }
 
 QString Domain::xml()
@@ -322,6 +327,76 @@ void Domain::managedSaveRemove()
 void Domain::setAutostart(bool enable)
 {
     virDomainSetAutostart(m_domain, enable ? 1 : 0);
+}
+
+bool Domain::attachDevice(const QString &xml)
+{
+    m_xml.clear();
+    return virDomainAttachDevice(m_domain, xml.toUtf8().constData()) == 0;
+}
+
+bool Domain::updateDevice(const QString &xml, int flags)
+{
+    m_xml.clear();
+    return virDomainUpdateDeviceFlags(m_domain, xml.toUtf8().constData(), flags) == 0;
+}
+
+void Domain::mountIso(const QString &dev, const QString &image)
+{
+    QDomDocument doc = xmlDoc();
+    QDomElement disk = doc
+            .documentElement()
+            .firstChildElement(QStringLiteral("devices"))
+            .firstChildElement(QStringLiteral("disk"));
+    while (!disk.isNull()) {
+        if (disk.attribute(QStringLiteral("device")) == QLatin1String("cdrom")) {
+            if (disk.firstChildElement(QStringLiteral("target")).attribute(QStringLiteral("dev")) == dev) {
+                QDomElement source = disk.firstChildElement(QStringLiteral("source"));
+                if (source.isNull()) {
+                    source = doc.createElement(QStringLiteral("source"));
+                    disk.appendChild(source);
+                }
+                source.setAttribute(QStringLiteral("file"), image);
+                QByteArray xml;
+                QTextStream s(&xml);
+                disk.save(s, 2);
+                bool ret = updateDevice(xml, VIR_DOMAIN_AFFECT_CONFIG);
+                qDebug() << "DISK update" << ret;
+                break;
+            }
+        }
+        disk = disk.nextSiblingElement(QStringLiteral("disk"));
+    }
+    qDebug() << 2 << image;
+
+    qDebug() << 2 << doc.toString(2).toUtf8().constData();
+//    saveXml();
+}
+
+void Domain::umountIso(const QString &dev, const QString &image)
+{
+    qDebug() << 1 << xmlDoc().toString(2);
+    QDomElement disk = xmlDoc()
+            .documentElement()
+            .firstChildElement(QStringLiteral("devices"))
+            .firstChildElement(QStringLiteral("disk"));
+    while (!disk.isNull()) {
+        if (disk.attribute(QStringLiteral("device")) == QLatin1String("cdrom")) {
+            QDomElement source = disk.firstChildElement(QStringLiteral("source"));
+            if (disk.firstChildElement(QStringLiteral("target")).attribute(QStringLiteral("dev")) == dev &&
+                    source.attribute(QStringLiteral("file")) == image) {
+                disk.removeChild(source);
+                QByteArray xml;
+                QTextStream s(&xml);
+                disk.save(s, 2);
+                bool ret = updateDevice(xml, VIR_DOMAIN_AFFECT_CONFIG);
+                qDebug() << "DISK remove update" << ret;
+            }
+        }
+        disk = disk.nextSiblingElement(QStringLiteral("disk"));
+    }
+//    saveXml();
+    qDebug() << 2 << xmlDoc().toString(2).toUtf8().constData();
 }
 
 QDomDocument Domain::xmlDoc()

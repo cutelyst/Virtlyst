@@ -174,6 +174,16 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
             dom->setConsoleType(type);
             dom->saveXml();
             redir = true;
+        } else if (params.contains(QStringLiteral("mount_iso"))) {
+            const QString dev = params.value(QStringLiteral("mount_iso"));
+            const QString image = params.value(QStringLiteral("media"));
+            dom->mountIso(dev, image);
+            redir = true;
+        } else if (params.contains(QStringLiteral("umount_iso"))) {
+            const QString dev = params.value(QStringLiteral("umount_iso"));
+            const QString image = params.value(QStringLiteral("path"));
+            dom->umountIso(dev, image);
+            redir = true;
         } else if (params.contains(QStringLiteral("change_settings"))) {
             const QString description = params.value(QStringLiteral("description"));
 
