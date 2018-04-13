@@ -1,5 +1,6 @@
 #include "storagevol.h"
 
+#include "storagepool.h"
 #include "virtlyst.h"
 
 #include <QXmlStreamWriter>
@@ -9,9 +10,6 @@ StorageVol::StorageVol(virStorageVolPtr vol, virStoragePoolPtr pool, QObject *pa
   , m_vol(vol)
   , m_pool(pool)
 {
-    if (!m_pool) {
-        m_pool = virStoragePoolLookupByVolume(m_vol);
-    }
 }
 
 QString StorageVol::name()
@@ -45,10 +43,9 @@ QString StorageVol::path()
     return QString::fromUtf8(virStorageVolGetPath(m_vol));
 }
 
-void StorageVol::undefine()
+bool StorageVol::undefine()
 {
-    virStorageVolDelete(m_vol, 0);
-
+    return virStorageVolDelete(m_vol, 0) == 0;
 }
 
 StorageVol *StorageVol::clone(const QString &name, const QString &format, int flags)
@@ -75,11 +72,16 @@ StorageVol *StorageVol::clone(const QString &name, const QString &format, int fl
     stream.writeEndElement(); // volume
     qDebug() << "XML output" << output;
 
-    virStorageVolPtr vol = virStorageVolCreateXMLFrom(m_pool, output.constData(), m_vol, flags);
+    virStorageVolPtr vol = virStorageVolCreateXMLFrom(poolPtr(), output.constData(), m_vol, flags);
     if (vol) {
         return new StorageVol(vol, m_pool, this);
     }
     return nullptr;
+}
+
+StoragePool *StorageVol::pool()
+{
+    return new StoragePool(poolPtr(), this);
 }
 
 bool StorageVol::getInfo()
@@ -103,4 +105,12 @@ QDomDocument StorageVol::xmlDoc()
         free(xml);
     }
     return m_xml;
+}
+
+virStoragePoolPtr StorageVol::poolPtr()
+{
+    if (!m_pool) {
+        m_pool = virStoragePoolLookupByVolume(m_vol);
+    }
+    return m_pool;
 }

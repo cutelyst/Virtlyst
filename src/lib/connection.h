@@ -40,6 +40,7 @@ class Connection : public QObject
     Q_PROPERTY(QString cpuArch READ cpuArch CONSTANT)
     Q_PROPERTY(QString cpuVendor READ cpuVendor CONSTANT)
     Q_PROPERTY(QString cpuModel READ cpuModel CONSTANT)
+    Q_PROPERTY(QStringList isoMedia READ isoMedia CONSTANT)
 public:
     explicit Connection(const QString &uri, QObject *parent = nullptr);
     ~Connection();
@@ -61,6 +62,8 @@ public:
     QString osType();
     QString modelCpu();
     bool kvmSupported();
+
+    QStringList isoMedia();
 
     QVector<QVariantList> getCacheModes() const;
 

@@ -22,12 +22,15 @@ public:
     QString size();
     QString path();
 
-    void undefine();
+    bool undefine();
     StorageVol *clone(const QString &name, const QString &format, int flags);
+
+    StoragePool *pool();
 
 private:
     bool getInfo();
     QDomDocument xmlDoc();
+    virStoragePoolPtr poolPtr();
 
     QDomDocument m_xml;
     virStoragePoolPtr m_pool;

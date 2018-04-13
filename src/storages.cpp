@@ -111,8 +111,6 @@ void Storages::storage(Context *c, const QString &hostId, const QString &pool)
     }
 
     if (c->request()->isPost()) {
-        c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("storage")), QStringList{ hostId, pool }));
-
         const ParamsMultiMap params = c->request()->bodyParameters();
         if (params.contains(QStringLiteral("start"))) {
             storage->start();
@@ -120,6 +118,8 @@ void Storages::storage(Context *c, const QString &hostId, const QString &pool)
             storage->stop();
         } else if (params.contains(QStringLiteral("delete"))) {
             storage->undefine();
+            c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("index")), QStringList{ hostId }));
+            return;
         } else if (params.contains(QStringLiteral("set_autostart"))) {
             storage->setAutostart(true);
         } else if (params.contains(QStringLiteral("unset_autostart"))) {
@@ -155,6 +155,7 @@ void Storages::storage(Context *c, const QString &hostId, const QString &pool)
                 vol->clone(imageName, format, flags);
             }
         }
+        c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("storage")), QStringList{ hostId, pool }));
     }
     c->setStash(QStringLiteral("storage"), QVariant::fromValue(storage));
 }

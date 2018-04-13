@@ -45,6 +45,7 @@ class Domain : public QObject
     Q_PROPERTY(QString consoleType READ consoleType CONSTANT)
     Q_PROPERTY(QString consolePassword READ consolePassword CONSTANT)
     Q_PROPERTY(QString consoleKeymap READ consoleKeymap CONSTANT)
+    Q_PROPERTY(QVariantList media READ media CONSTANT)
 public:
     explicit Domain(virDomainPtr domain, Connection *conn, QObject *parent = nullptr);
     ~Domain();
@@ -92,6 +93,8 @@ public:
     quint32 consolePort();
     QString consoleListenAddress();
     QString consoleKeymap();
+
+    QVariantList media();
 
     void start();
     void shutdown();

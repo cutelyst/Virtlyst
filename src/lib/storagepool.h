@@ -41,7 +41,7 @@ class StoragePool : public QObject
     Q_PROPERTY(QString path READ path CONSTANT)
     Q_PROPERTY(QVariant volumes READ volumes CONSTANT)
 public:
-    explicit StoragePool(virStoragePoolPtr storage, Connection *conn, QObject *parent = nullptr);
+    explicit StoragePool(virStoragePoolPtr storage, QObject *parent = nullptr);
 
     QString name();
     QString type();
@@ -76,7 +76,6 @@ private:
 
     QDomDocument m_xml;
     virStoragePoolPtr m_pool;
-    Connection *m_conn;
     QVector<StorageVol *> m_vols;
     virStoragePoolInfo m_info;
     bool m_gotVols = false;

@@ -229,6 +229,23 @@ bool Connection::kvmSupported()
     return false;
 }
 
+QStringList Connection::isoMedia()
+{
+    // TODO cache results
+    QStringList ret;
+    const QVector<StoragePool *> storages = storagePools(VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE, this);
+    for (StoragePool *pool : storages) {
+        const QVector<StorageVol *> vols = pool->storageVols();
+        for (StorageVol *vol : vols) {
+            const QString path = vol->path();
+            if (path.endsWith(QLatin1String(".iso"))) {
+                ret.append(path);
+            }
+        }
+    }
+    return ret;
+}
+
 QVector<QVariantList> Connection::getCacheModes() const
 {
     static QVector<QVariantList> cacheModes = {
@@ -743,7 +760,7 @@ QVector<StoragePool *> Connection::storagePools(int flags, QObject *parent)
     int count = virConnectListAllStoragePools(m_conn, &storagePools, flags);
     if (count > 0) {
         for (int i = 0; i < count; ++i) {
-            auto storagePool = new StoragePool(storagePools[i], this, parent);
+            auto storagePool = new StoragePool(storagePools[i], parent);
             ret.append(storagePool);
         }
         free(storagePools);
@@ -901,7 +918,7 @@ StoragePool *Connection::getStoragePoll(const QString &name, QObject *parent)
     if (!pool) {
         return nullptr;
     }
-    return new StoragePool(pool, this, parent);
+    return new StoragePool(pool, parent);
 }
 
 QVector<StorageVol *> Connection::getStorageImages(QObject *parent)

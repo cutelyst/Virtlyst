@@ -429,14 +429,14 @@
     </div>
     <div class="tab-pane tab-inst" id="instancemedia">
         <form class="form-horizontal" action="" method="post" role="form">{{ csrf_token }}
-            {% for cd in media %}
+            {% for cd in domain.media %}
                 <div class="form-group">
                     <label class="col-sm-3 control-label">{% i18n "CDROM" %} {{ forloop.counter }}</label>
                     {% if not cd.image %}
                         <div class="col-sm-6">
                             <select name="media" class="form-control">
-                                {% if media_iso %}
-                                    {% for iso in media_iso %}
+                                {% if host.isoMedia.size %}
+                                    {% for iso in host.isoMedia %}
                                         <option value="{{ iso }}">{{ iso }}</option>
                                     {% endfor %}
                                 {% else %}
@@ -445,7 +445,7 @@
                             </select>
                         </div>
                         <div class="col-sm-2">
-                            {% if media_iso %}
+                            {% if host.isoMedia.size %}
                                 <button type="submit" class="btn btn-primary btn-sm pull-left" value="{{ cd.dev }}"
                                         name="mount_iso">{% i18n "Connect" %}</button>
                             {% else %}

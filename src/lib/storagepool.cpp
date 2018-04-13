@@ -23,9 +23,8 @@
 #include <QXmlStreamWriter>
 #include <QLoggingCategory>
 
-StoragePool::StoragePool(virStoragePoolPtr storage, Connection *conn, QObject *parent) : QObject(parent)
+StoragePool::StoragePool(virStoragePoolPtr storage, QObject *parent) : QObject(parent)
   , m_pool(storage)
-  , m_conn(conn)
 {
 
 }

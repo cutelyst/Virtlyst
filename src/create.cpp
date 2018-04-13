@@ -83,7 +83,6 @@ void Create::index(Context *c, const QString &hostId)
             const bool virtio = params.contains(QStringLiteral("virtio"));
             const QString consoleType = QStringLiteral("spice");
             const QStringList networks = params.values(QStringLiteral("network-control"));
-            const QStringList imageControl = params.values(QStringLiteral("image-control"));
 
             QVector<StorageVol *> volumes;
             if (params.contains(QStringLiteral("hdd_size"))) {
@@ -97,6 +96,7 @@ void Create::index(Context *c, const QString &hostId)
                         flags = VIR_STORAGE_VOL_CREATE_PREALLOC_METADATA;
                     }
 
+                    // This is SLOW and will block clients
                     StorageVol *cloned = vol->clone(name, vol->type(), flags);
                     if (cloned) {
                         volumes << cloned;
@@ -105,7 +105,7 @@ void Create::index(Context *c, const QString &hostId)
                     }
                 }
             } else {
-
+                const QStringList imageControl = params.values(QStringLiteral("image-control"));
                 for (const QString &image : imageControl) {
                     StorageVol *vol = conn->getStorageVolByPath(image, c);
                     if (vol) {
@@ -132,12 +132,10 @@ void Create::index(Context *c, const QString &hostId)
         return;
     }
 
-    const QVector<StoragePool *> storages = conn->storagePools(0, c);
+    const QVector<StoragePool *> storages = conn->storagePools(VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE, c);
     c->setStash(QStringLiteral("storages"), QVariant::fromValue(storages));
     const QVector<Network *> networks = conn->networks(0, c);
     c->setStash(QStringLiteral("networks"), QVariant::fromValue(networks));
-//    const QVector<Domain *> domains = conn->domains(VIR_CONNECT_LIST_DOMAINS_ACTIVE, c);
-//    c->setStash(QStringLiteral("instances"), QVariant::fromValue(domains));
     c->setStash(QStringLiteral("get_images"), QVariant::fromValue(conn->getStorageImages(c)));
     c->setStash(QStringLiteral("cache_modes"), QVariant::fromValue(conn->getCacheModes()));
 }

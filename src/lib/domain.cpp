@@ -19,6 +19,8 @@
 #include "connection.h"
 
 #include "virtlyst.h"
+#include "storagepool.h"
+#include "storagevol.h"
 
 #include <QLoggingCategory>
 
@@ -237,6 +239,44 @@ QString Domain::consoleKeymap()
             .firstChildElement(QStringLiteral("devices"))
             .firstChildElement(QStringLiteral("graphics"))
             .attribute(QStringLiteral("keymap"));
+}
+
+QVariantList Domain::media()
+{
+    QVariantList ret;
+    QDomElement disk = xmlDoc()
+            .documentElement()
+            .firstChildElement(QStringLiteral("devices"))
+            .firstChildElement(QStringLiteral("disk"));
+    while (!disk.isNull()) {
+        if (disk.attribute(QStringLiteral("device")) == QLatin1String("cdrom")) {
+            const QString dev = disk.firstChildElement(QStringLiteral("target")).attribute(QStringLiteral("dev"));
+            const QString srcFile = disk.firstChildElement(QStringLiteral("source")).attribute(QStringLiteral("file"));
+            QString volume;
+            QString storage;
+            if (!srcFile.isEmpty()) {
+                StorageVol *vol = m_conn->getStorageVolByPath(srcFile, this);
+                if (vol) {
+                    volume = vol->name();
+                    StoragePool *pool = vol->pool();
+                    if (pool) {
+                        storage = pool->name();
+                    }
+                }
+            }
+
+            QHash<QString, QString> data{
+                {QStringLiteral("dev"), dev},
+                {QStringLiteral("image"), volume},
+                {QStringLiteral("storage"), storage},
+                {QStringLiteral("path"), srcFile},
+            };
+            ret.append(QVariant::fromValue(data));
+        }
+        disk = disk.nextSiblingElement(QStringLiteral("disk"));
+    }
+
+    return ret;
 }
 
 void Domain::start()

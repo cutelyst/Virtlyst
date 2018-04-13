@@ -92,8 +92,6 @@ void Networks::network(Context *c, const QString &hostId, const QString &netName
     c->setStash(QStringLiteral("network"), QVariant::fromValue(network));
 
     if (c->request()->isPost()) {
-        c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("network")), QStringList{ hostId, netName }));
-
         const ParamsMultiMap params = c->request()->bodyParameters();
         if (params.contains(QStringLiteral("start"))) {
             network->start();
@@ -101,10 +99,13 @@ void Networks::network(Context *c, const QString &hostId, const QString &netName
             network->stop();
         } else if (params.contains(QStringLiteral("delete"))) {
             network->undefine();
+            c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("index")), QStringList{ hostId }));
+            return;
         } else if (params.contains(QStringLiteral("set_autostart"))) {
             network->setAutostart(true);
         } else if (params.contains(QStringLiteral("unset_autostart"))) {
             network->setAutostart(false);
         }
+        c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("network")), QStringList{ hostId, netName }));
     }
 }

@@ -448,7 +448,7 @@
                         <div class="col-sm-6">
                             <select name="networks" class="form-control">
                                 {% for network in networks %}
-                                    <option value="{{ network }}">{{ network }}</option>
+                                    <option value="{{ network.name }}">{{ network.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>

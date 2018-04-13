@@ -92,8 +92,6 @@ void Interfaces::interface(Context *c, const QString &hostId, const QString &ifa
     }
 
     if (c->request()->isPost()) {
-        c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("interface")), QStringList{ hostId, ifaceName }));
-
         const ParamsMultiMap params = c->request()->bodyParameters();
         if (params.contains(QStringLiteral("stop"))) {
             iface->stop();
@@ -102,7 +100,9 @@ void Interfaces::interface(Context *c, const QString &hostId, const QString &ifa
         } else if (params.contains(QStringLiteral("delete"))) {
             iface->undefine();
             c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("index")), QStringList{ hostId }));
+            return;
         }
+        c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("interface")), QStringList{ hostId, ifaceName }));
     }
     c->setStash(QStringLiteral("iface"), QVariant::fromValue(iface));
 }
