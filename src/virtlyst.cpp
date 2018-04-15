@@ -165,6 +165,25 @@ QString Virtlyst::prettyKibiBytes(quint64 kibiBytes)
     return ret;
 }
 
+QStringList Virtlyst::keymaps()
+{
+    // list taken from http://qemu.weilnetz.de/qemu-doc.html#sec_005finvocation
+    static QStringList ret = {
+        QStringLiteral("ar"), QStringLiteral("da"), QStringLiteral("de"),
+        QStringLiteral("de-ch"), QStringLiteral("en-gb"), QStringLiteral("en-us"),
+        QStringLiteral("es"), QStringLiteral("et"), QStringLiteral("fi"),
+        QStringLiteral("fo"), QStringLiteral("fr"), QStringLiteral("fr-be"),
+        QStringLiteral("fr-ca"), QStringLiteral("fr-ch"), QStringLiteral("hr"),
+        QStringLiteral("hu"), QStringLiteral("is"), QStringLiteral("it"),
+        QStringLiteral("ja"), QStringLiteral("lt"), QStringLiteral("lv"),
+        QStringLiteral("mk"), QStringLiteral("nl"), QStringLiteral("nl-be"),
+        QStringLiteral("no"), QStringLiteral("pl"), QStringLiteral("pt"),
+        QStringLiteral("pt-br"), QStringLiteral("ru"), QStringLiteral("sl"),
+        QStringLiteral("sv"), QStringLiteral("th"), QStringLiteral("tr")
+    };
+    return ret;
+}
+
 bool Virtlyst::createDB()
 {
     auto db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("db"));

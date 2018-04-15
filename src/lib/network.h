@@ -56,6 +56,8 @@ public:
     QString ipDhcpRangeEnd();
     QVariantList ipDhcpHosts();
 
+    QString ipAddressForMac(const QString &mac);
+
 private:
     QDomDocument xmlDoc();
 

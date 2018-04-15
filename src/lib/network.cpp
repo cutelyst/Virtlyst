@@ -138,6 +138,22 @@ QVariantList Network::ipDhcpHosts()
     return ret;
 }
 
+QString Network::ipAddressForMac(const QString &mac)
+{
+    QDomElement host = xmlDoc()
+            .documentElement()
+            .firstChildElement(QStringLiteral("ip"))
+            .firstChildElement(QStringLiteral("dhcp"))
+            .firstChildElement(QStringLiteral("host"));
+    while (!host.isNull()) {
+        if (host.attribute(QStringLiteral("host")) == mac) {
+            return host.attribute(QStringLiteral("ip"));
+        }
+        host = host.nextSiblingElement(QStringLiteral("host"));
+    }
+    return QString();
+}
+
 QDomDocument Network::xmlDoc()
 {
     if (m_xml.isNull()) {

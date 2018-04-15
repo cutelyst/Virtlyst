@@ -21,6 +21,7 @@
 #include "virtlyst.h"
 #include "storagepool.h"
 #include "storagevol.h"
+#include "network.h"
 
 #include <QTextStream>
 #include <QDomElement>
@@ -246,6 +247,14 @@ QString Domain::consoleKeymap()
             .attribute(QStringLiteral("keymap"));
 }
 
+void Domain::setConsoleKeymap(const QString &keymap)
+{
+    xmlDoc().documentElement()
+            .firstChildElement(QStringLiteral("devices"))
+            .firstChildElement(QStringLiteral("graphics"))
+            .setAttribute(QStringLiteral("keymap"), keymap);
+}
+
 QVariantList Domain::media()
 {
     QVariantList ret;
@@ -279,6 +288,43 @@ QVariantList Domain::media()
             ret.append(QVariant::fromValue(data));
         }
         disk = disk.nextSiblingElement(QStringLiteral("disk"));
+    }
+
+    return ret;
+}
+
+QVariantList Domain::networks()
+{
+    QVariantList ret;
+    QDomElement interface = xmlDoc()
+            .documentElement()
+            .firstChildElement(QStringLiteral("devices"))
+            .firstChildElement(QStringLiteral("interface"));
+    while (!interface.isNull()) {
+        const QString macHost = interface.firstChildElement(QStringLiteral("mac")).attribute(QStringLiteral("address"));
+        const QDomElement source = interface.firstChildElement(QStringLiteral("source"));
+        QString nicHost;
+        if (source.hasAttribute(QStringLiteral("network"))) {
+            nicHost = source.attribute(QStringLiteral("network"));
+        } else if (source.hasAttribute(QStringLiteral("bridge"))) {
+            nicHost = source.attribute(QStringLiteral("bridge"));
+        } else if (source.hasAttribute(QStringLiteral("dev"))) {
+            nicHost = source.attribute(QStringLiteral("dev"));
+        }
+
+        QString ip;
+        Network *net = m_conn->getNetwork(nicHost, this);
+        if (net) {
+            ip = net->ipAddressForMac(macHost);
+        }
+
+        QHash<QString, QString> data{
+            {QStringLiteral("mac"), macHost},
+            {QStringLiteral("nic"), nicHost},
+            {QStringLiteral("ip"), ip},
+        };
+        ret.append(QVariant::fromValue(data));
+        interface = interface.nextSiblingElement(QStringLiteral("interface"));
     }
 
     return ret;

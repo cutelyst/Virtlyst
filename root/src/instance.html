@@ -472,12 +472,12 @@
         <p style="font-weight:bold;">{% i18n "Network devices" %}</p>
 
         <div class="col-sm-3">
-            {% for network in networks %}
+            {% for network in domain.networks %}
                 <p style="text-align: right;">eth{{ forloop.counter0 }} ({{ network.nic }})</p>
             {% endfor %}
         </div>
         <div class="col-sm-9">
-            {% for network in networks %}
+            {% for network in domain.networks %}
                 {% if network.ip %}
                     <p>{{ network.ip }}</p>
                 {% else %}
@@ -511,7 +511,7 @@
                 </div>
             </div>
             <p style="font-weight:bold;">{% i18n "Network devices" %}</p>
-            {% for network in networks %}
+            {% for network in domain.networks %}
                 <div class="form-group">
                     <label class="col-sm-3 control-label" style="font-weight:normal;">eth{{ forloop.counter0 }} ({{ network.nic }})</label>
 
@@ -652,7 +652,7 @@
                     <canvas style="margin-left: 25px" id="cpuChart" width="600" height="125"></canvas>
                 </div>
                 <div id="net-usage">
-                    {% for network in networks %}
+                    {% for network in domain.networks %}
                         <p style="margin-left: 25px">{% i18n "Bandwidth" %} - Eth{{ forloop.counter0 }}</p>
                         <canvas style="margin-left: 25px" id="netEth{{ forloop.counter0 }}Chart" width="600"
                                 height="125"></canvas>
@@ -912,7 +912,7 @@
     };
 
     var netChart = {};
-    {% for net in networks %}
+    {% for net in domain.networks %}
         var net_ctx_{{ forloop.counter0 }} = $("#netEth{{ forloop.counter0 }}Chart").get(0).getContext("2d");
         netChart['{{ forloop.counter0 }}'] = new Chart(net_ctx_{{ forloop.counter0 }});
     {% endfor %}

@@ -22,6 +22,7 @@
 
 #include <libvirt/libvirt.h>
 
+#include <QUuid>
 #include <QDebug>
 
 using namespace Cutelyst;
@@ -152,7 +153,7 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
         } else if (params.contains(QStringLiteral("set_console_passwd"))) {
             QString password;
             if (params.contains(QStringLiteral("auto_pass"))) {
-
+                password = QString::fromLatin1(QUuid::createUuid().toRfc4122().toHex());
             } else {
                 password = params.value(QStringLiteral("console_passwd"));
                 bool clear = params.contains(QStringLiteral("clear_pass"));
@@ -168,6 +169,16 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
                 dom->setConsolePassword(password);
                 dom->saveXml();
             }
+            redir = true;
+        } else if (params.contains(QStringLiteral("set_console_keymap"))) {
+            const QString keymap = params.value(QStringLiteral("console_keymap"));
+            const bool clear = params.contains(QStringLiteral("clear_keymap"));
+            if (clear) {
+                dom->setConsoleKeymap(QString());
+            } else {
+                dom->setConsoleKeymap(keymap);
+            }
+            dom->saveXml();
             redir = true;
         } else if (params.contains(QStringLiteral("set_console_type"))) {
             const QString type = params.value(QStringLiteral("console_type"));
@@ -252,6 +263,7 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
 
     c->setStash(QStringLiteral("vcpu_host"), conn->cpus());
     c->setStash(QStringLiteral("memory_host"), conn->freeMemoryBytes());
+    c->setStash(QStringLiteral("keymaps"), Virtlyst::keymaps());
 
     c->setStash(QStringLiteral("domain"), QVariant::fromValue(dom));
 

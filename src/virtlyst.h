@@ -42,6 +42,8 @@ public:
 
     static QString prettyKibiBytes(quint64 kibiBytes);
 
+    static QStringList keymaps();
+
 //    static bool changeSettings(virDomainPtr domain, const QString &description, quint64 cur_memory, quint64 memory, uint cur_vcpu, uint vcpu);
 
 private:
