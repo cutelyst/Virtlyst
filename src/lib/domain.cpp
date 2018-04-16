@@ -25,6 +25,7 @@
 
 #include <QTextStream>
 #include <QDomElement>
+#include <QFileInfo>
 
 #include <QLoggingCategory>
 
@@ -253,6 +254,72 @@ void Domain::setConsoleKeymap(const QString &keymap)
             .firstChildElement(QStringLiteral("devices"))
             .firstChildElement(QStringLiteral("graphics"))
             .setAttribute(QStringLiteral("keymap"), keymap);
+}
+
+QVariantList Domain::disks()
+{
+    QVariantList ret;
+    QDomElement disk = xmlDoc()
+            .documentElement()
+            .firstChildElement(QStringLiteral("devices"))
+            .firstChildElement(QStringLiteral("disk"));
+    while (!disk.isNull()) {
+        if (disk.attribute(QStringLiteral("device")) == QLatin1String("disk")) {
+            const QString dev = disk.firstChildElement(QStringLiteral("target")).attribute(QStringLiteral("dev"));
+            const QString srcFile = disk.firstChildElement(QStringLiteral("source")).attribute(QStringLiteral("file"));
+            const QString diskFormat = disk.firstChildElement(QStringLiteral("driver")).attribute(QStringLiteral("type"));
+            QString volume;
+            QString storage;
+            if (!srcFile.isEmpty()) {
+                StorageVol *vol = m_conn->getStorageVolByPath(srcFile, this);
+                if (vol) {
+                    volume = vol->name();
+                    StoragePool *pool = vol->pool();
+                    if (pool) {
+                        storage = pool->name();
+                    }
+                }
+            }
+
+            QHash<QString, QString> data{
+                {QStringLiteral("dev"), dev},
+                {QStringLiteral("image"), volume},
+                {QStringLiteral("storage"), storage},
+                {QStringLiteral("path"), srcFile},
+                {QStringLiteral("format"), diskFormat},
+            };
+            ret.append(QVariant::fromValue(data));
+        }
+        disk = disk.nextSiblingElement(QStringLiteral("disk"));
+    }
+
+    return ret;
+}
+
+QVariantList Domain::cloneDisks()
+{
+    QVariantList ret;
+    const QVariantList _disks = disks();
+    for (const QVariant &var : _disks) {
+        QHash<QString, QString> disk = var.value<QHash<QString, QString> >();
+        QString image = disk.value(QStringLiteral("image"));
+        if (image.isEmpty()) {
+            continue;
+        }
+
+        if (image.contains(QLatin1Char('.'))) {
+            QFileInfo info(image);
+            if (info.path() == QLatin1Char('.')) {
+                disk[QStringLiteral("image")] = info.baseName() + QLatin1String("-clone.") + info.completeSuffix();
+            } else {
+                disk[QStringLiteral("image")] = info.path() + QLatin1Char('/') + info.baseName() + QLatin1String("-clone.") + info.completeSuffix();
+            }
+        } else {
+            disk[QStringLiteral("image")] = image + QLatin1String("-clone");
+        }
+        ret.append(QVariant::fromValue(disk));
+    }
+    return ret;
 }
 
 QVariantList Domain::media()

@@ -488,12 +488,12 @@
         <p style="font-weight:bold;">{% i18n "Storage devices" %}</p>
 
         <div class="col-sm-3">
-            {% for disk in disks %}
+            {% for disk in domain.disks %}
                 <p style="text-align: right;">{{ disk.dev }} ({{ disk.storage }})</p>
             {% endfor %}
         </div>
         <div class="col-sm-9">
-            {% for disk in disks %}
+            {% for disk in domain.disks %}
                 <p>{{ disk.image }} ({{ disk.format }})</p>
             {% endfor %}
         </div>
@@ -525,7 +525,7 @@
                 </div>
             {% endfor %}
             <p style="font-weight:bold;">{% i18n "Storage devices" %}</p>
-            {% for disk in clone_disks %}
+            {% for disk in domain.cloneDisks %}
                 <div class="form-group">
                     <label class="col-sm-3 control-label" style="font-weight:normal;">{{ disk.dev }} ({{ disk.storage }})</label>
 
@@ -663,7 +663,7 @@
                     {% endfor %}
                 </div>
                 <div id="disk-usage">
-                    {% for disk in disks %}
+                    {% for disk in domain.disks %}
                         <p style="margin-left: 25px">{% i18n "Disk I/O" %} - {{ disk.dev }}</p>
                         <canvas style="margin-left: 25px" id="blk{{ disk.dev }}Chart" width="600" height="125"></canvas>
                         <div id="lineLegend">
@@ -900,7 +900,7 @@
     };
 
     var diskChart = {};
-    {% for disk in disks %}
+    {% for disk in domain.disks %}
         var disk_ctx_{{ disk.dev }} = $("#blk{{ disk.dev }}Chart").get(0).getContext("2d");
         diskChart['{{ disk.dev }}'] = new Chart(disk_ctx_{{ disk.dev }});
     {% endfor %}

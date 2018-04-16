@@ -22,6 +22,8 @@
 
 #include <libvirt/libvirt.h>
 
+#include <QNetworkCookie>
+
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QDebug>
@@ -32,6 +34,70 @@ Info::Info(Virtlyst *parent)
     : Controller(parent)
     , m_virtlyst(parent)
 {
+}
+
+void Info::hostusage(Context *c, const QString &hostId)
+{
+    Connection *conn = m_virtlyst->connection(hostId);
+    if (conn == nullptr) {
+        fprintf(stderr, "Failed to open connection to qemu:///system\n");
+        return;
+    }
+
+    int points = 5;
+    QStringList timerArray = c->request()->cookie(QStringLiteral("timer")).split(QLatin1Char(' '), QString::SkipEmptyParts);
+    QStringList cpuArray = c->request()->cookie(QStringLiteral("cpu")).split(QLatin1Char(' '), QString::SkipEmptyParts);
+    QStringList memArray = c->request()->cookie(QStringLiteral("mem")).split(QLatin1Char(' '), QString::SkipEmptyParts);
+
+    timerArray.append(QTime::currentTime().toString());
+    cpuArray.append(QString::number(15));
+    memArray.append(QString::number(conn->usedMemoryKiB() / 1024));
+
+    if (timerArray.size() > points) {
+        timerArray = timerArray.mid(timerArray.size() - points);
+    }
+    if (cpuArray.size() > points) {
+        cpuArray = cpuArray.mid(cpuArray.size() - points);
+    }
+    if (memArray.size() > points) {
+        memArray = memArray.mid(memArray.size() - points);
+    }
+
+    QJsonObject cpu {
+        {QStringLiteral("labels"), QJsonArray::fromStringList(timerArray)},
+        {QStringLiteral("datasets"), QJsonArray{
+                QJsonObject{
+                    {QStringLiteral("fillColor"), QStringLiteral("rgba(241,72,70,0.5)")},
+                    {QStringLiteral("strokeColor"), QStringLiteral("rgba(241,72,70,1)")},
+                    {QStringLiteral("pointColor"), QStringLiteral("rgba(241,72,70,1)")},
+                    {QStringLiteral("pointStrokeColor"), QStringLiteral("#fff")},
+                    {QStringLiteral("data"), QJsonArray::fromStringList(cpuArray)},
+                }
+            }},
+    };
+
+    QJsonObject memory{
+        {QStringLiteral("labels"), QJsonArray::fromStringList(timerArray)},
+        {QStringLiteral("datasets"), QJsonArray{
+                QJsonObject{
+                    {QStringLiteral("fillColor"), QStringLiteral("rgba(249,134,33,0.5)")},
+                    {QStringLiteral("strokeColor"), QStringLiteral("rgba(249,134,33,1)")},
+                    {QStringLiteral("pointColor"), QStringLiteral("rgba(249,134,33,1)")},
+                    {QStringLiteral("pointStrokeColor"), QStringLiteral("#fff")},
+                    {QStringLiteral("data"), QJsonArray::fromStringList(memArray)},
+                }
+            }
+        },
+    };
+
+    c->response()->setJsonObjectBody({
+                                         {QStringLiteral("cpu"), cpu},
+                                         {QStringLiteral("memory"), memory},
+                                     });
+    c->response()->setCookie(QNetworkCookie("cpu", cpuArray.join(QLatin1Char(' ')).toLatin1()));
+    c->response()->setCookie(QNetworkCookie("timer", timerArray.join(QLatin1Char(' ')).toLatin1()));
+    c->response()->setCookie(QNetworkCookie("mem", memArray.join(QLatin1Char(' ')).toLatin1()));
+    conn->allCpusUsage();
 }
 
 void Info::insts_status(Context *c, const QString &hostId)

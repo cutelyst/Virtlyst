@@ -119,6 +119,15 @@ quint64 Connection::freeMemoryBytes() const
     return 0;
 }
 
+quint64 Connection::usedMemoryKiB()
+{
+    quint64 free = freeMemoryBytes();
+    if (free) {
+        return memory() - (free / 1024);
+    }
+    return memory();
+}
+
 quint64 Connection::memory()
 {
     if (!m_nodeInfoLoaded) {
@@ -227,6 +236,31 @@ bool Connection::kvmSupported()
         guest = guest.nextSiblingElement(QStringLiteral("guest"));
     }
     return false;
+}
+
+int Connection::allCpusUsage()
+{
+    int nparams = 0;
+    if (virNodeGetCPUStats(m_conn, VIR_NODE_CPU_STATS_ALL_CPUS, NULL, &nparams, 0) == 0 &&
+            nparams != 0) {
+        virNodeCPUStatsPtr params = new virNodeCPUStats[nparams];
+        if (virNodeGetCPUStats(m_conn, VIR_NODE_CPU_STATS_ALL_CPUS, params, &nparams, 0) == 0) {
+            double user_time, sys_time;
+            double total_time = 0;
+            for (int i = 0; i < nparams; ++i) {
+                qDebug() << params[i].field << params[i].value << nparams;
+                if (strcmp(params[i].field, VIR_NODE_CPU_STATS_UTILIZATION) == 0) {
+                    return params[i].value;
+                } else {
+                    total_time += params[i].value;
+                }
+            }
+
+
+        }
+        delete [] params;
+    }
+    return -1;
 }
 
 QStringList Connection::isoMedia()

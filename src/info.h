@@ -28,6 +28,9 @@ class Info : public Controller
 public:
     explicit Info(Virtlyst *parent = 0);
 
+    C_ATTR(hostusage, :Local :AutoArgs)
+    void hostusage(Context *c, const QString &hostId);
+
     C_ATTR(insts_status, :Local :AutoArgs)
     void insts_status(Context *c, const QString &hostId);
 

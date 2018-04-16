@@ -50,6 +50,9 @@ public:
     QString hypervisor() const;
     quint64 freeMemoryBytes() const;
 
+    quint64 usedMemoryKiB();
+
+
     quint64 memory();
     QString memoryPretty();
     uint cpus();
@@ -62,6 +65,8 @@ public:
     QString osType();
     QString modelCpu();
     bool kvmSupported();
+
+    int allCpusUsage();
 
     QStringList isoMedia();
 
