@@ -949,8 +949,8 @@
 </script>
 <script>
      window.setInterval(function get_status() {
-         var status = {{ status }};
-         $.getJSON('/inst_status/{{ host_id}}/{{ domain.name }}', function (data) {
+         var status = {{ domain.status }};
+         $.getJSON('/info/inst_status/{{ host_id}}/{{ domain.name }}', function (data) {
              if (data['status'] != status) {
                  window.location.reload()
              }

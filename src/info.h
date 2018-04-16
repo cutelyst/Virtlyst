@@ -34,6 +34,9 @@ public:
     C_ATTR(insts_status, :Local :AutoArgs)
     void insts_status(Context *c, const QString &hostId);
 
+    C_ATTR(inst_status, :Local :AutoArgs)
+    void inst_status(Context *c, const QString &hostId, const QString &name);
+
     C_ATTR(instusage, :Local :AutoArgs)
     void instusage(Context *c, const QString &hostId, const QString &name);
 

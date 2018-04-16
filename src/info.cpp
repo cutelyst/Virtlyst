@@ -101,8 +101,6 @@ void Info::hostusage(Context *c, const QString &hostId)
 
 void Info::insts_status(Context *c, const QString &hostId)
 {
-    c->setStash(QStringLiteral("host_id"), hostId);
-
     Connection *conn = m_virtlyst->connection(hostId);
     if (conn == nullptr) {
         fprintf(stderr, "Failed to open connection to qemu:///system\n");
@@ -130,23 +128,92 @@ void Info::insts_status(Context *c, const QString &hostId)
     c->response()->setJsonArrayBody(vms);
 }
 
+void Info::inst_status(Context *c, const QString &hostId, const QString &name)
+{
+    Connection *conn = m_virtlyst->connection(hostId);
+    if (conn == nullptr) {
+        fprintf(stderr, "Failed to open connection to qemu:///system\n");
+        return;
+    }
+
+    Domain *dom = conn->getDomainByName(name, c);
+    if (dom) {
+        c->response()->setJsonObjectBody({
+                                             {QStringLiteral("status"), dom->status()},
+                                         });
+    } else {
+        c->response()->setJsonObjectBody({
+                                             {QStringLiteral("error"), QStringLiteral("Domain not found: no domain with matching name '%1'").arg(name)},
+                                         });
+    }
+}
+
 void Info::instusage(Context *c, const QString &hostId, const QString &name)
 {
-    QJsonObject obj;
+    Connection *conn = m_virtlyst->connection(hostId);
+    if (conn == nullptr) {
+        fprintf(stderr, "Failed to open connection to qemu:///system\n");
+        return;
+    }
 
-    QJsonObject cpu;
+    Domain *dom = conn->getDomainByName(name, c);
+    if (!dom) {
+        c->response()->setJsonObjectBody({
+                                             {QStringLiteral("error"), QStringLiteral("Domain not found: no domain with matching name '%1'").arg(name)},
+                                         });
+        return;
+    }
 
-    obj.insert(QStringLiteral("cpu"), cpu);
+    int points = 5;
+    QStringList timerArray = c->request()->cookie(QStringLiteral("timer")).split(QLatin1Char(' '), QString::SkipEmptyParts);
+    QStringList cpuArray = c->request()->cookie(QStringLiteral("cpu")).split(QLatin1Char(' '), QString::SkipEmptyParts);
+    QStringList hddArray = c->request()->cookie(QStringLiteral("hdd")).split(QLatin1Char(' '), QString::SkipEmptyParts);
+    QStringList netArray = c->request()->cookie(QStringLiteral("net")).split(QLatin1Char(' '), QString::SkipEmptyParts);
+
+    timerArray.append(QTime::currentTime().toString());
+    cpuArray.append(QString::number(dom->cpuUsage()));
+
+    if (timerArray.size() > points) {
+        timerArray = timerArray.mid(timerArray.size() - points);
+    }
+    if (cpuArray.size() > points) {
+        cpuArray = cpuArray.mid(cpuArray.size() - points);
+    }
+    if (hddArray.size() > points) {
+        hddArray = hddArray.mid(hddArray.size() - points);
+    }
+    if (netArray.size() > points) {
+        netArray = netArray.mid(netArray.size() - points);
+    }
+
+    QJsonObject cpu {
+        {QStringLiteral("labels"), QJsonArray::fromStringList(timerArray)},
+        {QStringLiteral("datasets"), QJsonArray{
+                QJsonObject{
+                    {QStringLiteral("fillColor"), QStringLiteral("rgba(241,72,70,0.5)")},
+                    {QStringLiteral("strokeColor"), QStringLiteral("rgba(241,72,70,1)")},
+                    {QStringLiteral("pointColor"), QStringLiteral("rgba(241,72,70,1)")},
+                    {QStringLiteral("pointStrokeColor"), QStringLiteral("#fff")},
+                    {QStringLiteral("data"), QJsonArray::fromStringList(cpuArray)},
+                }
+            }},
+    };
 
     QJsonObject net;
 
-    obj.insert(QStringLiteral("net"), net);
 
     QJsonObject hdd;
 
-    obj.insert(QStringLiteral("hdd"), hdd);
 
-    c->response()->setJsonObjectBody(obj);
+    c->response()->setJsonObjectBody({
+                                         {QStringLiteral("cpu"), cpu},
+                                         {QStringLiteral("hdd"), hdd},
+                                         {QStringLiteral("net"), net},
+                                     });
+    c->response()->setCookie(QNetworkCookie("timer", timerArray.join(QLatin1Char(' ')).toLatin1()));
+    c->response()->setCookie(QNetworkCookie("cpu", cpuArray.join(QLatin1Char(' ')).toLatin1()));
+    c->response()->setCookie(QNetworkCookie("hdd", cpuArray.join(QLatin1Char(' ')).toLatin1()));
+    c->response()->setCookie(QNetworkCookie("net", cpuArray.join(QLatin1Char(' ')).toLatin1()));
 }
 
 

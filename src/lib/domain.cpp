@@ -26,6 +26,8 @@
 #include <QTextStream>
 #include <QDomElement>
 #include <QFileInfo>
+#include <QEventLoop>
+#include <QTimer>
 
 #include <QLoggingCategory>
 
@@ -254,6 +256,74 @@ void Domain::setConsoleKeymap(const QString &keymap)
             .firstChildElement(QStringLiteral("devices"))
             .firstChildElement(QStringLiteral("graphics"))
             .setAttribute(QStringLiteral("keymap"), keymap);
+}
+
+struct cpu_stats {
+    unsigned long long user = 0;
+    unsigned long long sys = 0;
+    unsigned long long cpu_time = 0;
+    unsigned long long vcpu_time = 0;
+};
+
+bool fillCpuStats(virDomainPtr dom, int nparams, cpu_stats &stats)
+{
+    virTypedParameter params[nparams];
+    if (virDomainGetCPUStats(dom, params, nparams, -1, 1, 0) == -1) {
+        return false;
+    }
+
+    for (int i = 0; i < nparams; ++i) {
+        qDebug() << params[i].field << params[i].type;
+        unsigned long long value;
+        if (strcmp(params[i].field, VIR_DOMAIN_CPU_STATS_CPUTIME) == 0 &&
+                params[i].type == VIR_TYPED_PARAM_ULLONG) {
+            stats.cpu_time = params[i].value.ul;
+        } else if (strcmp(params[i].field, VIR_DOMAIN_CPU_STATS_USERTIME) == 0 &&
+                   params[i].type == VIR_TYPED_PARAM_ULLONG) {
+            stats.user = params[i].value.ul;
+        } else if (strcmp(params[i].field, VIR_DOMAIN_CPU_STATS_SYSTEMTIME) == 0 &&
+                   params[i].type == VIR_TYPED_PARAM_ULLONG) {
+            stats.sys = params[i].value.ul;
+        } else if (strcmp(params[i].field, VIR_DOMAIN_CPU_STATS_VCPUTIME) == 0 &&
+                   params[i].type == VIR_TYPED_PARAM_ULLONG) {
+            stats.vcpu_time = params[i].value.ul;
+        }
+        qDebug() << params[i].field << params[i].type << params[i].value.ul;
+    }
+
+    return true;
+}
+
+int Domain::cpuUsage()
+{
+    int nparams = virDomainGetCPUStats(m_domain, NULL, 0, -1, 1, 0); // nparams
+    if (nparams == -1) {
+        return -1;
+    }
+
+    cpu_stats t0;
+    if (!fillCpuStats(m_domain, nparams, t0)) {
+        return -1;
+    }
+
+    QEventLoop loop;
+    QTimer::singleShot(1000, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    cpu_stats t1;
+    if (!fillCpuStats(m_domain, nparams, t1)) {
+        return -1;
+    }
+
+    double user_time   = t1.user   - t0.user;
+    double sys_time    = t1.sys    - t0.sys;
+    double total_time  = t1.cpu_time - t0.cpu_time;
+
+
+    double usage = (user_time + sys_time) / total_time * 100;
+    qDebug() << "==== usage" << qint64(user_time) << qint64(sys_time) << qint64(total_time) << usage;
+
+    return usage;
 }
 
 QVariantList Domain::disks()

@@ -98,6 +98,7 @@ public:
     QString consoleKeymap();
     void setConsoleKeymap(const QString &keymap);
 
+    int cpuUsage();
     QVariantList disks();
     QVariantList cloneDisks();
     QVariantList media();
