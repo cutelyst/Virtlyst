@@ -27,7 +27,10 @@
 #include "storagevol.h"
 
 #include <libvirt/virterror.h>
+
 #include <QXmlStreamWriter>
+#include <QTimer>
+#include <QEventLoop>
 
 #include <QLoggingCategory>
 
@@ -238,27 +241,76 @@ bool Connection::kvmSupported()
     return false;
 }
 
+struct cpu_stats {
+    unsigned long long user;
+    unsigned long long sys;
+    unsigned long long idle;
+    unsigned long long iowait;
+    unsigned long long util;
+    bool utilization = false;
+};
+
+bool getCPUStats(virConnectPtr conn, int cpuNum, int nparams, cpu_stats &stats)
+{
+    virNodeCPUStats params[nparams];
+    if (virNodeGetCPUStats(conn, VIR_NODE_CPU_STATS_ALL_CPUS, params, &nparams, 0) == 0) {
+        for (int i = 0; i < nparams; ++i) {
+            unsigned long long value = params[i].value;
+
+            if (strcmp(params[i].field, VIR_NODE_CPU_STATS_KERNEL) == 0)
+                stats.sys = value;
+
+            if (strcmp(params[i].field, VIR_NODE_CPU_STATS_USER) == 0)
+                stats.user = value;
+
+            if (strcmp(params[i].field, VIR_NODE_CPU_STATS_IDLE) == 0)
+                stats.idle = value;
+
+            if (strcmp(params[i].field, VIR_NODE_CPU_STATS_IOWAIT) == 0)
+                stats.iowait = value;
+
+            if (strcmp(params[i].field, VIR_NODE_CPU_STATS_UTILIZATION) == 0) {
+                stats.util = value;
+                stats.utilization = true;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
 int Connection::allCpusUsage()
 {
     int nparams = 0;
     if (virNodeGetCPUStats(m_conn, VIR_NODE_CPU_STATS_ALL_CPUS, NULL, &nparams, 0) == 0 &&
             nparams != 0) {
-        virNodeCPUStatsPtr params = new virNodeCPUStats[nparams];
-        if (virNodeGetCPUStats(m_conn, VIR_NODE_CPU_STATS_ALL_CPUS, params, &nparams, 0) == 0) {
-            double user_time, sys_time;
-            double total_time = 0;
-            for (int i = 0; i < nparams; ++i) {
-                qDebug() << params[i].field << params[i].value << nparams;
-                if (strcmp(params[i].field, VIR_NODE_CPU_STATS_UTILIZATION) == 0) {
-                    return params[i].value;
-                } else {
-                    total_time += params[i].value;
-                }
-            }
-
-
+        cpu_stats t0;
+        if (!getCPUStats(m_conn, VIR_NODE_CPU_STATS_ALL_CPUS, nparams, t0)) {
+            return -1;
         }
-        delete [] params;
+
+        if (t0.utilization) {
+            return t0.util;
+        }
+
+        QEventLoop loop;
+        QTimer::singleShot(1000, &loop, &QEventLoop::quit);
+        loop.exec();
+
+        cpu_stats t1;
+        if (!getCPUStats(m_conn, VIR_NODE_CPU_STATS_ALL_CPUS, nparams, t1)) {
+            return -1;
+        }
+
+        double user_time   = t1.user   - t0.user;
+        double sys_time    = t1.sys    - t0.sys;
+        double idle_time   = t1.idle   - t0.idle;
+        double iowait_time = t1.iowait - t0.iowait;
+        double total_time  = user_time + sys_time + idle_time + iowait_time;
+
+        double usage = (user_time + sys_time) / total_time * 100;
+
+        return usage;
     }
     return -1;
 }

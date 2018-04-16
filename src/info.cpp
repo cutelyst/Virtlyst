@@ -50,7 +50,7 @@ void Info::hostusage(Context *c, const QString &hostId)
     QStringList memArray = c->request()->cookie(QStringLiteral("mem")).split(QLatin1Char(' '), QString::SkipEmptyParts);
 
     timerArray.append(QTime::currentTime().toString());
-    cpuArray.append(QString::number(15));
+    cpuArray.append(QString::number(conn->allCpusUsage()));
     memArray.append(QString::number(conn->usedMemoryKiB() / 1024));
 
     if (timerArray.size() > points) {
@@ -97,7 +97,6 @@ void Info::hostusage(Context *c, const QString &hostId)
     c->response()->setCookie(QNetworkCookie("cpu", cpuArray.join(QLatin1Char(' ')).toLatin1()));
     c->response()->setCookie(QNetworkCookie("timer", timerArray.join(QLatin1Char(' ')).toLatin1()));
     c->response()->setCookie(QNetworkCookie("mem", memArray.join(QLatin1Char(' ')).toLatin1()));
-    conn->allCpusUsage();
 }
 
 void Info::insts_status(Context *c, const QString &hostId)
