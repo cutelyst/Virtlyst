@@ -242,20 +242,20 @@ bool Connection::kvmSupported()
 }
 
 struct cpu_stats {
-    unsigned long long user;
-    unsigned long long sys;
-    unsigned long long idle;
-    unsigned long long iowait;
-    unsigned long long util;
+    quint64 user;
+    quint64 sys;
+    quint64 idle;
+    quint64 iowait;
+    quint64 util;
     bool utilization = false;
 };
 
 bool getCPUStats(virConnectPtr conn, int cpuNum, int nparams, cpu_stats &stats)
 {
     virNodeCPUStats params[nparams];
-    if (virNodeGetCPUStats(conn, VIR_NODE_CPU_STATS_ALL_CPUS, params, &nparams, 0) == 0) {
+    if (virNodeGetCPUStats(conn, cpuNum, params, &nparams, 0) == 0) {
         for (int i = 0; i < nparams; ++i) {
-            unsigned long long value = params[i].value;
+            quint64 value = params[i].value;
 
             if (strcmp(params[i].field, VIR_NODE_CPU_STATS_KERNEL) == 0)
                 stats.sys = value;

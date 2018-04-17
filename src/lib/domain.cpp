@@ -31,6 +31,8 @@
 
 #include <QLoggingCategory>
 
+#include <sys/time.h>
+
 Q_LOGGING_CATEGORY(VIRT_DOM, "virt.domain")
 
 Domain::Domain(virDomainPtr domain, Connection *conn, QObject *parent) : QObject(parent)
@@ -258,40 +260,22 @@ void Domain::setConsoleKeymap(const QString &keymap)
             .setAttribute(QStringLiteral("keymap"), keymap);
 }
 
-struct cpu_stats {
-    unsigned long long user = 0;
-    unsigned long long sys = 0;
-    unsigned long long cpu_time = 0;
-    unsigned long long vcpu_time = 0;
-};
-
-bool fillCpuStats(virDomainPtr dom, int nparams, cpu_stats &stats)
+bool getCpuTime(virDomainPtr dom, int nparams, quint64 &cpu_time)
 {
     virTypedParameter params[nparams];
-    if (virDomainGetCPUStats(dom, params, nparams, -1, 1, 0) == -1) {
+    if (virDomainGetCPUStats(dom, params, nparams, -1, 1, 0) != nparams) {
         return false;
     }
 
     for (int i = 0; i < nparams; ++i) {
-        qDebug() << params[i].field << params[i].type;
-        unsigned long long value;
-        if (strcmp(params[i].field, VIR_DOMAIN_CPU_STATS_CPUTIME) == 0 &&
-                params[i].type == VIR_TYPED_PARAM_ULLONG) {
-            stats.cpu_time = params[i].value.ul;
-        } else if (strcmp(params[i].field, VIR_DOMAIN_CPU_STATS_USERTIME) == 0 &&
-                   params[i].type == VIR_TYPED_PARAM_ULLONG) {
-            stats.user = params[i].value.ul;
-        } else if (strcmp(params[i].field, VIR_DOMAIN_CPU_STATS_SYSTEMTIME) == 0 &&
-                   params[i].type == VIR_TYPED_PARAM_ULLONG) {
-            stats.sys = params[i].value.ul;
-        } else if (strcmp(params[i].field, VIR_DOMAIN_CPU_STATS_VCPUTIME) == 0 &&
-                   params[i].type == VIR_TYPED_PARAM_ULLONG) {
-            stats.vcpu_time = params[i].value.ul;
+        if ((strcmp(params[i].field, VIR_DOMAIN_CPU_STATS_CPUTIME) == 0 || strcmp(params[i].field, VIR_DOMAIN_CPU_STATS_VCPUTIME) == 0)
+                && params[i].type == VIR_TYPED_PARAM_ULLONG) {
+            cpu_time = params[i].value.ul;
+            return true;
         }
-        qDebug() << params[i].field << params[i].type << params[i].value.ul;
     }
 
-    return true;
+    return false;
 }
 
 int Domain::cpuUsage()
@@ -301,8 +285,15 @@ int Domain::cpuUsage()
         return -1;
     }
 
-    cpu_stats t0;
-    if (!fillCpuStats(m_domain, nparams, t0)) {
+    struct timeval then_t, now_t;
+    /* Get current time */
+    if (gettimeofday(&then_t, NULL) < 0) {
+        qCritical("unable to get time");
+        return -1;
+    }
+
+    quint64 then_stats;
+    if (!getCpuTime(m_domain, nparams, then_stats)) {
         return -1;
     }
 
@@ -310,18 +301,21 @@ int Domain::cpuUsage()
     QTimer::singleShot(1000, &loop, &QEventLoop::quit);
     loop.exec();
 
-    cpu_stats t1;
-    if (!fillCpuStats(m_domain, nparams, t1)) {
+    if (gettimeofday(&now_t, NULL) < 0) {
+        qCritical("unable to get time");
         return -1;
     }
 
-    double user_time   = t1.user   - t0.user;
-    double sys_time    = t1.sys    - t0.sys;
-    double total_time  = t1.cpu_time - t0.cpu_time;
+    quint64 now_stats;
+    if (!getCpuTime(m_domain, nparams, now_stats)) {
+        return -1;
+    }
 
+    quint64 then = then_t.tv_sec * 1000000 + then_t.tv_usec;
+    quint64 now = now_t.tv_sec * 1000000 + now_t.tv_usec;
 
-    double usage = (user_time + sys_time) / total_time * 100;
-    qDebug() << "==== usage" << qint64(user_time) << qint64(sys_time) << qint64(total_time) << usage;
+    double usage = (now_stats - then_stats) / (now - then) / 10 / currentVcpu();
+//    qDebug("CPU: %.2lf", usage);
 
     return usage;
 }
