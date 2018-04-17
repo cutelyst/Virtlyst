@@ -320,6 +320,52 @@ int Domain::cpuUsage()
     return usage;
 }
 
+QVector<std::pair<qint64, qint64> > Domain::netUsage()
+{
+    QVector<std::pair<qint64, qint64> > ret;
+
+    const QStringList networks = networkTargetDevs();
+    for (const QString &net : networks) {
+        virDomainInterfaceStatsStruct stats;
+        quint64 rx = 0;
+        quint64 tx = 0;
+        if (virDomainInterfaceStats(m_domain, net.toUtf8().constData(), &stats, sizeof(virDomainInterfaceStatsStruct)) == 0) {
+            if (stats.rx_bytes != -1) {
+                rx = stats.rx_bytes;
+            }
+            if (stats.tx_bytes != -1) {
+                tx = stats.tx_bytes;
+            }
+        }
+        ret.append({ rx, tx });
+    }
+
+    QEventLoop loop;
+    QTimer::singleShot(1000, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    int i = 0;
+    for (const QString &net : networks) {
+        virDomainInterfaceStatsStruct stats;
+        std::pair<quint64, quint64> rx_tx = ret[i];
+        quint64 rx = 0;
+        quint64 tx = 0;
+        if (virDomainInterfaceStats(m_domain, net.toUtf8().constData(), &stats, sizeof(virDomainInterfaceStatsStruct)) == 0) {
+            if (stats.rx_bytes != -1) {
+                rx = (stats.rx_bytes - rx_tx.first);
+            }
+            if (stats.tx_bytes != -1) {
+                tx = (stats.tx_bytes - rx_tx.second);
+            }
+            qDebug() << net << stats.rx_bytes << rx_tx.first << rx;
+            qDebug() << net << stats.tx_bytes << rx_tx.second << tx;
+        }
+        ret[i++] = { rx, tx };
+    }
+
+    return ret;
+}
+
 QVariantList Domain::disks()
 {
     QVariantList ret;
@@ -459,6 +505,24 @@ QVariantList Domain::networks()
     }
 
     return ret;
+}
+
+QStringList Domain::networkTargetDevs()
+{
+    QStringList networks;
+    QDomElement interface = xmlDoc()
+            .documentElement()
+            .firstChildElement(QStringLiteral("devices"))
+            .firstChildElement(QStringLiteral("interface"));
+    while (!interface.isNull()) {
+        const QDomElement target = interface.firstChildElement(QStringLiteral("target"));
+        if (target.hasAttribute(QStringLiteral("dev"))) {
+            networks.append(target.attribute(QStringLiteral("dev")));
+        }
+
+        interface = interface.nextSiblingElement(QStringLiteral("interface"));
+    }
+    return networks;
 }
 
 void Domain::start()

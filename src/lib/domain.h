@@ -99,10 +99,12 @@ public:
     void setConsoleKeymap(const QString &keymap);
 
     int cpuUsage();
+    QVector<std::pair<qint64, qint64>> netUsage();
     QVariantList disks();
     QVariantList cloneDisks();
     QVariantList media();
     QVariantList networks();
+    QStringList networkTargetDevs();
 
     void start();
     void shutdown();

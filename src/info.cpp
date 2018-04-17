@@ -167,8 +167,11 @@ void Info::instusage(Context *c, const QString &hostId, const QString &name)
     int points = 5;
     QStringList timerArray = c->request()->cookie(QStringLiteral("timer")).split(QLatin1Char(' '), QString::SkipEmptyParts);
     QStringList cpuArray = c->request()->cookie(QStringLiteral("cpu")).split(QLatin1Char(' '), QString::SkipEmptyParts);
-    QStringList hddArray = c->request()->cookie(QStringLiteral("hdd")).split(QLatin1Char(' '), QString::SkipEmptyParts);
-    QStringList netArray = c->request()->cookie(QStringLiteral("net")).split(QLatin1Char(' '), QString::SkipEmptyParts);
+    QString hddCookie = c->request()->cookie(QStringLiteral("hdd")).replace(QLatin1String("\\054"), QLatin1String(","));
+    QString netCookie = c->request()->cookie(QStringLiteral("net")).replace(QLatin1String("\\054"), QLatin1String(","));
+    qDebug() << "cookies" << c->request()->cookies();
+    qDebug() << "hddCookie" << hddCookie;
+    qDebug() << "netCookie" << netCookie;
 
     timerArray.append(QTime::currentTime().toString());
     cpuArray.append(QString::number(dom->cpuUsage()));
@@ -179,12 +182,12 @@ void Info::instusage(Context *c, const QString &hostId, const QString &name)
     if (cpuArray.size() > points) {
         cpuArray = cpuArray.mid(cpuArray.size() - points);
     }
-    if (hddArray.size() > points) {
-        hddArray = hddArray.mid(hddArray.size() - points);
-    }
-    if (netArray.size() > points) {
-        netArray = netArray.mid(netArray.size() - points);
-    }
+//    if (hddArray.size() > points) {
+//        hddArray = hddArray.mid(hddArray.size() - points);
+//    }
+//    if (netArray.size() > points) {
+//        netArray = netArray.mid(netArray.size() - points);
+//    }
 
     QJsonObject cpu {
         {QStringLiteral("labels"), QJsonArray::fromStringList(timerArray)},
@@ -199,7 +202,48 @@ void Info::instusage(Context *c, const QString &hostId, const QString &name)
             }},
     };
 
-    QJsonObject net;
+    QJsonArray net;
+    const QVector<std::pair<qint64, qint64> > net_usage = dom->netUsage();
+    qDebug() << "net_usage -------" << net_usage;
+
+    int netDev = 0;
+    for (const std::pair<quint64, quint64> rx_tx : net_usage) {
+        QJsonObject network {
+            {QStringLiteral("labels"), QJsonArray::fromStringList(timerArray)},
+            {QStringLiteral("datasets"), QJsonArray{
+                    QJsonObject{
+                        {QStringLiteral("fillColor"), QStringLiteral("rgba(83,191,189,0.5)")},
+                        {QStringLiteral("strokeColor"), QStringLiteral("rgba(83,191,189,1)")},
+                        {QStringLiteral("pointColor"), QStringLiteral("rgba(83,191,189,1)")},
+                        {QStringLiteral("pointStrokeColor"), QStringLiteral("#fff")},
+                        {QStringLiteral("data"), QJsonArray{
+                                 int(rx_tx.first),
+                                        int(rx_tx.first),
+                                        int(rx_tx.first),
+                                        int(rx_tx.first),
+                                        int(rx_tx.first),
+                            }},
+                    },
+                    QJsonObject{
+                        {QStringLiteral("fillColor"), QStringLiteral("rgba(151,187,205,0.5)")},
+                        {QStringLiteral("strokeColor"), QStringLiteral("rgba(151,187,205,1)")},
+                        {QStringLiteral("pointColor"), QStringLiteral("rgba(151,187,205,1)")},
+                        {QStringLiteral("pointStrokeColor"), QStringLiteral("#fff")},
+                        {QStringLiteral("data"), QJsonArray{
+                                int(rx_tx.second),
+                                        int(rx_tx.second),
+                                        int(rx_tx.second),
+                                        int(rx_tx.second),
+                                        int(rx_tx.second),
+                            }},
+                    }
+                }},
+        };
+        net.append(QJsonObject{
+                       {QStringLiteral("dev"), netDev++},
+                       {QStringLiteral("data"), network},
+                   });
+    }
 
 
     QJsonObject hdd;
@@ -212,7 +256,9 @@ void Info::instusage(Context *c, const QString &hostId, const QString &name)
                                      });
     c->response()->setCookie(QNetworkCookie("timer", timerArray.join(QLatin1Char(' ')).toLatin1()));
     c->response()->setCookie(QNetworkCookie("cpu", cpuArray.join(QLatin1Char(' ')).toLatin1()));
-    c->response()->setCookie(QNetworkCookie("hdd", cpuArray.join(QLatin1Char(' ')).toLatin1()));
+    QByteArray hddd("\"{'hda': [[0\054 0\054 0\054 0\054 0]\054 [0\054 0\054 0\054 0\054 0]]}\"");
+    hddd.replace(',', "\\054");
+    c->response()->setCookie(QNetworkCookie("hdd", hddd));
     c->response()->setCookie(QNetworkCookie("net", cpuArray.join(QLatin1Char(' ')).toLatin1()));
 }
 
