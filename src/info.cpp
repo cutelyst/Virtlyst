@@ -203,7 +203,7 @@ void Info::instusage(Context *c, const QString &hostId, const QString &name)
     };
 
     QJsonArray net;
-    const QVector<std::pair<qint64, qint64> > net_usage = dom->netUsage();
+    const QVector<std::pair<qint64, qint64> > net_usage = dom->netUsageMiBs();
     qDebug() << "net_usage -------" << net_usage;
 
     int netDev = 0;

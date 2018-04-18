@@ -320,7 +320,7 @@ int Domain::cpuUsage()
     return usage;
 }
 
-QVector<std::pair<qint64, qint64> > Domain::netUsage()
+QVector<std::pair<qint64, qint64> > Domain::netUsageMiBs()
 {
     QVector<std::pair<qint64, qint64> > ret;
 
@@ -352,10 +352,10 @@ QVector<std::pair<qint64, qint64> > Domain::netUsage()
         quint64 tx = 0;
         if (virDomainInterfaceStats(m_domain, net.toUtf8().constData(), &stats, sizeof(virDomainInterfaceStatsStruct)) == 0) {
             if (stats.rx_bytes != -1) {
-                rx = (stats.rx_bytes - rx_tx.first);
+                rx = (stats.rx_bytes - rx_tx.first) * 8 / 1024;
             }
             if (stats.tx_bytes != -1) {
-                tx = (stats.tx_bytes - rx_tx.second);
+                tx = (stats.tx_bytes - rx_tx.second) * 8 / 1024;
             }
             qDebug() << net << stats.rx_bytes << rx_tx.first << rx;
             qDebug() << net << stats.tx_bytes << rx_tx.second << tx;
