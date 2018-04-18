@@ -352,15 +352,108 @@ QVector<std::pair<qint64, qint64> > Domain::netUsageMiBs()
         quint64 tx = 0;
         if (virDomainInterfaceStats(m_domain, net.toUtf8().constData(), &stats, sizeof(virDomainInterfaceStatsStruct)) == 0) {
             if (stats.rx_bytes != -1) {
-                rx = (stats.rx_bytes - rx_tx.first) * 8 / 1024;
+                rx = (stats.rx_bytes - rx_tx.first) * 8 / 1024 / 1024;
             }
             if (stats.tx_bytes != -1) {
-                tx = (stats.tx_bytes - rx_tx.second) * 8 / 1024;
+                tx = (stats.tx_bytes - rx_tx.second) * 8 / 1024 / 1024;
             }
             qDebug() << net << stats.rx_bytes << rx_tx.first << rx;
             qDebug() << net << stats.tx_bytes << rx_tx.second << tx;
         }
         ret[i++] = { rx, tx };
+    }
+
+    return ret;
+}
+
+QMap<QString, std::pair<qint64, qint64> > Domain::hddUsageMiBs()
+{
+    QMap<QString, std::pair<qint64, qint64> > ret;
+
+    QStringList devices;
+    QDomElement disk = xmlDoc()
+            .documentElement()
+            .firstChildElement(QStringLiteral("devices"))
+            .firstChildElement(QStringLiteral("disk"));
+    while (!disk.isNull()) {
+        QString dev_file;
+        bool network_disk = true;
+
+        const QDomElement source = disk.firstChildElement(QStringLiteral("source"));
+
+        if (source.hasAttribute(QStringLiteral("protocol"))) {
+            dev_file = source.attribute(QStringLiteral("protocol"));
+            network_disk = true;
+        }
+        if (source.hasAttribute(QStringLiteral("file"))) {
+            dev_file = source.attribute(QStringLiteral("file"));
+        }
+        if (source.hasAttribute(QStringLiteral("dev"))) {
+            dev_file = source.attribute(QStringLiteral("dev"));
+        }
+        const QString dev_bus = disk.firstChildElement(QStringLiteral("target")).attribute(QStringLiteral("dev"));
+
+        if (!dev_file.isEmpty() && !dev_bus.isEmpty()) {
+            if (network_disk) {
+                // this will always be true, odd logic from webvirtmgr
+                dev_file = dev_bus;
+            }
+            devices.append(dev_file);
+        }
+
+        disk = disk.nextSiblingElement(QStringLiteral("disk"));
+    }
+
+    for (const QString &dev : devices) {
+        virDomainBlockStatsStruct stats;
+        quint64 rd = 0;
+        quint64 wr = 0;
+        if (virDomainBlockStats(m_domain, dev.toUtf8().constData(), &stats, sizeof(virDomainBlockStatsStruct)) == 0) {
+            if (stats.rd_bytes != -1) {
+                rd = stats.rd_bytes;
+            }
+            if (stats.wr_bytes != -1) {
+                wr = stats.wr_bytes;
+            }
+        }
+        ret.insert(dev, { rd, wr });
+    }
+
+    for (const QString &dev : devices) {
+        virDomainBlockStatsStruct stats;
+        quint64 rd = 0;
+        quint64 wr = 0;
+        if (virDomainBlockStats(m_domain, dev.toUtf8().constData(), &stats, sizeof(virDomainBlockStatsStruct)) == 0) {
+            if (stats.rd_bytes != -1) {
+                rd = stats.rd_bytes;
+            }
+            if (stats.wr_bytes != -1) {
+                wr = stats.wr_bytes;
+            }
+        }
+        ret.insert(dev, { rd, wr });
+    }
+
+    QEventLoop loop;
+    QTimer::singleShot(1000, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    for (const QString &dev : devices) {
+        virDomainBlockStatsStruct stats;
+        std::pair<quint64, quint64> rd_wr = ret[dev];
+        quint64 rd = 0;
+        quint64 wr = 0;
+        if (virDomainBlockStats(m_domain, dev.toUtf8().constData(), &stats, sizeof(virDomainBlockStatsStruct)) == 0) {
+            if (stats.rd_bytes != -1) {
+                rd = (stats.rd_bytes - rd_wr.first) / 1024 / 1024;
+            }
+            if (stats.wr_bytes != -1) {
+                wr = (stats.wr_bytes - rd_wr.second) * 8 / 1024 / 1024;
+            }
+            qDebug() << dev << stats.rd_bytes << rd_wr.first << rd;
+            qDebug() << dev << stats.wr_bytes << rd_wr.second << wr;
+        }
+        ret[dev] = { rd, wr };
     }
 
     return ret;

@@ -100,6 +100,7 @@ public:
 
     int cpuUsage();
     QVector<std::pair<qint64, qint64>> netUsageMiBs();
+    QMap<QString, std::pair<qint64, qint64>> hddUsageMiBs();
     QVariantList disks();
     QVariantList cloneDisks();
     QVariantList media();
