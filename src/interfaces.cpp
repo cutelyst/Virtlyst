@@ -31,7 +31,6 @@ void Interfaces::index(Context *c, const QString &hostId)
 {
     c->setStash(QStringLiteral("template"), QStringLiteral("interfaces.html"));
     c->setStash(QStringLiteral("host_id"), hostId);
-    c->setStash(QStringLiteral("time_refresh"), 8000);
 
     Connection *conn = m_virtlyst->connection(hostId);
     if (conn == nullptr) {
@@ -77,7 +76,6 @@ void Interfaces::interface(Context *c, const QString &hostId, const QString &ifa
 {
     c->setStash(QStringLiteral("template"), QStringLiteral("interface.html"));
     c->setStash(QStringLiteral("host_id"), hostId);
-    c->setStash(QStringLiteral("time_refresh"), 8000);
 
     Connection *conn = m_virtlyst->connection(hostId);
     if (conn == nullptr) {

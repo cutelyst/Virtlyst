@@ -32,7 +32,6 @@ void Networks::index(Context *c, const QString &hostId)
 {
     c->setStash(QStringLiteral("template"), QStringLiteral("networks.html"));
     c->setStash(QStringLiteral("host_id"), hostId);
-    c->setStash(QStringLiteral("time_refresh"), 8000);
 
     Connection *conn = m_virtlyst->connection(hostId);
     if (conn == nullptr) {
@@ -75,7 +74,6 @@ void Networks::network(Context *c, const QString &hostId, const QString &netName
 {
     c->setStash(QStringLiteral("template"), QStringLiteral("network.html"));
     c->setStash(QStringLiteral("host_id"), hostId);
-    c->setStash(QStringLiteral("time_refresh"), 8000);
 
     Connection *conn = m_virtlyst->connection(hostId);
     if (conn == nullptr) {

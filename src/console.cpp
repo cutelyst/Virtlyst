@@ -37,7 +37,6 @@ void Console::index(Context *c, const QString &hostId, const QString &uuid)
 {
     QStringList errors;
     c->setStash(QStringLiteral("host_id"), hostId);
-    c->setStash(QStringLiteral("time_refresh"), 8000);
 
     Connection *conn = m_virtlyst->connection(hostId);
     if (conn == nullptr) {

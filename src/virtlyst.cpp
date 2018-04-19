@@ -31,6 +31,8 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
+#include <QUuid>
+#include <QTranslator>
 #include <QStandardPaths>
 #include <QDebug>
 
@@ -81,7 +83,7 @@ bool Virtlyst::init()
     qDebug() << "Production" << production;
 
     m_dbPath = config(QStringLiteral("DatabasePath"),
-                      QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + QLatin1String("/sticklyst.sqlite")).toString();
+                      QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + QLatin1String("/virtlyst.sqlite")).toString();
     qDebug() << "Database" << m_dbPath;
     if (!QFile::exists(m_dbPath)) {
         if (!createDB()) {
@@ -94,7 +96,7 @@ bool Virtlyst::init()
     auto view = new GrantleeView(this);
     view->setCache(production);
     view->engine()->addDefaultLibrary(QStringLiteral("grantlee_i18ntags"));
-//    view->addTranslator(QLocale::system(), new QTranslator(this));
+    view->addTranslator(QLocale::system(), new QTranslator(this));
     view->setIncludePaths({ pathTo(QStringLiteral("root/src")) });
 
     auto store = new SqlUserStore;
@@ -119,7 +121,7 @@ bool Virtlyst::postFork()
 {
     QMutexLocker locker(&mutex);
 
-    auto db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), Cutelyst::Sql::databaseNameThread(QStringLiteral("sticklyst")));
+    auto db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), Cutelyst::Sql::databaseNameThread(QStringLiteral("virtlyst")));
     db.setDatabaseName(m_dbPath);
     if (!db.open()) {
         qWarning() << "Failed to open database" << db.lastError().databaseText();
@@ -184,6 +186,15 @@ QStringList Virtlyst::keymaps()
     return ret;
 }
 
+bool Virtlyst::createDbFlavor(QSqlQuery &query, const QString &label, int memory, int vcpu, int disk)
+{
+    query.bindValue(QStringLiteral(":label"), label);
+    query.bindValue(QStringLiteral(":memory"), memory);
+    query.bindValue(QStringLiteral(":vcpu"), vcpu);
+    query.bindValue(QStringLiteral(":disk"), disk);
+    return query.exec();
+}
+
 bool Virtlyst::createDB()
 {
     auto db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("db"));
@@ -208,13 +219,57 @@ bool Virtlyst::createDB()
         return false;
     }
 
-    if (!query.exec(QStringLiteral("INSERT INTO users "
-                                   "(username, password) "
-                                   "VALUES "
-                                   "('admin', 'admin')"))) {
+    if (!query.prepare(QStringLiteral("INSERT INTO users "
+                                      "(username, password) "
+                                      "VALUES "
+                                      "('admin', :password)"))) {
         qCritical() << "Error creating database" << query.lastError().text();
         return false;
     }
+    const QString password = QString::fromLatin1(QUuid::createUuid().toRfc4122().toHex());
+    query.bindValue(QStringLiteral(":password"), QString::fromLatin1(
+                        CredentialPassword::createPassword(password.toUtf8(), QCryptographicHash::Sha256, 10000, 16, 16)));
+    if (!query.exec()) {
+        qCritical() << "Error creating database" << query.lastError().text();
+        return false;
+    }
+    qCritical() << "Created user admin with password:" << password;
+
+    if (!query.exec(QStringLiteral("CREATE TABLE servers_compute "
+                                   "( id integer NOT NULL PRIMARY KEY"
+                                   ", name varchar(20) NOT NULL"
+                                   ", hostname varchar(20) NOT NULL"
+                                   ", login varchar(20) NOT NULL"
+                                   ", password varchar(14)"
+                                   ", type integer NOT NULL)"))) {
+        qCritical() << "Error creating database" << query.lastError().text();
+        return false;
+    }
+
+    if (!query.exec(QStringLiteral("CREATE TABLE create_flavor "
+                                   "( id integer NOT NULL PRIMARY KEY"
+                                   ", label varchar(12) NOT NULL"
+                                   ", memory integer NOT NULL"
+                                   ", vcpu integer NOT NULL"
+                                   ", disk integer NOT NULL)"))) {
+        qCritical() << "Error creating database" << query.lastError().text();
+        return false;
+    }
+
+    if (!query.prepare(QStringLiteral("INSERT INTO create_flavor "
+                                      "(label, memory, vcpu, disk) "
+                                      "VALUES "
+                                      "(:label, :memory, :vcpu, :disk)"))) {
+        qCritical() << "Error creating database" << query.lastError().text();
+        return false;
+    }
+
+    createDbFlavor(query, QStringLiteral("micro"), 512, 1, 20);
+    createDbFlavor(query, QStringLiteral("mini"), 1024, 2, 30);
+    createDbFlavor(query, QStringLiteral("small"), 2048, 2, 40);
+    createDbFlavor(query, QStringLiteral("medium"), 4096, 2, 60);
+    createDbFlavor(query, QStringLiteral("large"), 8192, 4, 80);
+    createDbFlavor(query, QStringLiteral("xlarge"), 16348, 8, 160);
 
     return true;
 }

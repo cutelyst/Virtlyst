@@ -33,7 +33,6 @@ void Storages::index(Context *c, const QString &hostId)
 {
     c->setStash(QStringLiteral("template"), QStringLiteral("storages.html"));
     c->setStash(QStringLiteral("host_id"), hostId);
-    c->setStash(QStringLiteral("time_refresh"), 8000);
 
     Connection *conn = m_virtlyst->connection(hostId);
     if (conn == nullptr) {
@@ -96,7 +95,6 @@ void Storages::storage(Context *c, const QString &hostId, const QString &pool)
 {
     c->setStash(QStringLiteral("template"), QStringLiteral("storage.html"));
     c->setStash(QStringLiteral("host_id"), hostId);
-    c->setStash(QStringLiteral("time_refresh"), 8000);
 
     Connection *conn = m_virtlyst->connection(hostId);
     if (conn == nullptr) {

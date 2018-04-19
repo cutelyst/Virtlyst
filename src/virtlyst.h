@@ -23,6 +23,7 @@
 
 using namespace Cutelyst;
 
+class QSqlQuery;
 class Connection;
 class Virtlyst : public Application
 {
@@ -44,7 +45,7 @@ public:
 
     static QStringList keymaps();
 
-//    static bool changeSettings(virDomainPtr domain, const QString &description, quint64 cur_memory, quint64 memory, uint cur_vcpu, uint vcpu);
+    static bool createDbFlavor(QSqlQuery &query, const QString &label, int memory, int vcpu, int disk);
 
 private:
     bool createDB();

@@ -32,7 +32,6 @@ void Secrets::index(Context *c, const QString &hostId)
 {
     c->setStash(QStringLiteral("template"), QStringLiteral("secrets.html"));
     c->setStash(QStringLiteral("host_id"), hostId);
-    c->setStash(QStringLiteral("time_refresh"), 8000);
 
     Connection *conn = m_virtlyst->connection(hostId);
     if (conn == nullptr) {

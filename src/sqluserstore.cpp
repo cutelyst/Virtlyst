@@ -19,8 +19,6 @@
 #include <Cutelyst/Context>
 #include <Cutelyst/Plugins/Utils/Sql>
 
-#include <QRegularExpression>
-
 #include <QJsonDocument>
 #include <QJsonObject>
 
@@ -41,9 +39,9 @@ Cutelyst::AuthenticationUser SqlUserStore::findUser(Cutelyst::Context *c, const 
 {
     Q_UNUSED(c)
     QSqlQuery query = CPreparedSqlQueryThreadForDB(
-                QStringLiteral("SELECT * FROM users WHERE email = :email"),
-                QStringLiteral("cmlyst"));
-    query.bindValue(QStringLiteral(":email"), userinfo.value(QStringLiteral("email")));
+                QStringLiteral("SELECT * FROM users WHERE username = :username"),
+                QStringLiteral("virtlyst"));
+    query.bindValue(QStringLiteral(":username"), userinfo.value(QStringLiteral("username")));
     if (query.exec() && query.next()) {
         QVariant userId = query.value(QStringLiteral("id"));
 

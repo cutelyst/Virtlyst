@@ -35,8 +35,14 @@ public:
     C_ATTR(login, :Local :AutoArgs)
     void login(Context *c);
 
+    C_ATTR(logout, :Local :AutoArgs)
+    void logout(Context *c);
+
     C_ATTR(defaultPage, :Path)
     void defaultPage(Context *c);
+
+private Q_SLOTS:
+    bool Auto(Context *c);
 
 private:
     C_ATTR(End, :ActionClass("RenderView"))

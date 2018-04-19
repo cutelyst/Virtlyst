@@ -29,7 +29,6 @@ void Overview::index(Context *c, const QString &hostId)
 {
     c->setStash(QStringLiteral("template"), QStringLiteral("hostdetail.html"));
     c->setStash(QStringLiteral("host_id"), hostId);
-    c->setStash(QStringLiteral("time_refresh"), 8000);
 
     Connection *conn = m_virtlyst->connection(hostId);
     if (conn == nullptr) {
@@ -37,6 +36,4 @@ void Overview::index(Context *c, const QString &hostId)
         return;
     }
     c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));
-
-
 }

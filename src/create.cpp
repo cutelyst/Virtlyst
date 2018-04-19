@@ -8,6 +8,10 @@
 #include "lib/domain.h"
 
 #include <Cutelyst/Plugins/StatusMessage>
+#include <Cutelyst/Plugins/Utils/Sql>
+
+#include <QSqlQuery>
+#include <QSqlError>
 
 #include <QUuid>
 #include <QDomDocument>
@@ -23,7 +27,6 @@ Create::Create(Virtlyst *parent)
 
 void Create::index(Context *c, const QString &hostId)
 {
-    StatusMessage::load(c);
     Connection *conn = m_virtlyst->connection(hostId);
     if (conn == nullptr) {
         fprintf(stderr, "Failed to open connection to qemu:///system\n");
@@ -31,7 +34,6 @@ void Create::index(Context *c, const QString &hostId)
     }
     c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));
     c->setStash(QStringLiteral("host_id"), hostId);
-    c->setStash(QStringLiteral("time_refresh"), 8000);
     c->setStash(QStringLiteral("template"), QStringLiteral("create.html"));
 
     const QVector<Domain *> domains = conn->domains(
@@ -42,9 +44,28 @@ void Create::index(Context *c, const QString &hostId)
         QStringList errors;
         const ParamsMultiMap params = c->request()->bodyParameters();
         if (params.contains(QStringLiteral("create_flavor"))) {
-
+            const QString label = params[QStringLiteral("label")];
+            const int memory = params[QStringLiteral("memory")].toInt();
+            const int vcpu = params[QStringLiteral("vcpu")].toInt();
+            const int disk = params[QStringLiteral("disk")].toInt();
+            QSqlQuery query = CPreparedSqlQueryThreadForDB(
+                        QStringLiteral("INSERT INTO create_flavor "
+                                       "(label, memory, vcpu, disk) "
+                                       "VALUES "
+                                       "(:label, :memory, :vcpu, :disk)"),
+                        QStringLiteral("virtlyst"));
+            if (!Virtlyst::createDbFlavor(query, label, memory, vcpu, disk)) {
+                qWarning() << "Failed to create flavor" << label << query.lastError().databaseText();
+            }
         } else if (params.contains(QStringLiteral("delete_flavor"))) {
-
+            const QString id = params[QStringLiteral("flavor")];
+            QSqlQuery query = CPreparedSqlQueryThreadForDB(
+                        QStringLiteral("DELETE FROM create_flavor WHERE id = :id"),
+                        QStringLiteral("virtlyst"));
+            query.bindValue(QStringLiteral(":id"), id);
+            if (!query.exec()) {
+                qWarning() << "Failed to delete flavor" << id << query.lastError().databaseText();
+            }
         } else if (params.contains(QStringLiteral("create_xml"))) {
             const QString xml = params[QStringLiteral("from_xml")];
             QDomDocument xmlDoc;
@@ -138,4 +159,11 @@ void Create::index(Context *c, const QString &hostId)
     c->setStash(QStringLiteral("networks"), QVariant::fromValue(networks));
     c->setStash(QStringLiteral("get_images"), QVariant::fromValue(conn->getStorageImages(c)));
     c->setStash(QStringLiteral("cache_modes"), QVariant::fromValue(conn->getCacheModes()));
+
+    QSqlQuery query = CPreparedSqlQueryThreadForDB(
+                QStringLiteral("SELECT * FROM create_flavor"),
+                QStringLiteral("virtlyst"));
+    if (query.exec()) {
+        c->setStash(QStringLiteral("flavors"), Sql::queryToHashList(query));
+    }
 }

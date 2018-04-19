@@ -16,7 +16,12 @@
  */
 #include "root.h"
 
+#include <Cutelyst/Plugins/Authentication/authentication.h>
+#include <Cutelyst/Plugins/StatusMessage>
+
 #include <libvirt/libvirt.h>
+
+#include <QLoggingCategory>
 
 using namespace Cutelyst;
 
@@ -35,12 +40,61 @@ void Root::index(Context *c)
 
 void Root::login(Context *c)
 {
+    c->setStash(QStringLiteral("template"), QStringLiteral("login.html"));
 
+    Request *req = c->request();
+    const ParamsMultiMap params = req->bodyParams();
+    const QString username = params.value(QStringLiteral("username"));
+    if (req->isPost()) {
+        const QString password = params.value(QStringLiteral("password"));
+        if (!username.isEmpty() && !password.isEmpty()) {
+
+            // Authenticate
+            if (Authentication::authenticate(c, params)) {
+                qDebug() << Q_FUNC_INFO << username << "is now Logged in";
+                c->res()->redirect(c->uriFor(CActionFor(QStringLiteral("index"))));
+                return;
+            } else {
+                c->setStash(QStringLiteral("error_msg"), trUtf8("Wrong password or username"));
+                qDebug() << Q_FUNC_INFO << username << "user or password invalid";
+            }
+        } else {
+            qWarning() << "Empty username and password";
+        }
+        c->res()->setStatus(Response::Forbidden);
+    } else {
+        qWarning() << "Non POST method";
+    }
+}
+
+void Root::logout(Context *c)
+{
+    Authentication::logout(c);
+    c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("index"))));
 }
 
 void Root::defaultPage(Context *c)
 {
     c->setStash(QStringLiteral("template"), QStringLiteral("404.html"));
     c->response()->setStatus(404);
+}
+
+bool Root::Auto(Context *c)
+{
+    StatusMessage::load(c);
+
+    if (c->action() == CActionFor(QStringLiteral("login"))) {
+        return true;
+    }
+
+    if (!Authentication::userExists(c)) {
+        c->res()->redirect(c->uriFor(CActionFor(QStringLiteral("login"))));
+        return false;
+    }
+
+    c->setStash(QStringLiteral("user"), Authentication::user(c));
+    c->setStash(QStringLiteral("time_refresh"), 8000);
+
+    return true;
 }
 

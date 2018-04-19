@@ -43,7 +43,6 @@ void Instances::index(Context *c, const QString &hostId)
     }
     c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));
     c->setStash(QStringLiteral("host_id"), hostId);
-    c->setStash(QStringLiteral("time_refresh"), 8000);
 
     if (c->request()->isPost()) {
         const ParamsMultiMap params = c->request()->bodyParameters();
@@ -81,7 +80,6 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
     QStringList errors;
     c->setStash(QStringLiteral("template"), QStringLiteral("instance.html"));
     c->setStash(QStringLiteral("host_id"), hostId);
-    c->setStash(QStringLiteral("time_refresh"), 8000);
 
     Connection *conn = m_virtlyst->connection(hostId);
     if (conn == nullptr) {
@@ -239,7 +237,6 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
     }
 
     c->setStash(QStringLiteral("host_id"), hostId);
-    c->setStash(QStringLiteral("time_refresh"), 8000);
 
     int vcpus = conn->maxVcpus();
     QVector<int> vcpu_range;
