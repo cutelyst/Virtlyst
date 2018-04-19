@@ -18,7 +18,9 @@
 #ifndef DOMAIN_H
 #define DOMAIN_H
 
+#include <QMap>
 #include <QObject>
+#include <QVector>
 #include <QDomDocument>
 
 #include <libvirt/libvirt.h>
@@ -101,6 +103,7 @@ public:
     int cpuUsage();
     QVector<std::pair<qint64, qint64>> netUsageMiBs();
     QMap<QString, std::pair<qint64, qint64>> hddUsageMiBs();
+    QStringList blkDevices();
     QVariantList disks();
     QVariantList cloneDisks();
     QVariantList media();
@@ -128,10 +131,16 @@ private:
     QString dataFromSimpleNode(const QString &element);
     void setDataToSimpleNode(const QString &element, const QString &data);
 
+    bool getStats();
+
     Connection *m_conn;
     virDomainPtr m_domain;
     virDomainInfo m_info;
     QDomDocument m_xml;
+    int m_cpuUsage = 0;
+    QVector<std::pair<qint64, qint64>> m_netUsageMiBs;
+    QMap<QString, std::pair<qint64, qint64>> m_hddUsageMiBs;
+    bool m_gotStats = false;
     bool m_gotInfo = false;
 };
 

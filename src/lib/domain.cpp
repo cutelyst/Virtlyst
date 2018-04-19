@@ -278,98 +278,169 @@ bool getCpuTime(virDomainPtr dom, int nparams, quint64 &cpu_time)
     return false;
 }
 
+struct GetCPUStats {
+    GetCPUStats(virDomainPtr dom) : m_dom(dom) {
+        m_nparams = virDomainGetCPUStats(dom, NULL, 0, -1, 1, 0);
+    }
+
+    void getData(struct timeval &time, quint64 &stats) {
+        if (m_nparams == -1) {
+            return;
+        }
+
+        /* Get current time */
+        if (gettimeofday(&time, NULL) < 0) {
+            qCritical("unable to get time");
+            m_nparams = -1;
+            return;
+        }
+
+        if (!getCpuTime(m_dom, m_nparams, stats)) {
+            m_nparams = -1;
+        }
+    }
+
+    void begin() {
+        getData(then_t, then_stats);
+    }
+
+    double compute(int currentVcpu) {
+        getData(now_t, now_stats);
+
+        if (m_nparams) {
+            return 0;
+        }
+
+        quint64 then = then_t.tv_sec * 1000000 + then_t.tv_usec;
+        quint64 now = now_t.tv_sec * 1000000 + now_t.tv_usec;
+
+        double usage = (now_stats - then_stats) / (now - then) / 10 / currentVcpu;
+        return usage;
+    }
+
+    int m_nparams;
+    virDomainPtr m_dom;
+    struct timeval then_t, now_t;
+    quint64 then_stats, now_stats;
+};
+
 int Domain::cpuUsage()
 {
-    int nparams = virDomainGetCPUStats(m_domain, NULL, 0, -1, 1, 0); // nparams
-    if (nparams == -1) {
+    if (!getStats()) {
         return -1;
     }
 
-    struct timeval then_t, now_t;
-    /* Get current time */
-    if (gettimeofday(&then_t, NULL) < 0) {
-        qCritical("unable to get time");
-        return -1;
-    }
-
-    quint64 then_stats;
-    if (!getCpuTime(m_domain, nparams, then_stats)) {
-        return -1;
-    }
-
-    QEventLoop loop;
-    QTimer::singleShot(1000, &loop, &QEventLoop::quit);
-    loop.exec();
-
-    if (gettimeofday(&now_t, NULL) < 0) {
-        qCritical("unable to get time");
-        return -1;
-    }
-
-    quint64 now_stats;
-    if (!getCpuTime(m_domain, nparams, now_stats)) {
-        return -1;
-    }
-
-    quint64 then = then_t.tv_sec * 1000000 + then_t.tv_usec;
-    quint64 now = now_t.tv_sec * 1000000 + now_t.tv_usec;
-
-    double usage = (now_stats - then_stats) / (now - then) / 10 / currentVcpu();
-//    qDebug("CPU: %.2lf", usage);
-
-    return usage;
+    return m_cpuUsage;
 }
+
+struct GetNetUsage
+{
+    GetNetUsage(const QStringList &networks, virDomainPtr dom) : m_networks(networks), m_dom(dom) {}
+
+    void begin() {
+        for (const QString &net : m_networks) {
+            virDomainInterfaceStatsStruct stats;
+            quint64 rx = 0;
+            quint64 tx = 0;
+            if (virDomainInterfaceStats(m_dom, net.toUtf8().constData(), &stats, sizeof(virDomainInterfaceStatsStruct)) == 0) {
+                if (stats.rx_bytes != -1) {
+                    rx = stats.rx_bytes;
+                }
+                if (stats.tx_bytes != -1) {
+                    tx = stats.tx_bytes;
+                }
+            }
+            ret.append({ rx, tx });
+        }
+    }
+
+    QVector<std::pair<qint64, qint64> > compute() {
+        int i = 0;
+        for (const QString &net : m_networks) {
+            virDomainInterfaceStatsStruct stats;
+            std::pair<quint64, quint64> rx_tx = ret[i];
+            quint64 rx = 0;
+            quint64 tx = 0;
+            if (virDomainInterfaceStats(m_dom, net.toUtf8().constData(), &stats, sizeof(virDomainInterfaceStatsStruct)) == 0) {
+                if (stats.rx_bytes != -1) {
+                    rx = (stats.rx_bytes - rx_tx.first) * 8 / 1024 / 1024;
+                }
+                if (stats.tx_bytes != -1) {
+                    tx = (stats.tx_bytes - rx_tx.second) * 8 / 1024 / 1024;
+                }
+            }
+            ret[i++] = { rx, tx };
+        }
+        return ret;
+    }
+
+    const QStringList m_networks;
+    virDomainPtr m_dom;
+    QVector<std::pair<qint64, qint64> > ret;
+};
 
 QVector<std::pair<qint64, qint64> > Domain::netUsageMiBs()
 {
-    QVector<std::pair<qint64, qint64> > ret;
+    getStats();
 
-    const QStringList networks = networkTargetDevs();
-    for (const QString &net : networks) {
-        virDomainInterfaceStatsStruct stats;
-        quint64 rx = 0;
-        quint64 tx = 0;
-        if (virDomainInterfaceStats(m_domain, net.toUtf8().constData(), &stats, sizeof(virDomainInterfaceStatsStruct)) == 0) {
-            if (stats.rx_bytes != -1) {
-                rx = stats.rx_bytes;
-            }
-            if (stats.tx_bytes != -1) {
-                tx = stats.tx_bytes;
-            }
-        }
-        ret.append({ rx, tx });
-    }
-
-    QEventLoop loop;
-    QTimer::singleShot(1000, &loop, &QEventLoop::quit);
-    loop.exec();
-
-    int i = 0;
-    for (const QString &net : networks) {
-        virDomainInterfaceStatsStruct stats;
-        std::pair<quint64, quint64> rx_tx = ret[i];
-        quint64 rx = 0;
-        quint64 tx = 0;
-        if (virDomainInterfaceStats(m_domain, net.toUtf8().constData(), &stats, sizeof(virDomainInterfaceStatsStruct)) == 0) {
-            if (stats.rx_bytes != -1) {
-                rx = (stats.rx_bytes - rx_tx.first) * 8 / 1024 / 1024;
-            }
-            if (stats.tx_bytes != -1) {
-                tx = (stats.tx_bytes - rx_tx.second) * 8 / 1024 / 1024;
-            }
-            qDebug() << net << stats.rx_bytes << rx_tx.first << rx;
-            qDebug() << net << stats.tx_bytes << rx_tx.second << tx;
-        }
-        ret[i++] = { rx, tx };
-    }
-
-    return ret;
+    return m_netUsageMiBs;
 }
+
+struct GetHddUsage
+{
+    GetHddUsage(const QStringList &devices, virDomainPtr dom) : m_devices(devices), m_dom(dom) {}
+
+    void begin() {
+        for (const QString &dev : m_devices) {
+            virDomainBlockStatsStruct stats;
+            quint64 rd = 0;
+            quint64 wr = 0;
+            if (virDomainBlockStats(m_dom, dev.toUtf8().constData(), &stats, sizeof(virDomainBlockStatsStruct)) == 0) {
+                if (stats.rd_bytes != -1) {
+                    rd = stats.rd_bytes;
+                }
+                if (stats.wr_bytes != -1) {
+                    wr = stats.wr_bytes;
+                }
+            }
+            ret.insert(dev, { rd, wr });
+        }
+    }
+
+    QMap<QString, std::pair<qint64, qint64> > compute() {
+        for (const QString &dev : m_devices) {
+            virDomainBlockStatsStruct stats;
+            std::pair<quint64, quint64> rd_wr = ret[dev];
+            quint64 rd = 0;
+            quint64 wr = 0;
+            if (virDomainBlockStats(m_dom, dev.toUtf8().constData(), &stats, sizeof(virDomainBlockStatsStruct)) == 0) {
+                if (stats.rd_bytes != -1) {
+                    rd = (stats.rd_bytes - rd_wr.first) / 1024 / 1024;
+                }
+                if (stats.wr_bytes != -1) {
+                    wr = (stats.wr_bytes - rd_wr.second) * 8 / 1024 / 1024;
+                }
+            }
+            ret[dev] = { rd, wr };
+        }
+
+        return ret;
+    }
+
+    const QStringList m_devices;
+    virDomainPtr m_dom;
+    QMap<QString, std::pair<qint64, qint64> > ret;
+};
 
 QMap<QString, std::pair<qint64, qint64> > Domain::hddUsageMiBs()
 {
-    QMap<QString, std::pair<qint64, qint64> > ret;
+    getStats();
 
+    return m_hddUsageMiBs;
+}
+
+QStringList Domain::blkDevices()
+{
     QStringList devices;
     QDomElement disk = xmlDoc()
             .documentElement()
@@ -403,60 +474,7 @@ QMap<QString, std::pair<qint64, qint64> > Domain::hddUsageMiBs()
 
         disk = disk.nextSiblingElement(QStringLiteral("disk"));
     }
-
-    for (const QString &dev : devices) {
-        virDomainBlockStatsStruct stats;
-        quint64 rd = 0;
-        quint64 wr = 0;
-        if (virDomainBlockStats(m_domain, dev.toUtf8().constData(), &stats, sizeof(virDomainBlockStatsStruct)) == 0) {
-            if (stats.rd_bytes != -1) {
-                rd = stats.rd_bytes;
-            }
-            if (stats.wr_bytes != -1) {
-                wr = stats.wr_bytes;
-            }
-        }
-        ret.insert(dev, { rd, wr });
-    }
-
-    for (const QString &dev : devices) {
-        virDomainBlockStatsStruct stats;
-        quint64 rd = 0;
-        quint64 wr = 0;
-        if (virDomainBlockStats(m_domain, dev.toUtf8().constData(), &stats, sizeof(virDomainBlockStatsStruct)) == 0) {
-            if (stats.rd_bytes != -1) {
-                rd = stats.rd_bytes;
-            }
-            if (stats.wr_bytes != -1) {
-                wr = stats.wr_bytes;
-            }
-        }
-        ret.insert(dev, { rd, wr });
-    }
-
-    QEventLoop loop;
-    QTimer::singleShot(1000, &loop, &QEventLoop::quit);
-    loop.exec();
-
-    for (const QString &dev : devices) {
-        virDomainBlockStatsStruct stats;
-        std::pair<quint64, quint64> rd_wr = ret[dev];
-        quint64 rd = 0;
-        quint64 wr = 0;
-        if (virDomainBlockStats(m_domain, dev.toUtf8().constData(), &stats, sizeof(virDomainBlockStatsStruct)) == 0) {
-            if (stats.rd_bytes != -1) {
-                rd = (stats.rd_bytes - rd_wr.first) / 1024 / 1024;
-            }
-            if (stats.wr_bytes != -1) {
-                wr = (stats.wr_bytes - rd_wr.second) * 8 / 1024 / 1024;
-            }
-            qDebug() << dev << stats.rd_bytes << rd_wr.first << rd;
-            qDebug() << dev << stats.wr_bytes << rd_wr.second << wr;
-        }
-        ret[dev] = { rd, wr };
-    }
-
-    return ret;
+    return devices;
 }
 
 QVariantList Domain::disks()
@@ -762,4 +780,33 @@ void Domain::setDataToSimpleNode(const QString &element, const QString &data)
             .firstChildElement(element)
             .firstChild()
             .setNodeValue(data);
+}
+
+bool Domain::getStats()
+{
+    if (m_gotStats) {
+        return true;
+    }
+
+    if (status() == 1) {
+        GetCPUStats cpuStat(m_domain);
+        GetNetUsage netUsage(networkTargetDevs(), m_domain);
+        GetHddUsage hddUsage(blkDevices(), m_domain);
+
+        cpuStat.begin();
+        netUsage.begin();
+        hddUsage.begin();
+
+        QEventLoop loop;
+        QTimer::singleShot(1000, &loop, &QEventLoop::quit);
+        loop.exec();
+
+        m_cpuUsage = cpuStat.compute(currentVcpu());
+        m_netUsageMiBs = netUsage.compute();
+        m_hddUsageMiBs = hddUsage.compute();
+    }
+
+    m_gotStats = true;
+
+    return true;
 }

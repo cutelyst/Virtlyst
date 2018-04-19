@@ -179,11 +179,6 @@ void Info::instusage(Context *c, const QString &hostId, const QString &name)
     int points = 5;
     QStringList timerArray = c->request()->cookie(QStringLiteral("timer")).split(QLatin1Char(' '), QString::SkipEmptyParts);
     QStringList cpuArray = c->request()->cookie(QStringLiteral("cpu")).split(QLatin1Char(' '), QString::SkipEmptyParts);
-    QString hddCookie = c->request()->cookie(QStringLiteral("hdd")).replace(QLatin1String("\\054"), QLatin1String(","));
-    QString netCookie = c->request()->cookie(QStringLiteral("net")).replace(QLatin1String("\\054"), QLatin1String(","));
-    qDebug() << "cookies" << c->request()->cookies();
-    qDebug() << "hddCookie" << hddCookie;
-    qDebug() << "netCookie" << netCookie;
 
     timerArray.append(QTime::currentTime().toString());
     cpuArray.append(QString::number(dom->cpuUsage()));
@@ -194,9 +189,6 @@ void Info::instusage(Context *c, const QString &hostId, const QString &name)
     if (cpuArray.size() > points) {
         cpuArray = cpuArray.mid(cpuArray.size() - points);
     }
-//    if (hddArray.size() > points) {
-//        hddArray = hddArray.mid(hddArray.size() - points);
-//    }
 
     QJsonObject cpu {
         {QStringLiteral("labels"), QJsonArray::fromStringList(timerArray)},
