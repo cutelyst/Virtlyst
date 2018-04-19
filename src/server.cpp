@@ -14,25 +14,12 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CREATE_H
-#define CREATE_H
+#include "server.h"
 
-#include <Cutelyst/Controller>
+#include "virtlyst.h"
 
-using namespace Cutelyst;
-
-class Virtlyst;
-class Create : public Controller
+Server::Server(Virtlyst *parent) : Controller(parent)
+  , m_virtlyst(parent)
 {
-    Q_OBJECT
-public:
-    explicit Create(Virtlyst *parent = 0);
 
-    C_ATTR(index, :Path :AutoArgs)
-    void index(Context *c, const QString &hostId);
-
-private:
-    Virtlyst *m_virtlyst;
-};
-
-#endif // CREATE_H
+}

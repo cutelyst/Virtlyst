@@ -35,7 +35,7 @@ Root::~Root()
 
 void Root::index(Context *c)
 {
-    c->response()->body() = "Welcome to Cutelyst!";
+    c->response()->redirect(c->uriForAction(QStringLiteral("/server/index")));
 }
 
 void Root::login(Context *c)

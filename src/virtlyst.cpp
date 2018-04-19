@@ -46,6 +46,7 @@
 #include "networks.h"
 #include "interfaces.h"
 #include "secrets.h"
+#include "server.h"
 #include "console.h"
 #include "create.h"
 #include "root.h"
@@ -75,6 +76,7 @@ bool Virtlyst::init()
     new Networks(this);
     new Interfaces(this);
     new Secrets(this);
+    new Server(this);
     new Storages(this);
     new Console(this);
     new Create(this);
