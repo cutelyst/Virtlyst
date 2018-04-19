@@ -28,6 +28,7 @@
 
 #include <libvirt/virterror.h>
 
+#include <QUrl>
 #include <QXmlStreamWriter>
 #include <QTimer>
 #include <QEventLoop>
@@ -72,25 +73,37 @@ static int authCb(virConnectCredentialPtr cred, unsigned int ncred, void *cbdata
     return 0;
 }
 
-Connection::Connection(const QString &name, QObject *parent) : QObject(parent)
-  , m_uri(name)
+Connection::Connection(virConnectPtr conn, QObject *parent) : QObject(parent), m_conn(conn)
 {
+    virConnectRef(conn);
+}
+
+Connection::Connection(const QUrl &url, QObject *parent) : QObject(parent)
+{
+    qDebug() << "Connecting to" << url << url.toString();
     virConnectAuth auth;
     auth.credtype = authCreds;
     auth.ncredtype = sizeof(authCreds)/sizeof(int);
     auth.cb = authCb;
     auth.cbdata = this;
 
-    m_conn = virConnectOpenAuth(name.toUtf8().constData(), &auth, 0);
+    m_conn = virConnectOpenAuth(url.toString().toUtf8().constData(), &auth, 0);
     if (m_conn == NULL) {
-        qCWarning(VIRT_CONN) << "Failed to open connection to" << name;
+        qCWarning(VIRT_CONN) << "Failed to open connection to" << url;
         return;
     }
 }
 
 Connection::~Connection()
 {
-    virConnectClose(m_conn);
+    if (m_conn) {
+        virConnectClose(m_conn);
+    }
+}
+
+Connection *Connection::clone(QObject *parent)
+{
+    return new Connection(m_conn, parent);
 }
 
 QString Connection::uri() const
@@ -153,6 +166,14 @@ uint Connection::cpus()
         loadNodeInfo();
     }
     return m_nodeInfo.cpus;
+}
+
+bool Connection::isAlive()
+{
+    if (m_conn) {
+        return virConnectIsAlive(m_conn) == 1;
+    }
+    return false;
 }
 
 int Connection::maxVcpus() const

@@ -16,6 +16,8 @@
  */
 #include "root.h"
 
+#include "virtlyst.h"
+
 #include <Cutelyst/Plugins/Authentication/authentication.h>
 #include <Cutelyst/Plugins/StatusMessage>
 
@@ -25,7 +27,8 @@
 
 using namespace Cutelyst;
 
-Root::Root(QObject *parent) : Controller(parent)
+Root::Root(Virtlyst *parent) : Controller(parent)
+  , m_virtlyst(parent)
 {
 }
 
@@ -94,6 +97,8 @@ bool Root::Auto(Context *c)
 
     c->setStash(QStringLiteral("user"), Authentication::user(c));
     c->setStash(QStringLiteral("time_refresh"), 8000);
+
+    m_virtlyst->updateConnections();
 
     return true;
 }

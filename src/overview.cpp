@@ -19,6 +19,8 @@
 #include "lib/connection.h"
 #include "virtlyst.h"
 
+#include <QLoggingCategory>
+
 Overview::Overview(Virtlyst *parent) : Controller(parent)
   , m_virtlyst(parent)
 {
@@ -30,9 +32,10 @@ void Overview::index(Context *c, const QString &hostId)
     c->setStash(QStringLiteral("template"), QStringLiteral("hostdetail.html"));
     c->setStash(QStringLiteral("host_id"), hostId);
 
-    Connection *conn = m_virtlyst->connection(hostId);
+    Connection *conn = m_virtlyst->connection(hostId, c);
     if (conn == nullptr) {
-        fprintf(stderr, "Failed to open connection to qemu:///system\n");
+        qWarning() << "Host id not found or connection not active";
+        c->response()->redirect(c->uriForAction(QStringLiteral("/index")));
         return;
     }
     c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));

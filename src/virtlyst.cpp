@@ -130,23 +130,42 @@ bool Virtlyst::postFork()
         return false;
     }
 
-    auto conn = new Connection(QStringLiteral("qemu:///system"), this);
+//    auto server = new ServerConn;
+//    server->conn = new Connection(QStringLiteral("qemu:///system"), this);
 
-    m_connections.insert(QStringLiteral("1"), conn);
+//    m_connections.insert(QStringLiteral("1"), server);
 
     qDebug() << "Database ready" << db.connectionName();
+
+    updateConnections();
 
     return true;
 }
 
-QHash<QString, Connection *> Virtlyst::connections()
+QList<ServerConn *> Virtlyst::connections()
 {
-    return m_connections;
+    return m_connections.values();
 }
 
-Connection *Virtlyst::connection(const QString &id)
+QVector<ServerConn *> Virtlyst::servers(QObject *parent)
 {
-    return m_connections.value(id);
+    QVector<ServerConn *> ret;
+    auto it = m_connections.constBegin();
+    while (it != m_connections.constEnd()) {
+        ServerConn *conn = it.value()->clone(parent);
+        ret.append(conn);
+        ++it;
+    }
+    return ret;
+}
+
+Connection *Virtlyst::connection(const QString &id, QObject *parent)
+{
+    ServerConn *server = m_connections.value(id);
+    if (server && server->conn) {
+        return server->conn->clone(parent);
+    }
+    return nullptr;
 }
 
 QString Virtlyst::prettyKibiBytes(quint64 kibiBytes)
@@ -195,6 +214,88 @@ bool Virtlyst::createDbFlavor(QSqlQuery &query, const QString &label, int memory
     query.bindValue(QStringLiteral(":vcpu"), vcpu);
     query.bindValue(QStringLiteral(":disk"), disk);
     return query.exec();
+}
+
+void Virtlyst::updateConnections()
+{
+    QSqlQuery query = CPreparedSqlQueryThreadForDB(
+                QStringLiteral("SELECT id, name, hostname, login, password, type FROM servers_compute"),
+                QStringLiteral("virtlyst"));
+    if (!query.exec()) {
+        qWarning() << "Failed to get connections list";
+    }
+
+    QStringList ids;
+//    QMap<QString, ServerConn *> connections;
+    while (query.next()) {
+        const QString id = query.value(0).toString();
+        const QString name = query.value(1).toString();
+        const QString hostname = query.value(2).toString();
+        const QString login = query.value(3).toString();
+        const QString password = query.value(4).toString();
+        int type = query.value(5).toInt();
+        ids << id;
+
+        ServerConn *server = m_connections.value(id);
+        if (server) {
+            if (server->name == name &&
+                    server->hostname == hostname &&
+                    server->login == login &&
+                    server->password == password &&
+                    server->type == type) {
+                continue;
+            } else {
+                delete server->conn;
+                server->conn = nullptr;
+            }
+        } else {
+            server = new ServerConn(this);
+            server->id = id.toInt();
+        }
+
+        server->name = name;
+        server->hostname = hostname;
+        server->login = login;
+        server->password = password;
+        server->type = type;
+        QUrl url;
+        switch (type) {
+        case ServerConn::ConnSocket:
+            url = QStringLiteral("qemu:///system");
+            break;
+        case ServerConn::ConnSSH:
+            url = QStringLiteral("qemu+ssh:///system");
+            url.setHost(hostname);
+            url.setUserName(login);
+            break;
+        case ServerConn::ConnTCP:
+            url = QStringLiteral("qemu+tcp:///system");
+            url.setHost(hostname);
+            url.setUserName(login);
+            break;
+        case ServerConn::ConnTLS:
+            url = QStringLiteral("qemu+tls:///system");
+            url.setHost(hostname);
+            url.setPassword(password);
+            break;
+        }
+
+        auto conn = new Connection(url, server);
+        if (conn->isAlive()) {
+            server->conn = conn;
+        }
+        m_connections.insert(id, server);
+    }
+
+    auto it = m_connections.begin();
+    while (it != m_connections.end()) {
+        if (!ids.contains(it.key())) {
+            it.value()->deleteLater();
+            it = m_connections.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 bool Virtlyst::createDB()
@@ -276,3 +377,26 @@ bool Virtlyst::createDB()
     return true;
 }
 
+bool ServerConn::alive()
+{
+    if (conn) {
+        return conn->isAlive();
+    }
+    return false;
+}
+
+ServerConn *ServerConn::clone(QObject *parent)
+{
+    auto ret = new ServerConn(parent);
+    ret->id = id;
+    ret->name = name;
+    ret->hostname = hostname;
+    ret->login = login;
+    ret->password = password;
+    ret->type = type;
+    if (conn) {
+        ret->conn = conn->clone(ret);
+    }
+
+    return ret;
+}

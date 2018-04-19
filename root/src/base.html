@@ -30,7 +30,7 @@
             </ul>
 
             <ul class="nav navbar-nav navbar-right">
-                {% if request.user.is_authenticated or user.is_authenticated %}
+                {% if user.id %}
                     <li class="">
                         <a href="/logout">{% i18n "Sign out" %}</a>
                     </li>

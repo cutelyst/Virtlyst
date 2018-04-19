@@ -38,9 +38,10 @@ Info::Info(Virtlyst *parent)
 
 void Info::hostusage(Context *c, const QString &hostId)
 {
-    Connection *conn = m_virtlyst->connection(hostId);
+    Connection *conn = m_virtlyst->connection(hostId, c);
     if (conn == nullptr) {
-        fprintf(stderr, "Failed to open connection to qemu:///system\n");
+        qWarning() << "Host id not found or connection not active";
+        c->response()->redirect(c->uriForAction(QStringLiteral("/index")));
         return;
     }
 
@@ -101,9 +102,10 @@ void Info::hostusage(Context *c, const QString &hostId)
 
 void Info::insts_status(Context *c, const QString &hostId)
 {
-    Connection *conn = m_virtlyst->connection(hostId);
+    Connection *conn = m_virtlyst->connection(hostId, c);
     if (conn == nullptr) {
-        fprintf(stderr, "Failed to open connection to qemu:///system\n");
+        qWarning() << "Host id not found or connection not active";
+        c->response()->redirect(c->uriForAction(QStringLiteral("/index")));
         return;
     }
 
@@ -130,9 +132,10 @@ void Info::insts_status(Context *c, const QString &hostId)
 
 void Info::inst_status(Context *c, const QString &hostId, const QString &name)
 {
-    Connection *conn = m_virtlyst->connection(hostId);
+    Connection *conn = m_virtlyst->connection(hostId, c);
     if (conn == nullptr) {
-        fprintf(stderr, "Failed to open connection to qemu:///system\n");
+        qWarning() << "Host id not found or connection not active";
+        c->response()->redirect(c->uriForAction(QStringLiteral("/index")));
         return;
     }
 
@@ -162,9 +165,10 @@ QStringList buildArrayFromCookie(const QString &cookie, qint64 value, int points
 
 void Info::instusage(Context *c, const QString &hostId, const QString &name)
 {
-    Connection *conn = m_virtlyst->connection(hostId);
+    Connection *conn = m_virtlyst->connection(hostId, c);
     if (conn == nullptr) {
-        fprintf(stderr, "Failed to open connection to qemu:///system\n");
+        qWarning() << "Host id not found or connection not active";
+        c->response()->redirect(c->uriForAction(QStringLiteral("/index")));
         return;
     }
 

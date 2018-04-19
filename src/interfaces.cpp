@@ -21,6 +21,8 @@
 #include "lib/nodedevice.h"
 #include "lib/interface.h"
 
+#include <QLoggingCategory>
+
 Interfaces::Interfaces(Virtlyst *parent) : Controller(parent)
   , m_virtlyst(parent)
 {
@@ -32,9 +34,10 @@ void Interfaces::index(Context *c, const QString &hostId)
     c->setStash(QStringLiteral("template"), QStringLiteral("interfaces.html"));
     c->setStash(QStringLiteral("host_id"), hostId);
 
-    Connection *conn = m_virtlyst->connection(hostId);
+    Connection *conn = m_virtlyst->connection(hostId, c);
     if (conn == nullptr) {
-        fprintf(stderr, "Failed to open connection to qemu:///system\n");
+        qWarning() << "Host id not found or connection not active";
+        c->response()->redirect(c->uriForAction(QStringLiteral("/index")));
         return;
     }
     c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));
@@ -77,9 +80,10 @@ void Interfaces::interface(Context *c, const QString &hostId, const QString &ifa
     c->setStash(QStringLiteral("template"), QStringLiteral("interface.html"));
     c->setStash(QStringLiteral("host_id"), hostId);
 
-    Connection *conn = m_virtlyst->connection(hostId);
+    Connection *conn = m_virtlyst->connection(hostId, c);
     if (conn == nullptr) {
-        fprintf(stderr, "Failed to open connection to qemu:///system\n");
+        qWarning() << "Host id not found or connection not active";
+        c->response()->redirect(c->uriForAction(QStringLiteral("/index")));
         return;
     }
     c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));

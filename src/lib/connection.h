@@ -42,8 +42,11 @@ class Connection : public QObject
     Q_PROPERTY(QString cpuModel READ cpuModel CONSTANT)
     Q_PROPERTY(QStringList isoMedia READ isoMedia CONSTANT)
 public:
-    explicit Connection(const QString &uri, QObject *parent = nullptr);
+    explicit Connection(virConnectPtr conn, QObject *parent = nullptr);
+    explicit Connection(const QUrl &url, QObject *parent = nullptr);
     ~Connection();
+
+    Connection *clone(QObject *parent);
 
     QString uri() const;
     QString hostname() const;
@@ -57,6 +60,7 @@ public:
     QString memoryPretty();
     uint cpus();
 
+    bool isAlive();
     int maxVcpus() const;
 
     QString cpuArch();
@@ -116,7 +120,6 @@ private:
     bool loadDomainCapabilities();
     QString dataFromSimpleNode(const QString &element) const;
 
-    QString m_uri;
     virConnectPtr m_conn;
     virNodeInfo m_nodeInfo;
     QDomDocument m_xmlCapsDoc;

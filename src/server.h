@@ -31,9 +31,13 @@ public:
     explicit Server(Virtlyst *parent = nullptr);
 
     C_ATTR(index, :Path :AutoArgs)
-    void index(Context *c, const QString &hostId);
+    void index(Context *c);
 
 private:
+    void createServer(int type, const QString &name, const QString &hostname, const QString &login, const QString &password);
+    void updateServer(int id, const QString &name, const QString &hostname, const QString &login, const QString &password);
+    void deleteServer(int id);
+
     Virtlyst *m_virtlyst;
 };
 

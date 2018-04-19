@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{% i18n "Dashboard" %}{% endblock %}
 {% block style %}
-    <link href="{% static "css/table-sort.css" %}" rel="stylesheet">
+    <link href="/static/css/table-sort.css" rel="stylesheet">
 {% endblock %}
 {% block content %}
     <div class="row">
@@ -45,14 +45,14 @@
                 <h1>{% i18n "Connections" %}</h1>
             </div>
             <div class="row" role="main">
-            {% if hosts_info %}
-                {% for host in hosts_info %}
+            {% if servers.size %}
+                {% for host in servers %}
                     <div class="col-xs-12 col-sm-4">
-                        <div class="panel {% ifequal host.status 1 %}panel-success{% else %}panel-danger{% endifequal %} panel-data">
+                        <div class="panel {% if host.alive %}panel-success{% else %}panel-danger{% endif %} panel-data">
                             <div class="panel-heading">
-                                {% ifequal host.status 1 %}
+                                {% if host.alive %}
                                     <h3 class="panel-title">
-                                        <a href="{% url 'instances' host.id %}"><strong>{{ host.name }}</strong></a>
+                                        <a href="/instances/{{ host.id }}"><strong>{{ host.name }}</strong></a>
                                         <a data-toggle="modal" href="#editHost{{ host.id }}" class="pull-right"
                                            title="{% i18n "Edit" %}">
                                             <span class="glyphicon glyphicon-pencil"></span>
@@ -65,11 +65,11 @@
                                             <span class="glyphicon glyphicon-pencil"></span>
                                         </a>
                                     </h3>
-                                {% endifequal %}
+                                {% endif %}
                             </div>
                             <div class="panel-body">
                                 <p>
-                                <form action="" method="post" role="form">{% csrf_token %}
+                                <form action="" method="post" role="form">{{ csrf_token }}
                                     <input type="hidden" name="host_id" value="{{ host.id }}">
                                     <button type="submit" class="pull-right btn btn-xs btn-danger" name="host_del"
                                             title="{% i18n "Delete" %}"
@@ -79,10 +79,10 @@
                                 </form>
                                 <p>
                                 <p><strong>{% i18n "Type" %}:</strong> [
-                                    {% ifequal host.type 1 %}TCP{% endifequal %}
-                                    {% ifequal host.type 2 %}SSH{% endifequal %}
-                                    {% ifequal host.type 3 %}TLS{% endifequal %}
-                                    {% ifequal host.type 4 %}SOCKET{% endifequal %} ]
+                                    {% if host.type == 1 %}TCP
+                                    {% elif host.type == 2 %}SSH
+                                    {% elif host.type == 3 %}TLS
+                                    {% elif host.type == 4 %}SOCKET{% endif %} ]
                                 </p>
                                 <p><strong>{% i18n "Host" %}:</strong> <a
                                         href="ssh://{{ host.hostname }}" title="{{ host.status }}">{{ host.hostname }}</a></p>
@@ -95,15 +95,15 @@
                                                 <button type="button" class="close" data-dismiss="modal"
                                                         aria-hidden="true">&times;</button>
                                                 <h4 class="modal-title">{% i18n "Edit Host Server" %}
-                                                    {% ifequal host.type 1 %}({% i18n "TCP" %}){% endifequal %}
-                                                    {% ifequal host.type 2 %}({% i18n "SSH" %}){% endifequal %}
-                                                    {% ifequal host.type 3 %}({% i18n "TLS" %}){% endifequal %}
-                                                    {% ifequal host.type 4 %}({% i18n "SOCKET" %}){% endifequal %}
+                                                    {% if host.type == 1 %}({% i18n "TCP" %})
+                                                    {% elif host.type == 2 %}({% i18n "SSH" %})
+                                                    {% elif host.type == 3 %}({% i18n "TLS" %})
+                                                    {% elif host.type == 4 %}({% i18n "SOCKET" %}){% endif %}
                                                 </h4>
                                             </div>
                                             <div class="tab-content">
-                                                {% ifequal host.type 1 %}
-                                                    <form class="form-horizontal" method="post" role="form">{% csrf_token %}
+                                                {% if host.type == 1 %}
+                                                    <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
                                                         <div class="form-group">
                                                             <label class="col-sm-4 control-label">{% i18n "Label" %}</label>
                                                             <div class="col-sm-6">
@@ -145,9 +145,8 @@
                                                                     name="host_edit">{% i18n "Edit" %}</button>
                                                         </div>
                                                     </form>
-                                                {% endifequal %}
-                                                {% ifequal host.type 2 %}
-                                                    <form class="form-horizontal" method="post" role="form">{% csrf_token %}
+                                                {% elif host.type == 2 %}
+                                                    <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
                                                         <p class="modal-body">{% i18n "Need create ssh <a href='https://github.com/retspen/webvirtmgr/wiki/Setup-SSH-Authorization'>authorization key</a>. If you have another SSH port on your server, you can add IP:PORT like '192.168.1.1:2222'." %}</p>
 
                                                         <div class="form-group">
@@ -184,9 +183,8 @@
                                                                     name="host_edit">{% i18n "Edit" %}</button>
                                                         </div>
                                                     </form>
-                                                {% endifequal %}
-                                                {% ifequal host.type 3 %}
-                                                    <form class="form-horizontal" method="post" role="form">{% csrf_token %}
+                                                {% elif host.type == 3 %}
+                                                    <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
                                                         <div class="form-group">
                                                             <label class="col-sm-4 control-label">{% i18n "Label" %}</label>
 
@@ -229,7 +227,7 @@
                                                                     name="host_tls_add">{% i18n "Add" %}</button>
                                                         </div>
                                                     </form>
-                                                {% endifequal %}
+                                                {% endif %}
                                             </div>
                                         </div>
                                         <!-- /.modal-content -->
@@ -271,7 +269,7 @@
                 </div>
                 <div class="tab-content">
                     <div class="tab-pane active" id="1">
-                        <form class="form-horizontal" method="post" role="form">{% csrf_token %}
+                        <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
                             <div class="form-group">
                                 <label class="col-sm-4 control-label">{% i18n "Label" %}</label>
 
@@ -314,7 +312,7 @@
                         </form>
                     </div>
                     <div class="tab-pane" id="2">
-                        <form class="form-horizontal" method="post" role="form">{% csrf_token %}
+                        <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
                             <p class="modal-body">{% i18n "You must create ssh <a href='https://github.com/retspen/webvirtmgr/wiki/Setup-SSH-Authorization'>authorization key</a>. If you have another SSH port on your server, you can add IP:PORT like '192.168.1.1:2222'." %}</p>
 
                             <div class="form-group">
@@ -351,7 +349,7 @@
                         </form>
                     </div>
                     <div class="tab-pane" id="3">
-                        <form class="form-horizontal" method="post" role="form">{% csrf_token %}
+                        <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
                             <div class="form-group">
                                 <label class="col-sm-4 control-label">{% i18n "Label" %}</label>
 
@@ -394,7 +392,7 @@
                         </form>
                     </div>
                     <div class="tab-pane" id="4">
-                        <form class="form-horizontal" method="post" role="form">{% csrf_token %}
+                        <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
                             <div class="form-group">
                                 <label class="col-sm-4 control-label">{% i18n "Label" %}</label>
 

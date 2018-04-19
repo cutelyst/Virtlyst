@@ -36,9 +36,10 @@ Instances::Instances(Virtlyst *parent)
 
 void Instances::index(Context *c, const QString &hostId)
 {
-    Connection *conn = m_virtlyst->connection(hostId);
+    Connection *conn = m_virtlyst->connection(hostId, c);
     if (conn == nullptr) {
-        fprintf(stderr, "Failed to open connection to qemu:///system\n");
+        qWarning() << "Host id not found or connection not active";
+        c->response()->redirect(c->uriForAction(QStringLiteral("/index")));
         return;
     }
     c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));
@@ -81,9 +82,10 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
     c->setStash(QStringLiteral("template"), QStringLiteral("instance.html"));
     c->setStash(QStringLiteral("host_id"), hostId);
 
-    Connection *conn = m_virtlyst->connection(hostId);
+    Connection *conn = m_virtlyst->connection(hostId, c);
     if (conn == nullptr) {
-        fprintf(stderr, "Failed to open connection to qemu:///system\n");
+        qWarning() << "Host id not found or connection not active";
+        c->response()->redirect(c->uriForAction(QStringLiteral("/index")));
         return;
     }
     c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));

@@ -36,10 +36,15 @@ void Infrastructure::index(Context *c)
 {
     QVariantList hosts;
 
-    const QHash<QString, Connection *> conns = m_virtlyst->connections();
+    const QVector<ServerConn *> conns = m_virtlyst->servers(c);
     auto it = conns.constBegin();
     while (it != conns.constEnd()) {
-        Connection *conn = it.value();
+        ServerConn *server = *it;
+        Connection *conn = server->conn;
+        if (!conn) {
+            ++it;
+            continue;
+        }
 
         double freeMemory = conn->freeMemoryBytes() / 1024;// To KibiBytes
         double difference = freeMemory / conn->memory();
@@ -52,9 +57,9 @@ void Infrastructure::index(Context *c)
         }
 
         hosts.append(QVariantHash{
-                         {QStringLiteral("id"), 1},
-                         {QStringLiteral("name"), conn->hostname()},
-                         {QStringLiteral("status"), 1},
+                         {QStringLiteral("id"), server->id},
+                         {QStringLiteral("name"), server->name},
+                         {QStringLiteral("status"), conn->isAlive()},
                          {QStringLiteral("cpus"), conn->cpus()},
                          {QStringLiteral("memory"), conn->memoryPretty()},
                          {QStringLiteral("mem_usage"), QString::number(difference * 100, 'g', 3)},

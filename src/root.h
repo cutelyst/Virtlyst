@@ -21,12 +21,13 @@
 
 using namespace Cutelyst;
 
+class Virtlyst;
 class Root : public Controller
 {
     Q_OBJECT
     C_NAMESPACE("")
 public:
-    explicit Root(QObject *parent = 0);
+    explicit Root(Virtlyst *parent = 0);
     ~Root();
 
     C_ATTR(index, :Path :AutoArgs)
@@ -47,6 +48,8 @@ private Q_SLOTS:
 private:
     C_ATTR(End, :ActionClass("RenderView"))
     void End(Context *c) { Q_UNUSED(c); }
+
+    Virtlyst *m_virtlyst;
 };
 
 #endif //ROOT_H

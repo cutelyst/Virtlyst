@@ -20,11 +20,44 @@
 #include <Cutelyst/Application>
 
 #include <QHash>
+#include <QSharedPointer>
 
 using namespace Cutelyst;
 
-class QSqlQuery;
 class Connection;
+class ServerConn : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QString name MEMBER name CONSTANT)
+    Q_PROPERTY(QString hostname MEMBER hostname CONSTANT)
+    Q_PROPERTY(QString login MEMBER login CONSTANT)
+    Q_PROPERTY(QString password MEMBER password CONSTANT)
+    Q_PROPERTY(int type MEMBER type CONSTANT)
+    Q_PROPERTY(int id MEMBER id CONSTANT)
+    Q_PROPERTY(bool alive READ alive CONSTANT)
+public:
+    enum ServerType {
+        ConnTCP = 1,
+        ConnSSH,
+        ConnTLS,
+        ConnSocket,
+    };
+    ServerConn(QObject *parent) : QObject(parent) {}
+    ~ServerConn() {}
+
+    bool alive();
+    ServerConn *clone(QObject *parent);
+
+    int id;
+    QString name;
+    QString hostname;
+    QString login;
+    QString password;
+    int type;
+    Connection *conn = nullptr;
+};
+
+class QSqlQuery;
 class Virtlyst : public Application
 {
     Q_OBJECT
@@ -37,9 +70,11 @@ public:
 
     bool postFork() override;
 
-    QHash<QString, Connection *> connections();
+    QList<ServerConn *> connections();
 
-    Connection *connection(const QString &id);
+    QVector<ServerConn *> servers(QObject *parent);
+
+    Connection *connection(const QString &id, QObject *parent);
 
     static QString prettyKibiBytes(quint64 kibiBytes);
 
@@ -47,10 +82,12 @@ public:
 
     static bool createDbFlavor(QSqlQuery &query, const QString &label, int memory, int vcpu, int disk);
 
+    void updateConnections();
+
 private:
     bool createDB();
 
-    QHash<QString, Connection *> m_connections;
+    QMap<QString, ServerConn *> m_connections;
     QString m_dbPath;
 };
 
