@@ -22,11 +22,13 @@
 #include "storagepool.h"
 #include "storagevol.h"
 #include "network.h"
+#include "domainsnapshot.h"
 
 #include <QTextStream>
 #include <QDomElement>
 #include <QFileInfo>
 #include <QEventLoop>
+#include <QDateTime>
 #include <QTimer>
 
 #include <QLoggingCategory>
@@ -183,6 +185,69 @@ bool Domain::autostart() const
         qWarning() << "Failed to get autostart for domain" << name();
     }
     return autostart;
+}
+
+bool Domain::snapshot(const QString &name)
+{
+    QDomDocument orig = xmlDoc();
+
+    QDomDocument newDoc;
+    QDomElement e = newDoc.createElement(QStringLiteral("domainsnapshot"));
+    QDomElement node;
+
+    node = newDoc.createElement(QStringLiteral("name"));
+    node.appendChild(newDoc.createTextNode(name));
+    e.appendChild(node);
+
+    node = newDoc.createElement(QStringLiteral("creationTime"));
+    node.appendChild(newDoc.createTextNode(QString::number(QDateTime::currentMSecsSinceEpoch() / 1000)));
+    e.appendChild(node);
+
+    node = newDoc.createElement(QStringLiteral("state"));
+    node.appendChild(newDoc.createTextNode(QStringLiteral("shutoff")));
+    e.appendChild(node);
+
+    node = newDoc.createElement(QStringLiteral("active"));
+    node.appendChild(newDoc.createTextNode(QStringLiteral("0")));
+    e.appendChild(node);
+
+    e.appendChild(orig.cloneNode(true));
+
+    newDoc.appendChild(e);
+
+    virDomainSnapshotPtr snapshot = virDomainSnapshotCreateXML(m_domain, newDoc.toString(0).toUtf8().constData(), 0);
+//    qDebug() << snapshot << newDoc.toString(2).toUtf8().constData();
+    if (snapshot) {
+        virDomainSnapshotFree(snapshot);
+        return true;
+    }
+    return false;
+}
+
+QVariantList Domain::snapshots()
+{
+    QVariantList ret;
+    virDomainSnapshotPtr *snaps;
+    int count = virDomainListAllSnapshots(m_domain, &snaps, 0);
+    if (count == -1) {
+        return ret;
+    }
+
+    for (int i = 0; i < count; ++i) {
+        auto snap = new DomainSnapshot(snaps[i], this);
+        ret.append(QVariant::fromValue(snap));
+    }
+    free(snaps);
+    return ret;
+}
+
+DomainSnapshot *Domain::getSnapshot(const QString &name)
+{
+    virDomainSnapshotPtr snap = virDomainSnapshotLookupByName(m_domain, name.toUtf8().constData(), 0);
+    if (!snap) {
+        return nullptr;
+    }
+    return new DomainSnapshot(snap, this);
 }
 
 QString Domain::consoleType()

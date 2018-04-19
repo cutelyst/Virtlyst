@@ -20,6 +20,7 @@
 #include "lib/connection.h"
 #include "lib/storagevol.h"
 #include "lib/domain.h"
+#include "lib/domainsnapshot.h"
 
 #include <libvirt/libvirt.h>
 
@@ -154,7 +155,22 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
             conn->domainDefineXml(xml);
             redir = true;
         } else if (params.contains(QStringLiteral("snapshot"))) {
-//            const QString name = params.value(QStringLiteral("name"));
+            const QString name = params.value(QStringLiteral("name"));
+            dom->snapshot(name);
+            redir = true;
+        } else if (params.contains(QStringLiteral("revert_snapshot"))) {
+            const QString name = params.value(QStringLiteral("name"));
+            DomainSnapshot *snap = dom->getSnapshot(name);
+            if (snap) {
+                snap->revert();
+            }
+            redir = true;
+        } else if (params.contains(QStringLiteral("delete_snapshot"))) {
+            const QString name = params.value(QStringLiteral("name"));
+            DomainSnapshot *snap = dom->getSnapshot(name);
+            if (snap) {
+                snap->undefine();
+            }
             redir = true;
         } else if (params.contains(QStringLiteral("set_console_passwd"))) {
             QString password;

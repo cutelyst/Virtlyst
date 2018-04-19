@@ -598,7 +598,7 @@
             </div>
             <div class="tab-pane tab-inst" id="istaceshapshosts">
                 <p>{% i18n "To revert to a snapshot, shutdown the instance" %}</p>
-                {% if snapshots %}
+                {% if domain.snapshots.size %}
                     <table class="table table-bordered">
                         <thead>
                         <tr class="active">
@@ -608,10 +608,10 @@
                         </tr>
                         </thead>
                         <tbody>
-                        {% for snap in snapshots %}
+                        {% for snap in domain.snapshots %}
                             <tr>
                                 <td><strong>{{ snap.name }}</strong></td>
-                                <td>{{ snap.date|date:"M d H:i:s" }}</td>
+                                <td>{{ snap.date }}<!--|date:"M d H:i:s"--></td>
                                 <td style="width:30px;">
                                     <form action="" method="post" style="height:10px" role="form">{{ csrf_token }}
                                         <input type="hidden" name="name" value="{{ snap.name }}">

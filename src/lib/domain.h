@@ -26,6 +26,7 @@
 #include <libvirt/libvirt.h>
 
 class Connection;
+class DomainSnapshot;
 class Domain : public QObject
 {
     Q_OBJECT
@@ -51,6 +52,7 @@ class Domain : public QObject
     Q_PROPERTY(QVariantList cloneDisks READ cloneDisks CONSTANT)
     Q_PROPERTY(QVariantList media READ media CONSTANT)
     Q_PROPERTY(QVariantList networks READ networks CONSTANT)
+    Q_PROPERTY(QVariantList snapshots READ snapshots CONSTANT)
 public:
     explicit Domain(virDomainPtr domain, Connection *conn, QObject *parent = nullptr);
     ~Domain();
@@ -88,6 +90,10 @@ public:
 
     bool hasManagedSaveImage() const;
     bool autostart() const;
+
+    bool snapshot(const QString &name);
+    QVariantList snapshots();
+    DomainSnapshot *getSnapshot(const QString &name);
 
     QString consoleType();
     void setConsoleType(const QString &type);
