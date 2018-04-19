@@ -788,7 +788,7 @@ bool Domain::getStats()
         return true;
     }
 
-    if (status() == 1) {
+    if (status() == VIR_DOMAIN_RUNNING) {
         GetCPUStats cpuStat(m_domain);
         GetNetUsage netUsage(networkTargetDevs(), m_domain);
         GetHddUsage hddUsage(blkDevices(), m_domain);

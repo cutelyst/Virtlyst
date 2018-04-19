@@ -22,7 +22,7 @@ public:
     QString size();
     QString path();
 
-    bool undefine();
+    bool undefine(int flags = 0);
     StorageVol *clone(const QString &name, const QString &format, int flags);
 
     StoragePool *pool();

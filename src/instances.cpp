@@ -18,6 +18,7 @@
 #include "virtlyst.h"
 
 #include "lib/connection.h"
+#include "lib/storagevol.h"
 #include "lib/domain.h"
 
 #include <libvirt/libvirt.h>
@@ -96,8 +97,6 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
         return;
     }
 
-    qDebug() << "CONSOLE type" << dom->consoleType();
-
     c->setStash(QStringLiteral("console_types"), QStringList{QStringLiteral("vnc"), QStringLiteral("spice")});
 
     if (c->request()->isPost()) {
@@ -136,10 +135,17 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
                 dom->destroy();
             }
 
-            dom->undefine();
             if (params.contains(QStringLiteral("delete_disk"))) {
-                //TODO
+                const QVariantList disks = dom->disks();
+                for (const QVariant &disk : disks) {
+                    const QHash<QString, QString> diskHash = disk.value<QHash<QString, QString>>();
+                    StorageVol *vol = conn->getStorageVolByPath(diskHash.value(QStringLiteral("path")), c);
+                    if (vol) {
+                        vol->undefine();
+                    }
+                }
             }
+            dom->undefine();
 
             c->response()->redirect(c->uriFor(CActionFor("index"), QStringList{ hostId }));
             return;

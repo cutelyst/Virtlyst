@@ -43,9 +43,9 @@ QString StorageVol::path()
     return QString::fromUtf8(virStorageVolGetPath(m_vol));
 }
 
-bool StorageVol::undefine()
+bool StorageVol::undefine(int flags)
 {
-    return virStorageVolDelete(m_vol, 0) == 0;
+    return virStorageVolDelete(m_vol, flags) == 0;
 }
 
 StorageVol *StorageVol::clone(const QString &name, const QString &format, int flags)
