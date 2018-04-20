@@ -595,7 +595,7 @@ QVariantList Domain::cloneDisks()
 
         if (image.contains(QLatin1Char('.'))) {
             QFileInfo info(image);
-            if (info.path() == QLatin1Char('.')) {
+            if (info.path() == QLatin1String(".")) {
                 disk[QStringLiteral("image")] = info.baseName() + QLatin1String("-clone.") + info.completeSuffix();
             } else {
                 disk[QStringLiteral("image")] = info.path() + QLatin1Char('/') + info.baseName() + QLatin1String("-clone.") + info.completeSuffix();
