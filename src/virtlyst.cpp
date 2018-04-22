@@ -95,11 +95,12 @@ bool Virtlyst::init()
         QSqlDatabase::removeDatabase(QStringLiteral("db"));
     }
 
+    auto templatePath = config(QStringLiteral("TemplatePath"), pathTo(QStringLiteral("root/src"))).toString();
     auto view = new GrantleeView(this);
     view->setCache(production);
     view->engine()->addDefaultLibrary(QStringLiteral("grantlee_i18ntags"));
     view->addTranslator(QLocale::system(), new QTranslator(this));
-    view->setIncludePaths({ pathTo(QStringLiteral("root/src")) });
+    view->setIncludePaths({ templatePath });
 
     auto store = new SqlUserStore;
 
