@@ -88,7 +88,6 @@ QString StoragePool::status()
         return QStringLiteral("Running, but not accessible");
     default:
         return QStringLiteral("Unknown");
-
     }
 }
 

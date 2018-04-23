@@ -40,6 +40,9 @@ public:
     C_ATTR(instusage, :Local :AutoArgs)
     void instusage(Context *c, const QString &hostId, const QString &name);
 
+private Q_SLOTS:
+    bool End(Context *c) { Q_UNUSED(c); }
+
 private:
     Virtlyst *m_virtlyst;
 };
