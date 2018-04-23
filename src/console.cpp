@@ -65,7 +65,7 @@ void Console::index(Context *c, const QString &hostId, const QString &uuid)
     const QUrl uri = c->request()->uri();
     c->setStash(QStringLiteral("domain"), QVariant::fromValue(dom));
     c->setStash(QStringLiteral("ws_host"), uri.host());
-    c->setStash(QStringLiteral("ws_port"), uri.port());
+    c->setStash(QStringLiteral("ws_port"), uri.port(c->request()->secure() ? 443 : 80));
     c->setStash(QStringLiteral("console_passwd"), dom->consolePassword());
     const QString path = QLatin1String("console/ws/") + hostId + QLatin1Char('/') + uuid;
     c->setStash(QStringLiteral("ws_path"), path);
