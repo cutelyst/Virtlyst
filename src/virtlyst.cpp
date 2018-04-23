@@ -34,7 +34,7 @@
 #include <QUuid>
 #include <QTranslator>
 #include <QStandardPaths>
-#include <QDebug>
+#include <QLoggingCategory>
 
 #include "lib/connection.h"
 
@@ -56,6 +56,8 @@
 using namespace Cutelyst;
 
 static QMutex mutex;
+
+Q_LOGGING_CATEGORY(VIRTLYST, "virtlyst")
 
 Virtlyst::Virtlyst(QObject *parent) : Application(parent)
 {
@@ -82,11 +84,11 @@ bool Virtlyst::init()
     new Create(this);
 
     bool production = config(QStringLiteral("production")).toBool();
-    qDebug() << "Production" << production;
+    qCDebug(VIRTLYST) << "Production" << production;
 
     m_dbPath = config(QStringLiteral("DatabasePath"),
                       QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + QLatin1String("/virtlyst.sqlite")).toString();
-    qDebug() << "Database" << m_dbPath;
+    qCDebug(VIRTLYST) << "Database" << m_dbPath;
     if (!QFile::exists(m_dbPath)) {
         if (!createDB()) {
             qDebug() << "Failed to create database" << m_dbPath;
@@ -127,7 +129,7 @@ bool Virtlyst::postFork()
     auto db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), Cutelyst::Sql::databaseNameThread(QStringLiteral("virtlyst")));
     db.setDatabaseName(m_dbPath);
     if (!db.open()) {
-        qWarning() << "Failed to open database" << db.lastError().databaseText();
+        qCWarning(VIRTLYST) << "Failed to open database" << db.lastError().databaseText();
         return false;
     }
 
@@ -136,7 +138,7 @@ bool Virtlyst::postFork()
 
 //    m_connections.insert(QStringLiteral("1"), server);
 
-    qDebug() << "Database ready" << db.connectionName();
+    qCDebug(VIRTLYST) << "Database ready" << db.connectionName();
 
     updateConnections();
 
@@ -223,7 +225,7 @@ void Virtlyst::updateConnections()
                 QStringLiteral("SELECT id, name, hostname, login, password, type FROM servers_compute"),
                 QStringLiteral("virtlyst"));
     if (!query.exec()) {
-        qWarning() << "Failed to get connections list";
+        qCWarning(VIRTLYST) << "Failed to get connections list";
     }
 
     QStringList ids;
@@ -304,22 +306,22 @@ bool Virtlyst::createDB()
     auto db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("db"));
     db.setDatabaseName(m_dbPath);
     if (!db.open()) {
-        qWarning() << "Failed to open database" << db.lastError().databaseText();
+        qCWarning(VIRTLYST) << "Failed to open database" << db.lastError().databaseText();
         return false;
     }
 
     QSqlQuery query(db);
-    qDebug() << "Creating database" << m_dbPath;
+    qCDebug(VIRTLYST) << "Creating database" << m_dbPath;
 
     bool ret = query.exec(QStringLiteral("PRAGMA journal_mode = WAL"));
-    qDebug() << "PRAGMA journal_mode = WAL" << ret << query.lastError().databaseText();
+    qCDebug(VIRTLYST) << "PRAGMA journal_mode = WAL" << ret << query.lastError().databaseText();
 
     if (!query.exec(QStringLiteral("CREATE TABLE users "
                                    "( id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT"
                                    ", username TEXT UNIQUE NOT NULL "
                                    ", password TEXT NOT NULL "
                                    ")"))) {
-        qCritical() << "Error creating database" << query.lastError().text();
+        qCCritical(VIRTLYST) << "Error creating database" << query.lastError().text();
         return false;
     }
 
@@ -327,7 +329,7 @@ bool Virtlyst::createDB()
                                       "(username, password) "
                                       "VALUES "
                                       "('admin', :password)"))) {
-        qCritical() << "Error creating database" << query.lastError().text();
+        qCCritical(VIRTLYST) << "Error creating database" << query.lastError().text();
         return false;
     }
     const QString password = QString::fromLatin1(QUuid::createUuid().toRfc4122().toHex());
@@ -337,7 +339,7 @@ bool Virtlyst::createDB()
         qCritical() << "Error creating database" << query.lastError().text();
         return false;
     }
-    qCritical() << "Created user admin with password:" << password;
+    qCCritical(VIRTLYST) << "Created user admin with password:" << password;
 
     if (!query.exec(QStringLiteral("CREATE TABLE servers_compute "
                                    "( id integer NOT NULL PRIMARY KEY"
@@ -346,7 +348,7 @@ bool Virtlyst::createDB()
                                    ", login varchar(20) NOT NULL"
                                    ", password varchar(14)"
                                    ", type integer NOT NULL)"))) {
-        qCritical() << "Error creating database" << query.lastError().text();
+        qCCritical(VIRTLYST) << "Error creating database" << query.lastError().text();
         return false;
     }
 
@@ -356,7 +358,7 @@ bool Virtlyst::createDB()
                                    ", memory integer NOT NULL"
                                    ", vcpu integer NOT NULL"
                                    ", disk integer NOT NULL)"))) {
-        qCritical() << "Error creating database" << query.lastError().text();
+        qCCritical(VIRTLYST) << "Error creating database" << query.lastError().text();
         return false;
     }
 
@@ -364,7 +366,7 @@ bool Virtlyst::createDB()
                                       "(label, memory, vcpu, disk) "
                                       "VALUES "
                                       "(:label, :memory, :vcpu, :disk)"))) {
-        qCritical() << "Error creating database" << query.lastError().text();
+        qCCritical(VIRTLYST) << "Error creating database" << query.lastError().text();
         return false;
     }
 

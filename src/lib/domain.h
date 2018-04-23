@@ -19,6 +19,7 @@
 #define DOMAIN_H
 
 #include <QMap>
+#include <QHash>
 #include <QObject>
 #include <QVector>
 #include <QDomDocument>
@@ -139,6 +140,7 @@ private:
 
     bool getStats();
 
+    QVariantHash m_cache;
     Connection *m_conn;
     virDomainPtr m_domain;
     virDomainInfo m_info;

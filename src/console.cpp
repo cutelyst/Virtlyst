@@ -27,6 +27,8 @@
 #include <QEventLoop>
 #include <QTcpSocket>
 
+Q_LOGGING_CATEGORY(V_CONSOLE, "virtlyst.console")
+
 Console::Console(Virtlyst *parent) : Controller(parent)
   , m_virtlyst(parent)
 {
@@ -40,7 +42,7 @@ void Console::index(Context *c, const QString &hostId, const QString &uuid)
 
     Connection *conn = m_virtlyst->connection(hostId, c);
     if (conn == nullptr) {
-        qWarning() << "Host id not found or connection not active";
+        qCWarning(V_CONSOLE) << "Host id not found or connection not active";
         c->response()->redirect(c->uriForAction(QStringLiteral("/index")));
         return;
     }
@@ -59,7 +61,7 @@ void Console::index(Context *c, const QString &hostId, const QString &uuid)
     } else if (type == QLatin1String("vnc")) {
         c->setStash(QStringLiteral("template"), QStringLiteral("console-vnc.html"));
     } else {
-        qDebug() << "Console type not known for domain" << uuid;
+        qCDebug(V_CONSOLE) << "Console type not known for domain" << uuid;
         return;
     }
     const QUrl uri = c->request()->uri();
@@ -75,19 +77,19 @@ void Console::ws(Context *c, const QString &hostId, const QString &uuid)
 {
     Connection *conn = m_virtlyst->connection(hostId, c);
     if (conn == nullptr) {
-        qWarning() << "Host id not found or connection not active";
+        qCWarning(V_CONSOLE) << "Host id not found or connection not active";
         c->response()->redirect(c->uriForAction(QStringLiteral("/index")));
         return;
     }
 
     Domain *dom = conn->getDomainByUuid(uuid, c);
     if (!dom) {
-        qDebug() << "Domain not found: no domain with matching name '%1'" << uuid;
+        qCDebug(V_CONSOLE) << "Domain not found: no domain with matching name '%1'" << uuid;
         return;
     }
 
     if (!c->response()->webSocketHandshake(QString(), QString(), QStringLiteral("binary"))) {
-        qWarning() << "Failed to estabilish websocket handshake";
+        qCWarning(V_CONSOLE) << "Failed to estabilish websocket handshake";
         return;
     }
 
@@ -96,25 +98,25 @@ void Console::ws(Context *c, const QString &hostId, const QString &uuid)
 
     auto sock = new QTcpSocket(c);
     sock->connectToHost(host, port);
-    qDebug() << "Connecting TCP socket to" << host << port;
+    qCDebug(V_CONSOLE) << "Connecting TCP socket to" << host << port;
 
     connect(sock, &QTcpSocket::readyRead, c, [=] {
         const QByteArray data = sock->readAll();
-//        qWarning() << "Console Proxy socket data" << data.size();
+//        qCWarning(V_CONSOLE) << "Console Proxy socket data" << data.size();
         c->response()->webSocketBinaryMessage(data);
     });
     connect(sock, static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),
             c, [=] (QAbstractSocket::SocketError error) {
-        qWarning() << "Console Proxy error:" << error << sock->errorString();
+        qCWarning(V_CONSOLE) << "Console Proxy error:" << error << sock->errorString();
         c->response()->webSocketClose(Response::CloseCodeAbnormalDisconnection, sock->errorString());
     });
     connect(sock, &QTcpSocket::disconnected, c, [=] {
-        qWarning() << "Console Proxy socket disconnected";
+        qCWarning(V_CONSOLE) << "Console Proxy socket disconnected";
         c->response()->webSocketClose(Response::CloseCodeAbnormalDisconnection, sock->errorString());
     });
     auto buf = new QByteArray;//this will leak
     connect(sock, &QTcpSocket::connected, c, [=] {
-        qWarning() << "Console Proxy socket connected from" << host << port;
+        qCWarning(V_CONSOLE) << "Console Proxy socket connected from" << host << port;
         if (!buf->isNull()) {
             sock->write(*buf);
             sock->flush();
@@ -122,7 +124,7 @@ void Console::ws(Context *c, const QString &hostId, const QString &uuid)
     });
 
     connect(c->request(), &Request::webSocketBinaryFrame, c, [=] (const QByteArray &message) {
-//        qWarning() << "Console Proxy ws data" << message.size();
+//        qCWarning(V_CONSOLE) << "Console Proxy ws data" << message.size();
         if (sock->state() != QAbstractSocket::ConnectedState) {
             buf->append(message);
             return;

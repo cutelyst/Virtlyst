@@ -227,6 +227,12 @@ bool Domain::snapshot(const QString &name)
 QVariantList Domain::snapshots()
 {
     QVariantList ret;
+    auto it = m_cache.constFind(QStringLiteral("snapshots"));
+    if (it != m_cache.constEnd()) {
+        ret = it.value().toList();
+        return ret;
+    }
+
     virDomainSnapshotPtr *snaps;
     int count = virDomainListAllSnapshots(m_domain, &snaps, 0);
     if (count == -1) {
@@ -238,6 +244,8 @@ QVariantList Domain::snapshots()
         ret.append(QVariant::fromValue(snap));
     }
     free(snaps);
+
+    m_cache.insert(QStringLiteral("snapshots"), ret);
     return ret;
 }
 
@@ -506,7 +514,13 @@ QMap<QString, std::pair<qint64, qint64> > Domain::hddUsageMiBs()
 
 QStringList Domain::blkDevices()
 {
-    QStringList devices;
+    QStringList ret;
+    auto it = m_cache.constFind(QStringLiteral("blkDevices"));
+    if (it != m_cache.constEnd()) {
+        ret = it.value().toStringList();
+        return ret;
+    }
+
     QDomElement disk = xmlDoc()
             .documentElement()
             .firstChildElement(QStringLiteral("devices"))
@@ -534,17 +548,25 @@ QStringList Domain::blkDevices()
                 // this will always be true, odd logic from webvirtmgr
                 dev_file = dev_bus;
             }
-            devices.append(dev_file);
+            ret.append(dev_file);
         }
 
         disk = disk.nextSiblingElement(QStringLiteral("disk"));
     }
-    return devices;
+
+    m_cache.insert(QStringLiteral("blkDevices"), ret);
+    return ret;
 }
 
 QVariantList Domain::disks()
 {
     QVariantList ret;
+    auto it = m_cache.constFind(QStringLiteral("disks"));
+    if (it != m_cache.constEnd()) {
+        ret = it.value().toList();
+        return ret;
+    }
+
     QDomElement disk = xmlDoc()
             .documentElement()
             .firstChildElement(QStringLiteral("devices"))
@@ -579,12 +601,19 @@ QVariantList Domain::disks()
         disk = disk.nextSiblingElement(QStringLiteral("disk"));
     }
 
+    m_cache.insert(QStringLiteral("disks"), ret);
     return ret;
 }
 
 QVariantList Domain::cloneDisks()
 {
     QVariantList ret;
+    auto it = m_cache.constFind(QStringLiteral("cloneDisks"));
+    if (it != m_cache.constEnd()) {
+        ret = it.value().toList();
+        return ret;
+    }
+
     const QVariantList _disks = disks();
     for (const QVariant &var : _disks) {
         QHash<QString, QString> disk = var.value<QHash<QString, QString> >();
@@ -605,12 +634,20 @@ QVariantList Domain::cloneDisks()
         }
         ret.append(QVariant::fromValue(disk));
     }
+
+    m_cache.insert(QStringLiteral("cloneDisks"), ret);
     return ret;
 }
 
 QVariantList Domain::media()
 {
     QVariantList ret;
+    auto it = m_cache.constFind(QStringLiteral("media"));
+    if (it != m_cache.constEnd()) {
+        ret = it.value().toList();
+        return ret;
+    }
+
     QDomElement disk = xmlDoc()
             .documentElement()
             .firstChildElement(QStringLiteral("devices"))
@@ -643,12 +680,19 @@ QVariantList Domain::media()
         disk = disk.nextSiblingElement(QStringLiteral("disk"));
     }
 
+    m_cache.insert(QStringLiteral("media"), ret);
     return ret;
 }
 
 QVariantList Domain::networks()
 {
     QVariantList ret;
+    auto it = m_cache.constFind(QStringLiteral("networks"));
+    if (it != m_cache.constEnd()) {
+        ret = it.value().toList();
+        return ret;
+    }
+
     QDomElement interface = xmlDoc()
             .documentElement()
             .firstChildElement(QStringLiteral("devices"))
@@ -680,12 +724,19 @@ QVariantList Domain::networks()
         interface = interface.nextSiblingElement(QStringLiteral("interface"));
     }
 
+    m_cache.insert(QStringLiteral("networks"), ret);
     return ret;
 }
 
 QStringList Domain::networkTargetDevs()
 {
-    QStringList networks;
+    QStringList ret;
+    auto it = m_cache.constFind(QStringLiteral("networkTargetDevs"));
+    if (it != m_cache.constEnd()) {
+        ret = it.value().toStringList();
+        return ret;
+    }
+
     QDomElement interface = xmlDoc()
             .documentElement()
             .firstChildElement(QStringLiteral("devices"))
@@ -693,12 +744,14 @@ QStringList Domain::networkTargetDevs()
     while (!interface.isNull()) {
         const QDomElement target = interface.firstChildElement(QStringLiteral("target"));
         if (target.hasAttribute(QStringLiteral("dev"))) {
-            networks.append(target.attribute(QStringLiteral("dev")));
+            ret.append(target.attribute(QStringLiteral("dev")));
         }
 
         interface = interface.nextSiblingElement(QStringLiteral("interface"));
     }
-    return networks;
+
+    m_cache.insert(QStringLiteral("networkTargetDevs"), ret);
+    return ret;
 }
 
 void Domain::start()

@@ -266,7 +266,7 @@ QDomDocument StoragePool::xmlDoc()
     if (m_xml.isNull()) {
         char *xml = virStoragePoolGetXMLDesc(m_pool, 0);
         const QString xmlString = QString::fromUtf8(xml);
-        qDebug() << "XML" << xml;
+//        qDebug() << "XML" << xml;
         QString error;
         if (!m_xml.setContent(xmlString, &error)) {
             qWarning() << "Failed to parse XML from interface" << error;
