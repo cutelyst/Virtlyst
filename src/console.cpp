@@ -91,8 +91,13 @@ void Console::ws(Context *c, const QString &hostId, const QString &uuid)
         return;
     }
 
+    const QString host = dom->consoleListenAddress();
+    const quint32 port = dom->consolePort();
+
     auto sock = new QTcpSocket(c);
-    sock->connectToHost(dom->consoleListenAddress(), dom->consolePort());
+    sock->connectToHost(host, port);
+    qDebug() << "Connecting TCP socket to" << host << port;
+
     connect(sock, &QTcpSocket::readyRead, c, [=] {
         const QByteArray data = sock->readAll();
 //        qWarning() << "Console Proxy socket data" << data.size();
@@ -109,7 +114,7 @@ void Console::ws(Context *c, const QString &hostId, const QString &uuid)
     });
     auto buf = new QByteArray;//this will leak
     connect(sock, &QTcpSocket::connected, c, [=] {
-        qWarning() << "Console Proxy socket connected";
+        qWarning() << "Console Proxy socket connected from" << host << port;
         if (!buf->isNull()) {
             sock->write(*buf);
             sock->flush();
