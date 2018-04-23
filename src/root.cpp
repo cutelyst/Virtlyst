@@ -43,15 +43,12 @@ void Root::index(Context *c)
 
 void Root::login(Context *c)
 {
-    c->setStash(QStringLiteral("template"), QStringLiteral("login.html"));
-
     Request *req = c->request();
-    const ParamsMultiMap params = req->bodyParams();
-    const QString username = params.value(QStringLiteral("username"));
     if (req->isPost()) {
+        const ParamsMultiMap params = req->bodyParams();
+        const QString username = params.value(QStringLiteral("username"));
         const QString password = params.value(QStringLiteral("password"));
         if (!username.isEmpty() && !password.isEmpty()) {
-
             // Authenticate
             if (Authentication::authenticate(c, params)) {
                 qDebug() << Q_FUNC_INFO << username << "is now Logged in";
@@ -65,9 +62,9 @@ void Root::login(Context *c)
             qWarning() << "Empty username and password";
         }
         c->res()->setStatus(Response::Forbidden);
-    } else {
-        qWarning() << "Non POST method";
     }
+
+    c->setStash(QStringLiteral("template"), QStringLiteral("login.html"));
 }
 
 void Root::logout(Context *c)
