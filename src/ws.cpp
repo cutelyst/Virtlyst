@@ -1,0 +1,80 @@
+#include "ws.h"
+
+#include "virtlyst.h"
+#include "lib/connection.h"
+#include "lib/domain.h"
+
+#include <libvirt/libvirt.h>
+
+#include <QTcpSocket>
+
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(V_WS, "virtlyst.ws")
+
+Ws::Ws(Virtlyst *parent) : Controller(parent)
+  , m_virtlyst(parent)
+{
+
+}
+
+void Ws::index(Context *c, const QString &hostId, const QString &uuid)
+{
+    Connection *conn = m_virtlyst->connection(hostId, c);
+    if (conn == nullptr) {
+        qCWarning(V_WS) << "Host id not found or connection not active";
+        c->response()->redirect(c->uriForAction(QStringLiteral("/index")));
+        return;
+    }
+
+    Domain *dom = conn->getDomainByUuid(uuid, c);
+    if (!dom) {
+        qCDebug(V_WS) << "Domain not found: no domain with matching name '%1'" << uuid;
+        return;
+    }
+
+    if (!c->response()->webSocketHandshake(QString(), QString(), QStringLiteral("binary"))) {
+        qCWarning(V_WS) << "Failed to estabilish websocket handshake";
+        return;
+    }
+
+    const QString host = dom->consoleListenAddress();
+    const quint32 port = dom->consolePort();
+
+    auto sock = new QTcpSocket(c);
+    sock->connectToHost(host, port);
+    qCDebug(V_WS) << "Connecting TCP socket to" << host << port;
+
+    connect(sock, &QTcpSocket::readyRead, c, [=] {
+        const QByteArray data = sock->readAll();
+//        qCWarning(V_WS) << "Console Proxy socket data" << data.size();
+        c->response()->webSocketBinaryMessage(data);
+    });
+    connect(sock, static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),
+            c, [=] (QAbstractSocket::SocketError error) {
+        qCWarning(V_WS) << "Console Proxy error:" << error << sock->errorString();
+        c->response()->webSocketClose(Response::CloseCodeAbnormalDisconnection, sock->errorString());
+    });
+    connect(sock, &QTcpSocket::disconnected, c, [=] {
+        qCWarning(V_WS) << "Console Proxy socket disconnected";
+        c->response()->webSocketClose(Response::CloseCodeAbnormalDisconnection, sock->errorString());
+    });
+    auto buf = new QByteArray;//this will leak
+    connect(sock, &QTcpSocket::connected, c, [=] {
+        qCWarning(V_WS) << "Console Proxy socket connected from" << host << port;
+        if (!buf->isNull()) {
+            sock->write(*buf);
+            sock->flush();
+        }
+    });
+
+    connect(c->request(), &Request::webSocketBinaryFrame, c, [=] (const QByteArray &message) {
+//        qCWarning(V_WS) << "Console Proxy ws data" << message.size();
+        if (sock->state() != QAbstractSocket::ConnectedState) {
+            buf->append(message);
+            return;
+        }
+        sock->write(message);
+        sock->flush();
+    });
+}

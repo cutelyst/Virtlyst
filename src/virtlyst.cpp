@@ -50,6 +50,7 @@
 #include "console.h"
 #include "create.h"
 #include "root.h"
+#include "ws.h"
 
 #include "sqluserstore.h"
 
@@ -82,6 +83,7 @@ bool Virtlyst::init()
     new Storages(this);
     new Console(this);
     new Create(this);
+    new Ws(this);
 
     bool production = config(QStringLiteral("production")).toBool();
     qCDebug(VIRTLYST) << "Production" << production;
