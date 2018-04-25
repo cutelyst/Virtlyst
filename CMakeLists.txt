@@ -13,7 +13,7 @@ if(WIN32)
 endif()
 
 find_package(Qt5 COMPONENTS Core Network Sql Xml REQUIRED)
-find_package(Cutelyst2Qt5 2.1.0 REQUIRED)
+find_package(Cutelyst2Qt5 2.2.0 REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBVIRT REQUIRED libvirt)
 
