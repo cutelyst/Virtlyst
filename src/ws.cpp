@@ -9,6 +9,7 @@
 #include <QTcpSocket>
 
 #include <QLoggingCategory>
+#include <QBuffer>
 
 Q_LOGGING_CATEGORY(V_WS, "virtlyst.ws")
 
@@ -59,19 +60,22 @@ void Ws::index(Context *c, const QString &hostId, const QString &uuid)
         qCWarning(V_WS) << "Console Proxy socket disconnected";
         c->response()->webSocketClose(Response::CloseCodeAbnormalDisconnection, sock->errorString());
     });
-    auto buf = new QByteArray;//this will leak
+
+    auto buf = new QBuffer(c);
     connect(sock, &QTcpSocket::connected, c, [=] {
         qCWarning(V_WS) << "Console Proxy socket connected from" << host << port;
-        if (!buf->isNull()) {
-            sock->write(*buf);
+        if (buf->isOpen()) {
+            sock->write(buf->readAll());
             sock->flush();
+            buf->close();
         }
     });
 
     connect(c->request(), &Request::webSocketBinaryFrame, c, [=] (const QByteArray &message) {
 //        qCWarning(V_WS) << "Console Proxy ws data" << message.size();
         if (sock->state() != QAbstractSocket::ConnectedState) {
-            buf->append(message);
+            buf->open(QIODevice::ReadWrite);
+            buf->write(message);
             return;
         }
         sock->write(message);
