@@ -35,6 +35,7 @@
 #include <QTranslator>
 #include <QStandardPaths>
 #include <QLoggingCategory>
+#include <QCoreApplication>
 
 #include "lib/connection.h"
 
@@ -62,6 +63,9 @@ Q_LOGGING_CATEGORY(VIRTLYST, "virtlyst")
 
 Virtlyst::Virtlyst(QObject *parent) : Application(parent)
 {
+    QCoreApplication::setApplicationName(QStringLiteral("Virtlyst"));
+    QCoreApplication::setOrganizationName(QStringLiteral("Cutelyst"));
+    QCoreApplication::setApplicationVersion(QStringLiteral("1.1.0"));
 }
 
 Virtlyst::~Virtlyst()
