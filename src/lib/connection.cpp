@@ -44,29 +44,33 @@ static int authCreds[] = {
 
 static int authCb(virConnectCredentialPtr cred, unsigned int ncred, void *cbdata)
 {
-    int i;
-    char buf[1024];
-
-    for (i = 0; i < ncred; i++) {
+    for (int i = 0; i < ncred; ++i) {
         if (cred[i].type == VIR_CRED_AUTHNAME) {
-            printf("%s: ", cred[i].prompt);
-            fflush(stdout);
-            fgets(buf, sizeof(buf), stdin);
-            buf[strlen(buf) - 1] = '\0';
-            cred[i].result = strdup(buf);
-            if (cred[i].result == NULL)
+            QUrl *url = static_cast<QUrl*>(cbdata);
+
+            const QByteArray user = url->userName().toUtf8();
+            if (user.isEmpty()) {
                 return -1;
-            cred[i].resultlen = strlen(cred[i].result);
-        }
-        else if (cred[i].type == VIR_CRED_PASSPHRASE) {
-            printf("%s: ", cred[i].prompt);
-            fflush(stdout);
-            fgets(buf, sizeof(buf), stdin);
-            buf[strlen(buf) - 1] = '\0';
-            cred[i].result = strdup(buf);
-            if (cred[i].result == NULL)
+            }
+
+            cred[i].result = strdup(user.constData());
+            if (cred[i].result == NULL) {
                 return -1;
-            cred[i].resultlen = strlen(cred[i].result);
+            }
+            cred[i].resultlen = user.length();
+        } else if (cred[i].type == VIR_CRED_PASSPHRASE) {
+            QUrl *url = static_cast<QUrl*>(cbdata);
+
+            const QByteArray password = url->password().toUtf8();
+            if (password.isEmpty()) {
+                return -1;
+            }
+
+            cred[i].result = strdup(password.constData());
+            if (cred[i].result == NULL) {
+                return -1;
+            }
+            cred[i].resultlen = password.length();
         }
     }
 
@@ -80,18 +84,21 @@ Connection::Connection(virConnectPtr conn, QObject *parent) : QObject(parent), m
 
 Connection::Connection(const QUrl &url, QObject *parent) : QObject(parent)
 {
-    qDebug() << "Connecting to" << url << url.toString();
+    const QString uri = url.toString(QUrl::RemoveUserInfo);
+    qDebug() << "Connecting to" << uri;
+    QUrl localUrl(url);
     virConnectAuth auth;
     auth.credtype = authCreds;
     auth.ncredtype = sizeof(authCreds)/sizeof(int);
     auth.cb = authCb;
-    auth.cbdata = this;
+    auth.cbdata = &localUrl;
 
-    m_conn = virConnectOpenAuth(url.toString().toUtf8().constData(), &auth, 0);
+    m_conn = virConnectOpenAuth(uri.toUtf8().constData(), &auth, 0);
     if (m_conn == NULL) {
         qCWarning(VIRT_CONN) << "Failed to open connection to" << url;
         return;
     }
+    qDebug() << "Connected to" << uri;
 }
 
 Connection::~Connection()

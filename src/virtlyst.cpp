@@ -281,10 +281,12 @@ void Virtlyst::updateConnections()
             url = QStringLiteral("qemu+tcp:///system");
             url.setHost(hostname);
             url.setUserName(login);
+            url.setPassword(password);
             break;
         case ServerConn::ConnTLS:
             url = QStringLiteral("qemu+tls:///system");
             url.setHost(hostname);
+            url.setUserName(login);
             url.setPassword(password);
             break;
         }
