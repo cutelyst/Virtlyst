@@ -33,7 +33,7 @@ class Connection : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString uri READ uri CONSTANT)
-    Q_PROPERTY(QString name READ name WRITE setName CONSTANT)
+    Q_PROPERTY(QString name READ name CONSTANT)
     Q_PROPERTY(QString hostname READ hostname CONSTANT)
     Q_PROPERTY(QString hypervisor READ hypervisor CONSTANT)
     Q_PROPERTY(QString memoryPretty READ memoryPretty CONSTANT)
