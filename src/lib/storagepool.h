@@ -66,7 +66,7 @@ public:
 
     bool build(int flags);
     bool create(int flags);
-    bool createStorageVolume(const QString &name, const QString &format, const QString &size, int flags);
+    StorageVol *createStorageVolume(const QString &name, const QString &format, int sizeGiB, int flags);
 //    bool cloneStorageVolume(StorageVol *volume, const QString &name, const QString &format, int flags);
     StorageVol *getVolume(const QString &name);
 

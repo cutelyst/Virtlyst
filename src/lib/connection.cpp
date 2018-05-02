@@ -454,7 +454,9 @@ bool Connection::createDomain(const QString &name, const QString &memory, const 
                 stream.writeEmptyElement(QStringLiteral("driver"));
                 stream.writeAttribute(QStringLiteral("name"), QStringLiteral("qemu"));
                 stream.writeAttribute(QStringLiteral("type"), type);
-                stream.writeAttribute(QStringLiteral("cache"), cacheMode);
+                if (!cacheMode.isEmpty()) {
+                    stream.writeAttribute(QStringLiteral("cache"), cacheMode);
+                }
 
                 stream.writeStartElement(QStringLiteral("auth"));
                 stream.writeAttribute(QStringLiteral("username"), QStringLiteral("ceph_user"));
@@ -472,7 +474,9 @@ bool Connection::createDomain(const QString &name, const QString &memory, const 
                 stream.writeEmptyElement(QStringLiteral("driver"));
                 stream.writeAttribute(QStringLiteral("name"), QStringLiteral("qemu"));
                 stream.writeAttribute(QStringLiteral("type"), vol->type());
-                stream.writeAttribute(QStringLiteral("cache"), cacheMode);
+                if (!cacheMode.isEmpty()) {
+                    stream.writeAttribute(QStringLiteral("cache"), cacheMode);
+                }
 
                 stream.writeEmptyElement(QStringLiteral("source"));
                 stream.writeAttribute(QStringLiteral("file"), vol->path());

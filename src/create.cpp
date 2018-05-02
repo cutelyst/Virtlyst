@@ -122,18 +122,31 @@ void Create::index(Context *c, const QString &hostId)
             const QString consoleType = QStringLiteral("spice");
             const QStringList networks = params.values(QStringLiteral("network-control"));
 
+            int flags = 0;
+            if (params.contains(QStringLiteral("meta_prealloc"))) {
+                flags = VIR_STORAGE_VOL_CREATE_PREALLOC_METADATA;
+            }
+
             QVector<StorageVol *> volumes;
             if (params.contains(QStringLiteral("hdd_size"))) {
-
+                const QString storageName = params[QStringLiteral("storage")];
+                const QString hddSize = params[QStringLiteral("hdd_size")];
+                StoragePool *storage = conn->getStoragePoll(storageName);
+                if (storage) {
+                    StorageVol *vol = storage->createStorageVolume(name, QStringLiteral("qcow2"), hddSize.toInt(), flags);
+                    if (vol) {
+                        volumes << vol;
+                    } else {
+                        errors.append(QStringLiteral("Could not create storage volume"));
+                        errors.append(conn->lastError());
+                    }
+                } else {
+                    errors.append(QStringLiteral("Could not find storage"));
+                }
             } else if (params.contains(QStringLiteral("template"))) {
                 const QString templ = params[QStringLiteral("template")];
                 StorageVol *vol = conn->getStorageVolByPath(templ, c);
                 if (vol) {
-                    int flags = 0;
-                    if (params.contains(QStringLiteral("meta_prealloc"))) {
-                        flags = VIR_STORAGE_VOL_CREATE_PREALLOC_METADATA;
-                    }
-
                     // This is SLOW and will block clients
                     StorageVol *cloned = vol->clone(name, vol->type(), flags);
                     if (cloned) {

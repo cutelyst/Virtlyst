@@ -134,7 +134,10 @@ void Storages::storage(Context *c, const QString &hostId, const QString &pool)
             if (params.contains(QStringLiteral("meta_prealloc")) && format == QLatin1String("qcow2")) {
                 flags = VIR_STORAGE_VOL_CREATE_PREALLOC_METADATA;
             }
-            storage->createStorageVolume(name, format, size, flags);
+            StorageVol *vol = storage->createStorageVolume(name, format, size.toInt(), flags);
+            if (!vol) {
+                // failed to create storage
+            }
         } else if (params.contains(QStringLiteral("del_volume"))) {
             const QString name = params[QStringLiteral("volname")];
             StorageVol *vol = storage->getVolume(name);

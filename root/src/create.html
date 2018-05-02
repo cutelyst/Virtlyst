@@ -111,7 +111,7 @@
                                                         <select name="storage" class="form-control">
                                                             {% if storages.size %}
                                                                 {% for storage in storages %}
-                                                                    <option value="{{ storage }}">{{ storage }}</option>
+                                                                    <option value="{{ storage.name }}">{{ storage.name }}</option>
                                                                 {% endfor %}
                                                             {% else %}
                                                                 <option value="">{% i18n "None" %}</option>
@@ -133,7 +133,7 @@
                                                     <div class="col-sm-6">
                                                         <select name="networks" class="form-control">
                                                             {% for network in networks %}
-                                                                <option value="{{ network }}">{{ network }}</option>
+                                                                <option value="{{ network.name }}">{{ network.name }}</option>
                                                             {% endfor %}
                                                         </select>
                                                     </div>
