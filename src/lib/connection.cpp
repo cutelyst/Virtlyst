@@ -108,9 +108,21 @@ Connection::~Connection()
     }
 }
 
+QString Connection::name() const
+{
+    return m_connName;
+}
+
+void Connection::setName(const QString &name)
+{
+    m_connName = name;
+}
+
 Connection *Connection::clone(QObject *parent)
 {
-    return new Connection(m_conn, parent);
+    auto conn = new Connection(m_conn, parent);
+    conn->setName(m_connName);
+    return conn;
 }
 
 QString Connection::uri() const

@@ -33,6 +33,7 @@ class Connection : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString uri READ uri CONSTANT)
+    Q_PROPERTY(QString name READ name WRITE setName CONSTANT)
     Q_PROPERTY(QString hostname READ hostname CONSTANT)
     Q_PROPERTY(QString hypervisor READ hypervisor CONSTANT)
     Q_PROPERTY(QString memoryPretty READ memoryPretty CONSTANT)
@@ -45,6 +46,9 @@ public:
     explicit Connection(virConnectPtr conn, QObject *parent = nullptr);
     explicit Connection(const QUrl &url, QObject *parent = nullptr);
     ~Connection();
+
+    QString name() const;
+    void setName(const QString &name);
 
     Connection *clone(QObject *parent);
 
@@ -120,6 +124,7 @@ private:
     bool loadDomainCapabilities();
     QString dataFromSimpleNode(const QString &element) const;
 
+    QString m_connName;
     virConnectPtr m_conn;
     virNodeInfo m_nodeInfo;
     QDomDocument m_xmlCapsDoc;

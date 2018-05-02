@@ -235,7 +235,6 @@ void Virtlyst::updateConnections()
     }
 
     QStringList ids;
-//    QMap<QString, ServerConn *> connections;
     while (query.next()) {
         const QString id = query.value(0).toString();
         const QString name = query.value(1).toString();
@@ -292,6 +291,7 @@ void Virtlyst::updateConnections()
         }
 
         auto conn = new Connection(url, server);
+        conn->setName(name);
         if (conn->isAlive()) {
             server->conn = conn;
         }
