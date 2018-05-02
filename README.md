@@ -1,12 +1,16 @@
 # Virtlyst
 Web interface to manage virtual machines with libvirt
 
-Do not let your virtualization management use more resources than you main virtualized needs.
+Don't let your virtualization management use more resources than you main virtualized needs.
 
  * Ideal for small deployments where simplicity is key to virtualization usage
- * Low memory footprint, less 10MB of RAM used
+ * Low memory footprint, around 5 MiB of RAM used
  * Low CPU usage
  * Look and feel easly customized with templates
+ 
+# Screenshot
+
+![Instances](http://i67.tinypic.com/161yn1d.png)
 
 # Running
 
