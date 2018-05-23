@@ -151,11 +151,6 @@ bool Virtlyst::postFork()
     return true;
 }
 
-QList<ServerConn *> Virtlyst::connections()
-{
-    return m_connections.values();
-}
-
 QVector<ServerConn *> Virtlyst::servers(QObject *parent)
 {
     QVector<ServerConn *> ret;
@@ -171,9 +166,19 @@ QVector<ServerConn *> Virtlyst::servers(QObject *parent)
 Connection *Virtlyst::connection(const QString &id, QObject *parent)
 {
     ServerConn *server = m_connections.value(id);
-    if (server && server->conn) {
+    if (server && server->conn->isAlive()) {
         return server->conn->clone(parent);
+    } else if (server) {
+        if (server->conn) {
+            delete server->conn;
+        }
+
+        server->conn = new Connection(server->url, server->name, server);
+        if (server->conn->isAlive()) {
+            return server->conn->clone(parent);
+        }
     }
+
     return nullptr;
 }
 
@@ -254,7 +259,6 @@ void Virtlyst::updateConnections()
                 continue;
             } else {
                 delete server->conn;
-                server->conn = nullptr;
             }
         } else {
             server = new ServerConn(this);
@@ -289,12 +293,9 @@ void Virtlyst::updateConnections()
             url.setPassword(password);
             break;
         }
+        server->url = url;
 
-        auto conn = new Connection(url, server);
-        conn->setName(name);
-        if (conn->isAlive()) {
-            server->conn = conn;
-        }
+        server->conn = new Connection(url, name, server);
         m_connections.insert(id, server);
     }
 
@@ -405,9 +406,13 @@ ServerConn *ServerConn::clone(QObject *parent)
     ret->login = login;
     ret->password = password;
     ret->type = type;
-    if (conn) {
-        ret->conn = conn->clone(ret);
+    ret->url = url;
+
+    if (!conn->isAlive()) {
+        delete conn;
+        conn = new Connection(url, name, this);
     }
+    ret->conn = conn->clone(ret);
 
     return ret;
 }

@@ -82,8 +82,10 @@ Connection::Connection(virConnectPtr conn, QObject *parent) : QObject(parent), m
     virConnectRef(conn);
 }
 
-Connection::Connection(const QUrl &url, QObject *parent) : QObject(parent)
+Connection::Connection(const QUrl &url, const QString &name, QObject *parent) : QObject(parent)
 {
+    setName(name);
+
     const QString uri = url.toString(QUrl::RemoveUserInfo);
     qDebug() << "Connecting to" << uri;
     QUrl localUrl(url);
@@ -190,6 +192,8 @@ uint Connection::cpus()
 bool Connection::isAlive()
 {
     if (m_conn) {
+        // This is will still return true when the connection
+        // closed but no request has been made
         return virConnectIsAlive(m_conn) == 1;
     }
     return false;

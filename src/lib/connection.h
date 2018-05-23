@@ -44,7 +44,7 @@ class Connection : public QObject
     Q_PROPERTY(QStringList isoMedia READ isoMedia CONSTANT)
 public:
     explicit Connection(virConnectPtr conn, QObject *parent = nullptr);
-    explicit Connection(const QUrl &url, QObject *parent = nullptr);
+    explicit Connection(const QUrl &url, const QString &name, QObject *parent = nullptr);
     ~Connection();
 
     QString name() const;

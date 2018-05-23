@@ -21,6 +21,7 @@
 
 #include <QHash>
 #include <QSharedPointer>
+#include <QUrl>
 
 using namespace Cutelyst;
 
@@ -54,6 +55,7 @@ public:
     QString login;
     QString password;
     int type;
+    QUrl url;
     Connection *conn = nullptr;
 };
 
@@ -69,8 +71,6 @@ public:
     bool init() override;
 
     bool postFork() override;
-
-    QList<ServerConn *> connections();
 
     QVector<ServerConn *> servers(QObject *parent);
 
