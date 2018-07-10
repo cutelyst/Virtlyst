@@ -174,29 +174,28 @@ bool StoragePool::create(int flags)
     return virStoragePoolCreate(m_pool, flags) == 0;
 }
 
-StorageVol *StoragePool::createStorageVolume(const QString &name, const QString &format, long sizeGiB, int flags)
+StorageVol *StoragePool::createStorageVolume(const QString &name, const QString &format, qint64 sizeGiB, int flags)
 {
     QByteArray output;
     QXmlStreamWriter stream(&output);
 
     QString localName(name);
     QString localFormat(format);
-    long sizeInt = sizeGiB * 1073741824;
-    QString size = QString::number(sizeInt);
-    QString alloc = size;
+    qint64 sizeByte = sizeGiB * 1073741824;
+    qint64 alloc = sizeByte;
     
     if (format == QLatin1String("unknown")) {
         localFormat = QStringLiteral("raw");
     }
     if (format == QLatin1String("dir")) {
         localName.append(QLatin1String(".img"));
-        alloc = "";
+        alloc = 0;
     }
 
     stream.writeStartElement(QStringLiteral("volume"));
     stream.writeTextElement(QStringLiteral("name"), localName);
-    stream.writeTextElement(QStringLiteral("capacity"), size);
-    stream.writeTextElement(QStringLiteral("allocation"), alloc);
+    stream.writeTextElement(QStringLiteral("capacity"), QString::number(sizeByte));
+    stream.writeTextElement(QStringLiteral("allocation"), QString::number(alloc));
 
     stream.writeStartElement(QStringLiteral("target"));
     stream.writeStartElement(QStringLiteral("format"));
