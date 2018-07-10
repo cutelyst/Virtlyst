@@ -16,6 +16,7 @@ target_link_libraries(Virtlyst
     Cutelyst::Authentication
     Cutelyst::StatusMessage
     Cutelyst::Session
+    Grantlee5::Templates
     Qt5::Core
     Qt5::Network
     Qt5::Sql

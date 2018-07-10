@@ -15,6 +15,7 @@ endif()
 find_package(Qt5 COMPONENTS Core Network Sql Xml REQUIRED)
 find_package(Cutelyst2Qt5 2.2.1 REQUIRED)
 find_package(PkgConfig REQUIRED)
+find_package(Grantlee5 REQUIRED)
 pkg_check_modules(LIBVIRT REQUIRED libvirt)
 
 set(CMAKE_AUTOMOC ON)

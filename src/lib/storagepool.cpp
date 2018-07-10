@@ -174,15 +174,16 @@ bool StoragePool::create(int flags)
     return virStoragePoolCreate(m_pool, flags) == 0;
 }
 
-StorageVol *StoragePool::createStorageVolume(const QString &name, const QString &format, int sizeGiB, int flags)
+StorageVol *StoragePool::createStorageVolume(const QString &name, const QString &format, qint64 sizeGiB, int flags)
 {
     QByteArray output;
     QXmlStreamWriter stream(&output);
 
     QString localName(name);
     QString localFormat(format);
-    int sizeInt = sizeGiB * 1073741824;
-    int alloc = sizeInt;
+    qint64 sizeByte = sizeGiB * 1073741824;
+    qint64 alloc = sizeByte;
+    
     if (format == QLatin1String("unknown")) {
         localFormat = QStringLiteral("raw");
     }
@@ -193,7 +194,7 @@ StorageVol *StoragePool::createStorageVolume(const QString &name, const QString 
 
     stream.writeStartElement(QStringLiteral("volume"));
     stream.writeTextElement(QStringLiteral("name"), localName);
-    stream.writeTextElement(QStringLiteral("capacity"), QString::number(sizeInt));
+    stream.writeTextElement(QStringLiteral("capacity"), QString::number(sizeByte));
     stream.writeTextElement(QStringLiteral("allocation"), QString::number(alloc));
 
     stream.writeStartElement(QStringLiteral("target"));
