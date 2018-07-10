@@ -18,7 +18,6 @@ find_package(PkgConfig REQUIRED)
 find_package(Grantlee5 REQUIRED)
 pkg_check_modules(LIBVIRT REQUIRED libvirt)
 
-
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
