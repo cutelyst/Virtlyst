@@ -107,7 +107,7 @@ void Storages::storage(Context *c, const QString &hostId, const QString &pool)
     }
     c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));
 
-    StoragePool *storage = conn->getStoragePoll(pool, c);
+    StoragePool *storage = conn->getStoragePool(pool, c);
     if (!storage) {
         return;
     }
