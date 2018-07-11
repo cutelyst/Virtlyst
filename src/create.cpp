@@ -131,7 +131,7 @@ void Create::index(Context *c, const QString &hostId)
             if (params.contains(QStringLiteral("hdd_size"))) {
                 const QString storageName = params[QStringLiteral("storage")];
                 const QString hddSize = params[QStringLiteral("hdd_size")];
-                StoragePool *storage = conn->getStoragePoll(storageName);
+                StoragePool *storage = conn->getStoragePool(storageName);
                 if (storage) {
                     StorageVol *vol = storage->createStorageVolume(name, QStringLiteral("qcow2"), hddSize.toInt(), flags);
                     if (vol) {

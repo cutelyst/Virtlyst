@@ -1045,7 +1045,7 @@ bool Connection::createStoragePoolNetFs(const QString &name, const QString &netf
     return true;
 }
 
-StoragePool *Connection::getStoragePoll(const QString &name, QObject *parent)
+StoragePool *Connection::getStoragePool(const QString &name, QObject *parent)
 {
 
     virStoragePoolPtr pool = virStoragePoolLookupByName(m_conn, name.toUtf8().constData());
