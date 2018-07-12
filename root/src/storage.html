@@ -106,9 +106,15 @@
                                         <td style="width:30px;">
                                             <form action="" method="post" role="form">{{ csrf_token }}
                                                 <input type="hidden" name="volname" value="{{ volume.name }}">
+                                                {% ifnotequal volume.usedby "" %}
+                                                <input type="submit" class="btn btn-sm btn-danger disabled" name="del_volume"
+                                                    value="{% i18n "Delete" %}"
+                                                    disabled>
+                                                {% else %}
                                                 <input type="submit" class="btn btn-sm btn-danger" name="del_volume"
-                                                       value="{% i18n "Delete" %}"
-                                                       onclick="return confirm('{% i18n "Are you sure?" %}')">
+                                                    value="{% i18n "Delete" %}"
+                                                    onclick="return confirm('{% i18n "Are you sure?" %}')">
+                                                {% endifnotequal %}
                                             </form>
                                         </td>
                                     </tr>
@@ -137,6 +143,7 @@
                                 <th>{% i18n "Name" %}</th>
                                 <th style="width:80px;">{% i18n "Size" %}</th>
                                 <th style="width:75px;">{% i18n "Format" %}</th>
+                                <th style="widtg:100px;">{% i18n "Used By" %}</th>
                                 <th colspan="2">{% i18n "Action" %}</th>
                             </tr>
                             </thead>
@@ -147,6 +154,7 @@
                                     <td>{{ volume.name }}</td>
                                     <td>{{ volume.size }}<!--|filesizeformat--></td>
                                     <td>{{ volume.type }}</td>
+                                    <td>{{ volume.usedby }}</td>
                                     <td style="width:30px;">
                                         <div class="modal fade" id="Clone{{ forloop.counter }}" tabindex="-1" role="dialog"
                                              aria-labelledby="addHostLabel" aria-hidden="true">
@@ -221,9 +229,15 @@
                                     <td style="width:30px;">
                                         <form action="" method="post" style="height:10px" role="form">{{ csrf_token }}
                                             <input type="hidden" name="volname" value="{{ volume.name }}">
+                                            {% ifnotequal volume.usedby "" %}
+                                            <input type="submit" class="btn btn-sm btn-danger disabled" name="del_volume"
+                                                   value="{% i18n "Delete" %}"
+                                                   disabled>
+                                            {% else %}
                                             <input type="submit" class="btn btn-sm btn-danger" name="del_volume"
                                                    value="{% i18n "Delete" %}"
                                                    onclick="return confirm('{% i18n "Are you sure?" %}')">
+                                            {% endifnotequal %}
                                         </form>
                                     </td>
                                 </tr>

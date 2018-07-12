@@ -23,6 +23,7 @@
 
 #include <libvirt/libvirt.h>
 
+class Domain;
 class StoragePool;
 class StorageVol : public QObject
 {
@@ -30,6 +31,7 @@ class StorageVol : public QObject
     Q_PROPERTY(QString name READ name CONSTANT)
     Q_PROPERTY(QString type READ type CONSTANT)
     Q_PROPERTY(QString size READ size CONSTANT)
+    Q_PROPERTY(QString usedby READ usedby CONSTANT)
     Q_PROPERTY(QString path READ path CONSTANT)
 public:
     explicit StorageVol(virStorageVolPtr vol, virStoragePoolPtr pool, QObject *parent = nullptr);
@@ -37,6 +39,7 @@ public:
     QString name();
     QString type();
     QString size();
+    QString usedby();
     QString path();
 
     bool undefine(int flags = 0);
@@ -53,6 +56,7 @@ private:
     virStoragePoolPtr m_pool;
     virStorageVolInfo m_info;
     virStorageVolPtr m_vol;
+    virConnectPtr m_conn;
     bool m_gotInfo = false;
 };
 
