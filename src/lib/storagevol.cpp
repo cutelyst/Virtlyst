@@ -55,6 +55,45 @@ QString StorageVol::size()
     return QString();
 }
 
+QString StorageVol::usedby()
+{
+    QString usedbyvm;
+    QString pathdisk = path();
+    QString tryname;
+    QString trysrc;
+    QVector<Domain *> ret;
+    
+    m_conn = virStorageVolGetConnect(m_vol);
+    virDomainPtr *domains;
+    int count = virConnectListAllDomains(m_conn, &domains, VIR_CONNECT_LIST_DOMAINS_ACTIVE | VIR_CONNECT_LIST_DOMAINS_INACTIVE);
+    if (count > 0) {
+        for (int i = 0; i < count; i++) {
+            tryname = QString::fromUtf8(virDomainGetName(domains[i]));
+            char *xml = virDomainGetXMLDesc(domains[i], VIR_DOMAIN_XML_SECURE);
+            QString xmlString = QString::fromUtf8(xml);
+            QString error;
+            QDomDocument domxml;
+            if (!domxml.setContent(xmlString, &error)) {
+                qWarning() << "Failed to parse XML from interface" << error;
+            }
+            QDomElement disk = domxml
+                    .documentElement()
+                    .firstChildElement(QStringLiteral("devices"))
+                    .firstChildElement(QStringLiteral("disk"));
+            while (!disk.isNull()) {
+                trysrc = disk.firstChildElement(QStringLiteral("source")).attribute(QStringLiteral("file"));
+                if (trysrc == pathdisk){
+                    usedbyvm = usedbyvm + tryname + QStringLiteral(" ");
+                }
+                disk = disk.nextSiblingElement(QStringLiteral("disk"));
+            }
+            free(xml);
+        }
+    }
+    free(domains);
+    return usedbyvm;
+}
+
 QString StorageVol::path()
 {
     return QString::fromUtf8(virStorageVolGetPath(m_vol));
