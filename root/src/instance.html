@@ -112,7 +112,8 @@
                     {% endif %}
                     {% if domain.status == 1 %}
                         <button data-id="shutoff" type="submit" name="power" value="shutdown"
-                                class="btn btn-lg btn-primary pull-right">{% i18n "Shutdown" %}</button>
+                                class="btn btn-lg btn-primary pull-right"
+                                onclick="return confirm('{% i18n "Are you sure?" %}')">{% i18n "Shutdown" %}</button>
                     {% endif %}
                     {% if domain.status == 3 %}
                         <button class="btn btn-lg btn-primary pull-right disabled">{% i18n "Shutdown" %}</button>
@@ -127,7 +128,8 @@
                 <form action="" method="post" role="form">{{ csrf_token }}
                     {% if domain.status == 1 %}
                         <button data-id="shutoff" type="submit" name="power" value="destroy"
-                                class="btn btn-lg btn-primary pull-right">{% i18n "Force Shutdown" %}</button>
+                                class="btn btn-lg btn-primary pull-right"
+                                onclick="return confirm('{% i18n "Are you sure?" %}')">{% i18n "Force Shutdown" %}</button>
                     {% endif %}
                     {% if domain.status == 3 %}
                         <button class="btn btn-lg btn-primary pull-right disabled">{% i18n "Force Shutdown" %}</button>
@@ -141,7 +143,8 @@
                 <form action="" method="post" role="form">{{ csrf_token }}
                     {% if domain.status == 1 %}
                         <button data-id="shutoff" type="submit" name="suspend"
-                                class="btn btn-lg btn-primary pull-right">{% i18n "Suspend" %}</button>
+                                class="btn btn-lg btn-primary pull-right"
+                                onclick="return confirm('{% i18n "Are you sure?" %}')">{% i18n "Suspend" %}</button>
                     {% endif %}
                     {% if domain.status == 3 %}
                         <button type="submit" name="resume"
@@ -167,7 +170,8 @@
                     {% endif %}
                     {% if domain.status == 1 %}
                         <button type="submit" name="power" value="managedsave"
-                                class="btn btn-lg btn-primary pull-right">{% i18n "Save" %}</button>
+                                class="btn btn-lg btn-primary pull-right"
+                                onclick="return confirm('{% i18n "Are you sure?" %}')">{% i18n "Save" %}</button>
                     {% endif %}
                     {% if domain.status == 3 %}
                         <button class="btn btn-lg btn-primary pull-right disabled">{% i18n "Save" %}</button>
