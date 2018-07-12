@@ -62,7 +62,8 @@
                                         </button>
                                         {% ifequal inst.has_managed_save_image 1 %}
                                             <button class="btn btn-sm btn-default" type="submit" name="deletesaveimage"
-                                                    title="{% i18n "Delete Save Image" %}">
+                                                    title="{% i18n "Delete Save Image" %}"
+                                                    onclick='return confirm('Are you sure?')'>
                                                 <span class="glyphicon glyphicon-remove"></span>
                                             </button>
                                         {% else %}
@@ -106,15 +107,18 @@
                                             <span class="glyphicon glyphicon-play"></span>
                                         </button>
                                         <button class="btn btn-sm btn-default" type="submit" name="suspend"
-                                                title="{% i18n "Suspend" %}">
+                                                title="{% i18n "Suspend" %}"
+                                                onclick="return confirm('Are you sure?')">
                                             <span class="glyphicon glyphicon-pause"></span>
                                         </button>
                                         <button class="btn btn-sm btn-default" type="submit" name="managedsave"
-                                                title="{% i18n "Save" %}">
+                                                title="{% i18n "Save" %}"
+                                                onclick="return confirm('Are you sure?')">
                                             <span class="glyphicon glyphicon-download-alt"></span>
                                         </button>
                                         <button class="btn btn-sm btn-default" type="submit" name="shutdown"
-                                                title="{% i18n "Shutdown" %}">
+                                                title="{% i18n "Shutdown" %}"
+                                                onclick="return confirm('Are you sure?')">
                                             <span class="glyphicon glyphicon-off"></span>
                                         </button>
                                         <button class="btn btn-sm btn-default" type="submit" name="destroy"
@@ -150,11 +154,11 @@
                     var elem = '#' + data[i]['name']
                     if (data[i]['status'] === 1) {
                         if (data[i]['dump'] === 1) {
-                            var btn = "<button class='btn btn-sm btn-default' type='submit' name='deletesaveimage' title='{% i18n "Delete Save Image" %}'>"
+                            var btn = "<button class='btn btn-sm btn-default' type='submit' name='deletesaveimage' title='{% i18n "Delete Save Image" %}' onclick='return confirm('Are you sure?')'>"
                                     + "<span class='glyphicon glyphicon-remove'></span>"
                                     + "</button> ";
                         } else {
-                            var btn = "<button class='btn btn-sm btn-default' type='submit' name='shutdown' title='{% i18n "Shutdown" %}'>"
+                            var btn = "<button class='btn btn-sm btn-default' type='submit' name='shutdown' title='{% i18n "Shutdown" %}' onclick='return confirm('Are you sure?')'>"
                                     + "<span class='glyphicon glyphicon-off'></span>"
                                     + "</button> ";
                         }
@@ -168,10 +172,10 @@
                                 + "<button class='btn btn-sm btn-default disabled' title='{% i18n "Start" %}'>"
                                 + "<span class='glyphicon glyphicon-play'></span>"
                                 + "</button> "
-                                + "<button class='btn btn-sm btn-default' type='submit' name='suspend' title='{% i18n "Suspend" %}'>"
+                                + "<button class='btn btn-sm btn-default' type='submit' name='suspend' title='{% i18n "Suspend" %}' onclick='return confirm('Are you sure?')'>"
                                 + "<span class='glyphicon glyphicon-pause'></span>"
                                 + "</button> "
-                                + "<button class='btn btn-sm btn-default' type='submit' name='managedsave' title='{% i18n "Save" %}'>"
+                                + "<button class='btn btn-sm btn-default' type='submit' name='managedsave' title='{% i18n "Save" %}' onclick='return confirm('Are you sure?')'>"
                                 + "<span class='glyphicon glyphicon-download-alt'></span>"
                                 + "</button> "
                                 + btn
