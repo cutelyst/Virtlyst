@@ -106,7 +106,7 @@
                                         <td style="width:30px;">
                                             <form action="" method="post" role="form">{{ csrf_token }}
                                                 <input type="hidden" name="volname" value="{{ volume.name }}">
-                                                {% ifnotequal volume.usedby "" %}
+                                                {% if volume.usedby != "" %}
                                                 <input type="submit" class="btn btn-sm btn-danger disabled" name="del_volume"
                                                     value="{% i18n "Delete" %}"
                                                     disabled>
@@ -114,7 +114,7 @@
                                                 <input type="submit" class="btn btn-sm btn-danger" name="del_volume"
                                                     value="{% i18n "Delete" %}"
                                                     onclick="return confirm('{% i18n "Are you sure?" %}')">
-                                                {% endifnotequal %}
+                                                {% endif %}
                                             </form>
                                         </td>
                                     </tr>
@@ -229,7 +229,7 @@
                                     <td style="width:30px;">
                                         <form action="" method="post" style="height:10px" role="form">{{ csrf_token }}
                                             <input type="hidden" name="volname" value="{{ volume.name }}">
-                                            {% ifnotequal volume.usedby "" %}
+                                            {% if volume.usedby != "" %}
                                             <input type="submit" class="btn btn-sm btn-danger disabled" name="del_volume"
                                                    value="{% i18n "Delete" %}"
                                                    disabled>
@@ -237,7 +237,7 @@
                                             <input type="submit" class="btn btn-sm btn-danger" name="del_volume"
                                                    value="{% i18n "Delete" %}"
                                                    onclick="return confirm('{% i18n "Are you sure?" %}')">
-                                            {% endifnotequal %}
+                                            {% endif %}
                                         </form>
                                     </td>
                                 </tr>
