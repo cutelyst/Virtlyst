@@ -31,26 +31,26 @@
                         <tr id="{{ inst.name }}">
                             <td><a href="/instances/{{ host_id }}/{{ inst.name }}"><i
                                     class="icon-th-large"></i> {{ inst.name }}</a></td>
-                            <td>{% ifequal inst.status 1 %}
+                            <td>{% if inst.status == 1 %}
                                 <span class="label label-success">{% i18n "Running" %}</span>
-                            {% endifequal %}
-                                {% ifequal inst.status 5 %}
-                                    {% ifequal inst.has_managed_save_image 1 %}
+                            {% endif %}
+                                {% if inst.status == 5 %}
+                                    {% if inst.has_managed_save_image == 1 %}
                                         <span class="label label-warning">{% i18n "Saved" %}</span>
                                     {% else %}
                                         <span class="label label-danger">{% i18n "Shutoff" %}</span>
-                                    {% endifequal %}
-                                {% endifequal %}
-                                {% ifequal inst.status 3 %}
+                                    {% endif %}
+                                {% endif %}
+                                {% if inst.status == 3 %}
                                     <span class="label label-warning">{% i18n "Suspend" %}</span>
-                                {% endifequal %}
+                                {% endif %}
                             </td>
                             <td>{{ inst.vcpu }}</td>
                             <td>{{ inst.currentMemoryPretty }}</td>
                             <td>
                                 <form action="" method="post" role="form">{{ csrf_token }}
                                     <input type="hidden" name="name" value="{{ inst.name }}"/>
-                                    {% ifequal inst.status 5 %}
+                                    {% if inst.status == 5 %}
                                         <button class="btn btn-sm btn-default" type="submit" name="start" title="Start">
                                             <span class="glyphicon glyphicon-play"></span>
                                         </button>
@@ -60,7 +60,7 @@
                                         <button class="btn btn-sm btn-default disabled" title="{% i18n "Save" %}">
                                             <span class="glyphicon glyphicon-download-alt"></span>
                                         </button>
-                                        {% ifequal inst.has_managed_save_image 1 %}
+                                        {% if inst.has_managed_save_image == 1 %}
                                             <button class="btn btn-sm btn-default" type="submit" name="deletesaveimage"
                                                     title="{% i18n "Delete Save Image" %}"
                                                     onclick='return confirm('Are you sure?')'>
@@ -70,7 +70,7 @@
                                             <button class="btn btn-sm btn-default disabled" title="{% i18n "Shutdown" %}">
                                                 <span class="glyphicon glyphicon-off"></span>
                                             </button>
-                                        {% endifequal %}
+                                        {% endif %}
                                         <button class="btn btn-sm btn-default disabled"
                                                 title="{% i18n "Force Shutdown" %}">
                                             <span class="glyphicon glyphicon-stop"></span>
@@ -78,8 +78,8 @@
                                         <button class="btn btn-sm btn-default disabled" title="{% i18n "Console" %}">
                                             <span class="glyphicon glyphicon-align-justify"></span>
                                         </button>
-                                    {% endifequal %}
-                                    {% ifequal inst.status 3 %}
+                                    {% endif %}
+                                    {% if inst.status == 3 %}
                                         <button class="btn btn-sm btn-default" type="submit" name="resume"
                                                 title="{% i18n "Resume" %}">
                                             <span class="glyphicon glyphicon-play"></span>
@@ -101,8 +101,8 @@
                                         <button class="btn btn-sm btn-default disabled" title="{% i18n "Console" %}">
                                             <span class="glyphicon glyphicon-align-justify"></span>
                                         </button>
-                                    {% endifequal %}
-                                    {% ifequal inst.status 1 %}
+                                    {% endif %}
+                                    {% if inst.status == 1 %}
                                         <button class="btn btn-sm btn-default disabled" title="{% i18n "Start" %}">
                                             <span class="glyphicon glyphicon-play"></span>
                                         </button>
@@ -130,7 +130,7 @@
                                            onclick='open_console("{{ host_id }}/{{ inst.uuid }}")' title="{% i18n "Console" %}">
                                             <span class="glyphicon glyphicon-align-justify"></span>
                                         </a>
-                                    {% endifequal %}
+                                    {% endif %}
                                 </form>
                             </td>
                         </tr>

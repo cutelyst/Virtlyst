@@ -219,12 +219,12 @@
                                             <!-- /.modal-dialog -->
                                         </div>
                                         <!-- /.modal -->
-                                        {% ifnotequal volume.type "iso" %}
+                                        {% if volume.type != "iso" %}
                                             <a data-toggle="modal" href="#Clone{{ forloop.counter }}"
                                                class="btn btn-sm btn-primary">{% i18n "Clone" %}</a>
                                         {% else %}
                                             <a class="btn btn-sm btn-primary disabled">{% i18n "Clone" %}</a>
-                                        {% endifnotequal %}
+                                        {% endif %}
                                     </td>
                                     <td style="width:30px;">
                                         <form action="" method="post" style="height:10px" role="form">{{ csrf_token }}
