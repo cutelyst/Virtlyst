@@ -83,7 +83,7 @@ bool Root::Auto(Context *c)
 {
     StatusMessage::load(c);
 
-    if (c->action() == CActionFor(QStringLiteral("login"))) {
+    if (c->action() == CActionFor(QStringLiteral("login")) && !Authentication::userExists(c)) {
         return true;
     }
 
