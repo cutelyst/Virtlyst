@@ -24,7 +24,7 @@ class SqlUserStore : public Cutelyst::AuthenticationStore
 {
     Q_OBJECT
 public:
-    explicit SqlUserStore(QObject *parent = 0);
+    explicit SqlUserStore(QObject *parent = nullptr);
 
     virtual Cutelyst::AuthenticationUser findUser(Cutelyst::Context *c, const Cutelyst::ParamsMultiMap &userinfo);
 

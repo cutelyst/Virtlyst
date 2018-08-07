@@ -236,8 +236,8 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
                 cur_memory = cur_memory_custom.toULong();
             }
 
-            ulong vcpu = params.value(QStringLiteral("vcpu")).toUInt();
-            ulong cur_vcpu = params.value(QStringLiteral("cur_vcpu")).toUInt();
+            uint vcpu = params.value(QStringLiteral("vcpu")).toUInt();
+            uint cur_vcpu = params.value(QStringLiteral("cur_vcpu")).toUInt();
 
             dom->setDescription(description);
             dom->setMemory(memory * 1024);
@@ -263,19 +263,19 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
     }
     c->setStash(QStringLiteral("vcpu_range"), QVariant::fromValue(vcpu_range));
 
-    QVector<int> memory_range;
-    int last = 256;
+    QVector<quint64> memory_range;
+    uint last = 256;
     // conn.memory is in kilobytes, I guess we need to convert to kibi bytes
     while (last <= conn->memory() / 1024) {
         memory_range.append(last);
         last *= 2;
     }
-    int cur_memory = dom->currentMemory() / 1024;
+    quint64 cur_memory = dom->currentMemory() / 1024;
     if (!memory_range.contains(cur_memory)) {
         memory_range.append(cur_memory);
         std::sort(memory_range.begin(), memory_range.end(),[] (int a, int b) -> int { return a < b; });
     }
-    int memory = dom->memory() / 1024;
+    quint64 memory = dom->memory() / 1024;
     if (!memory_range.contains(memory)) {
         memory_range.append(memory);
         std::sort(memory_range.begin(), memory_range.end(),[] (int a, int b) -> int { return a < b; });

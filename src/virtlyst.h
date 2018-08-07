@@ -65,8 +65,8 @@ class Virtlyst : public Application
     Q_OBJECT
     CUTELYST_APPLICATION(IID "Virtlyst")
 public:
-    Q_INVOKABLE explicit Virtlyst(QObject *parent = 0);
-    ~Virtlyst();
+    Q_INVOKABLE explicit Virtlyst(QObject *parent = nullptr);
+    ~Virtlyst() override;
 
     bool init() override;
 

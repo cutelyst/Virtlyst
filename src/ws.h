@@ -16,7 +16,7 @@ public:
     void index(Context *c, const QString &hostId, const QString &uuid);
 
 private Q_SLOTS:
-    bool End(Context *c) { Q_UNUSED(c); }
+    void End(Context *c) { Q_UNUSED(c); }
 
 private:
     Virtlyst *m_virtlyst;

@@ -26,7 +26,7 @@ class Create : public Controller
 {
     Q_OBJECT
 public:
-    explicit Create(Virtlyst *parent = 0);
+    explicit Create(Virtlyst *parent = nullptr);
 
     C_ATTR(index, :Path :AutoArgs)
     void index(Context *c, const QString &hostId);

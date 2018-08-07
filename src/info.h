@@ -26,7 +26,7 @@ class Info : public Controller
 {
     Q_OBJECT
 public:
-    explicit Info(Virtlyst *parent = 0);
+    explicit Info(Virtlyst *parent = nullptr);
 
     C_ATTR(hostusage, :Local :AutoArgs)
     void hostusage(Context *c, const QString &hostId);
@@ -41,7 +41,7 @@ public:
     void instusage(Context *c, const QString &hostId, const QString &name);
 
 private Q_SLOTS:
-    bool End(Context *c) { Q_UNUSED(c); }
+    void End(Context *c) { Q_UNUSED(c); }
 
 private:
     Virtlyst *m_virtlyst;

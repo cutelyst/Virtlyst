@@ -27,7 +27,7 @@ class Root : public Controller
     Q_OBJECT
     C_NAMESPACE("")
 public:
-    explicit Root(Virtlyst *parent = 0);
+    explicit Root(Virtlyst *parent = nullptr);
     ~Root();
 
     C_ATTR(index, :Path :AutoArgs)

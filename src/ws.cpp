@@ -40,7 +40,7 @@ void Ws::index(Context *c, const QString &hostId, const QString &uuid)
     }
 
     const QString host = dom->consoleListenAddress();
-    const quint32 port = dom->consolePort();
+    const quint16 port = dom->consolePort();
 
     auto sock = new QTcpSocket(c);
     sock->connectToHost(host, port);

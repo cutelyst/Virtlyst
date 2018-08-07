@@ -40,9 +40,9 @@ class Domain : public QObject
     Q_PROPERTY(int currentVcpu READ currentVcpu CONSTANT)
     Q_PROPERTY(int vcpu READ vcpu CONSTANT)
     Q_PROPERTY(quint64 memory READ memory CONSTANT)
-    Q_PROPERTY(int memoryMiB READ memoryMiB CONSTANT)
+    Q_PROPERTY(quint64 memoryMiB READ memoryMiB CONSTANT)
     Q_PROPERTY(quint64 currentMemory READ currentMemory CONSTANT)
-    Q_PROPERTY(int currentMemoryMiB READ currentMemoryMiB CONSTANT)
+    Q_PROPERTY(quint64 currentMemoryMiB READ currentMemoryMiB CONSTANT)
     Q_PROPERTY(QString currentMemoryPretty READ currentMemoryPretty CONSTANT)
     Q_PROPERTY(bool hasManagedSaveImage READ hasManagedSaveImage CONSTANT)
     Q_PROPERTY(bool autostart READ autostart CONSTANT)
@@ -81,11 +81,11 @@ public:
 
     quint64 memory();
     void setMemory(quint64 kBytes);
-    int memoryMiB();
+    quint64 memoryMiB();
 
     quint64 currentMemory();
     void setCurrentMemory(quint64 kBytes);
-    int currentMemoryMiB();
+    quint64 currentMemoryMiB();
 
     QString currentMemoryPretty();
 
@@ -102,7 +102,7 @@ public:
     QString consolePassword();
     void setConsolePassword(const QString &password);
 
-    quint32 consolePort();
+    quint16 consolePort();
     QString consoleListenAddress();
     QString consoleKeymap();
     void setConsoleKeymap(const QString &keymap);
@@ -128,7 +128,7 @@ public:
     void setAutostart(bool enable);
 
     bool attachDevice(const QString &xml);
-    bool updateDevice(const QString &xml, int flags);
+    bool updateDevice(const QString &xml, uint flags);
 
     void mountIso(const QString &dev, const QString &image);
     void umountIso(const QString &dev, const QString &image);
