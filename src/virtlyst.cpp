@@ -65,7 +65,7 @@ Virtlyst::Virtlyst(QObject *parent) : Application(parent)
 {
     QCoreApplication::setApplicationName(QStringLiteral("Virtlyst"));
     QCoreApplication::setOrganizationName(QStringLiteral("Cutelyst"));
-    QCoreApplication::setApplicationVersion(QStringLiteral("1.1.0"));
+    QCoreApplication::setApplicationVersion(QStringLiteral("1.2.0"));
 }
 
 Virtlyst::~Virtlyst()
