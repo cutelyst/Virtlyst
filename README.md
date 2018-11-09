@@ -22,6 +22,11 @@ Don't let your virtualization management use more resources than you main virtua
     --master
 
 # Running with Docker on Linux Mint 19/Ubunt 18.04
+##ToDo
+* Add support for console
+* Streamline process
+
+## Process
 * Make sure Docker is installed  
 * Clone the repo: git clone https://github.com/cutelyst/Virtlyst.git virtlyst
 * Build the image and name it: cd virtlyst; docker -t virtlyst build .
