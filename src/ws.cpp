@@ -45,7 +45,7 @@ void Ws::index(Context *c, const QString &hostId, const QString &uuid)
     // if the remote or local domain is listening on
     // all addresses better use the connection hostname
     if (host == QLatin1String("0.0.0.0")) {
-        host = conn->hostname();
+        host = QUrl(conn->uri()).host();
     }
 
     auto sock = new QTcpSocket(c);
