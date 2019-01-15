@@ -39,8 +39,14 @@ void Ws::index(Context *c, const QString &hostId, const QString &uuid)
         return;
     }
 
-    const QString host = dom->consoleListenAddress();
     const quint16 port = dom->consolePort();
+    QString host = dom->consoleListenAddress();
+
+    // if the remote or local domain is listening on
+    // all addresses better use the connection hostname
+    if (host == QLatin1String("0.0.0.0")) {
+        host = conn->hostname();
+    }
 
     auto sock = new QTcpSocket(c);
     sock->connectToHost(host, port);
