@@ -86,8 +86,8 @@ Connection::Connection(const QUrl &url, const QString &name, QObject *parent) : 
 {
     setName(name);
 
-    const QString uri = url.toString(QUrl::RemoveUserInfo);
-    qDebug() << "Connecting to" << uri;
+    const QString uri = url.toString(QUrl::RemovePassword);
+    qCDebug(VIRT_CONN) << "Connecting to" << uri;
     QUrl localUrl(url);
     virConnectAuth auth;
     auth.credtype = authCreds;
@@ -100,7 +100,7 @@ Connection::Connection(const QUrl &url, const QString &name, QObject *parent) : 
         qCWarning(VIRT_CONN) << "Failed to open connection to" << url;
         return;
     }
-    qDebug() << "Connected to" << uri;
+    qCDebug(VIRT_CONN) << "Connected to" << uri;
 }
 
 Connection::~Connection()
@@ -589,7 +589,7 @@ bool Connection::createDomain(const QString &name, const QString &memory, const 
     stream.writeEndElement(); // devices
 
     stream.writeEndElement(); // domain
-    qDebug() << "XML output" << output.constData();
+    qCDebug(VIRT_CONN) << "XML output" << output.constData();
     return domainDefineXml(QString::fromUtf8(output));
 }
 
@@ -728,7 +728,7 @@ bool Connection::createInterface(const QString &name, const QString &netdev, con
     }
 
     stream.writeEndElement(); // interface
-    qDebug() << "XML output" << output;
+    qCDebug(VIRT_CONN) << "XML output" << output;
 
     virInterfacePtr iface = virInterfaceDefineXML(m_conn, output.constData(), 0);
     if (iface) {
@@ -810,7 +810,7 @@ bool Connection::createNetwork(const QString &name, const QString &forward, cons
     }
 
     stream.writeEndElement(); // network
-    qDebug() << "XML output" << output;
+    qCDebug(VIRT_CONN) << "XML output" << output;
     virNetworkPtr net = virNetworkDefineXML(m_conn, output.constData());
     if (net) {
         virNetworkFree(net);
@@ -859,7 +859,7 @@ bool Connection::createSecret(const QString &ephemeral, const QString &usageType
     stream.writeEndElement(); // usage
 
     stream.writeEndElement(); // secret
-    qDebug() << "XML output" << output;
+    qDebug(VIRT_CONN) << "XML output" << output;
 //    xml.appendChild();
     virSecretPtr secret = virSecretDefineXML(m_conn, output.constData(), 0);
     if (secret) {
@@ -939,11 +939,11 @@ bool Connection::createStoragePool(const QString &name, const QString &type, con
     stream.writeEndElement(); // target
 
     stream.writeEndElement(); // pool
-//    qDebug() << "XML output" << output;
+//    qDebug(VIRT_CONN) << "XML output" << output;
 
     virStoragePoolPtr pool = virStoragePoolDefineXML(m_conn, output.constData(), 0);
     if (!pool) {
-        qDebug() << "virStoragePoolDefineXML" << output;
+        qDebug(VIRT_CONN) << "virStoragePoolDefineXML" << output;
         return false;
     }
 
@@ -987,11 +987,11 @@ bool Connection::createStoragePoolCeph(const QString &name, const QString &ceph_
     stream.writeEndElement(); // source
 
     stream.writeEndElement(); // pool
-    qDebug() << "XML output" << output;
+    qDebug(VIRT_CONN) << "XML output" << output;
 
     virStoragePoolPtr pool = virStoragePoolDefineXML(m_conn, output.constData(), 0);
     if (!pool) {
-        qDebug() << "virStoragePoolDefineXML" << output;
+        qDebug(VIRT_CONN) << "virStoragePoolDefineXML" << output;
         return false;
     }
 
@@ -1031,11 +1031,11 @@ bool Connection::createStoragePoolNetFs(const QString &name, const QString &netf
     stream.writeEndElement(); // target
 
     stream.writeEndElement(); // pool
-    qDebug() << "XML output" << output;
+    qDebug(VIRT_CONN) << "XML output" << output;
 
     virStoragePoolPtr pool = virStoragePoolDefineXML(m_conn, output.constData(), 0);
     if (!pool) {
-        qDebug() << "virStoragePoolDefineXML" << output;
+        qDebug(VIRT_CONN) << "virStoragePoolDefineXML" << output;
         return false;
     }
 
@@ -1108,7 +1108,7 @@ bool Connection::loadDomainCapabilities()
         return false;
     }
     const QString xmlString = QString::fromUtf8(xml);
-//    qDebug() << "Caps" << xml;
+//    qDebug(VIRT_CONN) << "Caps" << xml;
     free(xml);
 
     QString errorString;
@@ -1118,7 +1118,7 @@ bool Connection::loadDomainCapabilities()
     }
 
     m_domainCapabilitiesLoaded = true;
-    qDebug() << "kvmSupported" << kvmSupported();
+    qDebug(VIRT_CONN) << "kvmSupported" << kvmSupported();
     return true;
 }
 
