@@ -1,7 +1,7 @@
 FROM debian:stretch as builder
 
-ARG CUTELYST_VERSION=v2.4.1
-ARG VIRTLYST_VERSION=v1.1.0
+ARG CUTELYST_VERSION=v2.6.0
+ARG VIRTLYST_VERSION=v1.2.0
 
 RUN apt-get update \
     # Install build dependencies
