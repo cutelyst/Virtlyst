@@ -313,8 +313,9 @@
                     </div>
                     <div class="tab-pane" id="2">
                         <form class="form-horizontal" method="post" role="form">{{ csrf_token }}
-                            <p class="modal-body">{% i18n "You must create ssh <a href='https://github.com/retspen/webvirtmgr/wiki/Setup-SSH-Authorization'>authorization key</a>. If you have another SSH port on your server, you can add IP:PORT like '192.168.1.1:2222'." %}</p>
-
+                        {% with "<a href='https://github.com/retspen/webvirtmgr/wiki/Setup-SSH-Authorization'>"|safe as url %}
+                            <p class="modal-body">{% i18n "You must create ssh %1 authorization key %2. If you have another SSH port on your server, you can add IP:PORT like '192.168.1.1:2222'." url %}</p>
+{% endwith %}
                             <div class="form-group">
                                 <label class="col-sm-4 control-label">{% i18n "Label" %}</label>
 

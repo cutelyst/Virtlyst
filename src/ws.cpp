@@ -46,6 +46,9 @@ void Ws::index(Context *c, const QString &hostId, const QString &uuid)
     // all addresses better use the connection hostname
     if (host == QLatin1String("0.0.0.0")) {
         host = QUrl(conn->uri()).host();
+        if (host.isEmpty()) {
+            host = QStringLiteral("0.0.0.0");
+        }
     }
 
     auto sock = new QTcpSocket(c);
