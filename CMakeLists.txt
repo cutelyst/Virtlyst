@@ -13,19 +13,13 @@ if(WIN32)
 endif()
 
 find_package(Qt5 COMPONENTS Core Network Sql Xml REQUIRED)
-find_package(Cutelyst2Qt5 2.2.1 REQUIRED)
+find_package(Cutelyst2Qt5 2.7.0 REQUIRED)
 find_package(PkgConfig REQUIRED)
 find_package(Grantlee5 REQUIRED)
 pkg_check_modules(LIBVIRT REQUIRED libvirt)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-include_directories(
-    ${CMAKE_SOURCE_DIR}
-    ${CMAKE_CURRENT_BINARY_DIR}
-    ${Cutelyst2Qt5_INCLUDE_DIR}
-)
 
 file(GLOB_RECURSE TEMPLATES_SRC root/*)
 
