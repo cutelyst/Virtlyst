@@ -50,6 +50,7 @@
 #include "server.h"
 #include "console.h"
 #include "create.h"
+#include "users.h"
 #include "root.h"
 #include "ws.h"
 
@@ -87,6 +88,7 @@ bool Virtlyst::init()
     new Storages(this);
     new Console(this);
     new Create(this);
+    new Users(this);
     new Ws(this);
 
     bool production = config(QStringLiteral("production")).toBool();

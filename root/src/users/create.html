@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{% i18n "Create User" %}{% endblock %}
+
+{% block content %}
+<form method="post">
+  <div class="form-group">
+    <label for="username">Username</label>
+    <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required autocomplete="username">
+  </div>
+  {% if not user_edit %}
+  <div class="form-group">
+    <label for="password">Password</label>
+    <input type="password" class="form-control" id="password" name="password" required>
+  </div>
+  {% endif %}
+  <button type="submit" class="btn btn-primary">{% if user_edit %}Edit{% else %}Create{% endif %}</button>
+</form>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{% i18n "Users" %}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <a class="btn btn-primary" href="/users/create" role="button">New</a>
+  </div>
+</div>
+
+<table class="table table-hover table-borderless">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Username</th>
+      <th scope="col">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <th scope="row">{{ forloop.counter }}</th>
+      <td>{{ user.1 }}</td>
+      </td>
+      <td>
+        <a role="button" class="btn btn-primary btn-sm" href="/users/edit/{{ user.0 }}">Edit</a>
+        <a role="button" class="btn btn-primary btn-sm" href="/users/change_password/{{ user.0 }}">Change Password</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
