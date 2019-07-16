@@ -343,7 +343,7 @@ bool Virtlyst::createDB()
         qCCritical(VIRTLYST) << "Error creating database" << query.lastError().text();
         return false;
     }
-    const QString password = QString::fromLatin1(QUuid::createUuid().toRfc4122().toHex());
+    const QString password = QStringLiteral("admin");
     query.bindValue(QStringLiteral(":password"), QString::fromLatin1(
                         CredentialPassword::createPassword(password.toUtf8(), QCryptographicHash::Sha256, 10000, 16, 16)));
     if (!query.exec()) {

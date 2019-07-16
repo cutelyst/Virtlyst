@@ -20,3 +20,6 @@ Don't let your virtualization management use more resources than your main virtu
     --static-map /static=root/static \
     --http-socket localhost:3000 \
     --master
+
+Default Username: admin
+Password: admin
