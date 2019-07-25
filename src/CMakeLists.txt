@@ -8,6 +8,9 @@ set(Virtlyst_SRCS
 # Create the application
 add_library(Virtlyst SHARED ${Virtlyst_SRCS})
 
+# Make sure we link with libvirt installed in weird places, cough macos
+target_include_directories(Virtlyst PRIVATE ${LIBVIRT_LIBRARY_DIRS})
+
 # Link to Cutelyst
 target_link_libraries(Virtlyst
     Cutelyst::Core
