@@ -30,7 +30,7 @@ WORKDIR /usr/local/src/Virtlyst
 
 RUN apt-get update \
     # Install dependencies
-    && apt-get install -y libqt5core5a libqt5network5 libqt5sql5 libqt5xml5 libvirt0 libgrantlee-templates5 \
+    && apt-get install -y libqt5core5a libqt5network5 libqt5sql5 libqt5xml5 libvirt0 libgrantlee-templates5 ssh \
     && apt-get clean \
     # Fix ld library path
     && echo "/usr/local/lib/x86_64-linux-gnu" > /etc/ld.so.conf.d/usr-local.conf \
