@@ -53,7 +53,7 @@ void Users::create(Context *c)
         const ParamsMultiMap params = c->req()->bodyParameters();
         c->setStash(QStringLiteral("user"), params);
 
-        const QString password = params[QStringLiteral("password")];
+        const QString password = params.value(u"password"_qs);
         if (password.size() < 10) {
             c->setStash(QStringLiteral("error_msg"), QStringLiteral("Password too short"));
             return;
@@ -122,8 +122,8 @@ void Users::change_password(Context *c, const QString &id)
 {
     if (c->request()->isPost()) {
         const ParamsMultiMap params = c->req()->bodyParameters();
-        const QString password = params[QStringLiteral("password")];
-        if (password != params[QStringLiteral("password_conf")]) {
+        const QString password = params.value(u"password"_qs);
+        if (password != params.value(u"password_conf"_qs)) {
             c->setStash(QStringLiteral("error_msg"), QStringLiteral("Password confirmation does not match"));
             return;
         }

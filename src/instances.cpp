@@ -67,7 +67,7 @@ void Instances::index(Context *c, const QString &hostId)
                 domain->resume();
             }
 
-            c->response()->redirect(c->uriFor(CActionFor("index"), QStringList{ hostId }));
+            c->response()->redirect(c->uriFor(CActionFor(u"index"), QStringList{ hostId }));
         }
     }
 
@@ -148,7 +148,7 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
             }
             dom->undefine();
 
-            c->response()->redirect(c->uriFor(CActionFor("index"), QStringList{ hostId }));
+            c->response()->redirect(c->uriFor(CActionFor(u"index"), QStringList{ hostId }));
             return;
         } else if (params.contains(QStringLiteral("change_xml"))) {
             const QString xml = params.value(QStringLiteral("inst_xml"));
@@ -249,7 +249,7 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
         }
 
         if (redir) {
-            c->response()->redirect(c->uriFor(CActionFor("index"), QStringList{ hostId, name }));
+            c->response()->redirect(c->uriFor(CActionFor(u"index"), QStringList{ hostId, name }));
             return;
         }
     }

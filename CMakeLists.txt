@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
 project(Virtlyst LANGUAGES CXX)
 
@@ -13,10 +13,14 @@ if(WIN32)
   endif()
 endif()
 
-find_package(Qt5 COMPONENTS Core Network Sql Xml REQUIRED)
-find_package(Cutelyst2Qt5 2.7.0 REQUIRED)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+find_package(Qt6 COMPONENTS Core Network Sql Xml REQUIRED)
+find_package(Cutelyst4Qt6 4.0.0 REQUIRED)
+find_package(Cutelee6Qt6 REQUIRED)
 find_package(PkgConfig REQUIRED)
-find_package(Grantlee5 REQUIRED)
 pkg_check_modules(LIBVIRT REQUIRED libvirt)
 
 set(CMAKE_AUTOMOC ON)

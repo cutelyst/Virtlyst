@@ -46,10 +46,10 @@ void Networks::index(Context *c, const QString &hostId)
 
         const ParamsMultiMap params = c->request()->bodyParameters();
         if (params.contains(QStringLiteral("create"))) {
-            const QString name = params[QStringLiteral("name")];
-            const QString forward = params[QStringLiteral("forward")];
-            const QString subnet = params[QStringLiteral("subnet")];
-            const QString bridge = params[QStringLiteral("bridge_name")];
+            const QString name = params.value(u"name"_qs);
+            const QString forward = params.value(u"forward"_qs);
+            const QString subnet = params.value(u"subnet"_qs);
+            const QString bridge = params.value(u"bridge_name"_qs);
             const bool openvswitch = params.contains(QStringLiteral("openvswitch"));
             const bool dhcp = params.contains(QStringLiteral("openvswitch"));
             const bool fixed = params.contains(QStringLiteral("openvswitch"));

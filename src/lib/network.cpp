@@ -18,6 +18,7 @@
 #include "network.h"
 
 #include <QHostAddress>
+#include <QVariant>
 #include <QLoggingCategory>
 
 Network::Network(virNetworkPtr net, Connection *conn, QObject *parent) : QObject(parent)

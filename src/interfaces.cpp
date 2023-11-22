@@ -37,7 +37,7 @@ void Interfaces::index(Context *c, const QString &hostId)
     Connection *conn = m_virtlyst->connection(hostId, c);
     if (conn == nullptr) {
         qWarning() << "Host id not found or connection not active";
-        c->response()->redirect(c->uriForAction(QStringLiteral("/index")));
+        c->response()->redirect(c->uriForAction(u"/index"));
         return;
     }
     c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));
@@ -45,18 +45,18 @@ void Interfaces::index(Context *c, const QString &hostId)
     if (c->request()->isPost()) {
         const ParamsMultiMap params = c->request()->bodyParameters();
         if (params.contains(QStringLiteral("create"))) {
-            const QString delay = params[QStringLiteral("delay")];
-            const QString ipv4_addr = params[QStringLiteral("ipv4_addr")];
-            const QString ipv4_gw = params[QStringLiteral("ipv4_gw")];
-            const QString ipv4_type = params[QStringLiteral("ipv4_type")];
-            const QString ipv6_addr = params[QStringLiteral("ipv6_addr")];
-            const QString ipv6_gw = params[QStringLiteral("ipv6_gw")];
-            const QString ipv6_type = params[QStringLiteral("ipv6_type")];
-            const QString itype = params[QStringLiteral("itype")];
-            const QString name = params[QStringLiteral("name")];
-            const QString netdev = params[QStringLiteral("netdev")];
-            const QString start_mode = params[QStringLiteral("start_mode")];
-            const QString stp = params[QStringLiteral("stp")];
+            const QString delay = params.value(u"delay"_qs);
+            const QString ipv4_addr = params.value(u"ipv4_addr"_qs);
+            const QString ipv4_gw = params.value(u"ipv4_gw"_qs);
+            const QString ipv4_type = params.value(u"ipv4_type"_qs);
+            const QString ipv6_addr = params.value(u"ipv6_addr"_qs);
+            const QString ipv6_gw = params.value(u"ipv6_gw"_qs);
+            const QString ipv6_type = params.value(u"ipv6_type"_qs);
+            const QString itype = params.value(u"itype"_qs);
+            const QString name = params.value(u"name"_qs);
+            const QString netdev = params.value(u"netdev"_qs);
+            const QString start_mode = params.value(u"start_mode"_qs);
+            const QString stp = params.value(u"stp"_qs);
             conn->createInterface(name, netdev, itype, start_mode, delay.toInt(), stp == QLatin1String("on"),
                                   ipv4_addr, ipv4_gw, ipv4_type,
                                   ipv6_addr, ipv6_gw, ipv6_type);

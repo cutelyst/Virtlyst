@@ -41,39 +41,39 @@ void Server::index(Context *c)
     if (c->request()->isPost()) {
         const ParamsMultiMap params = c->request()->bodyParameters();
         if (params.contains(QStringLiteral("host_tcp_add"))) {
-            const QString hostname = params[QStringLiteral("hostname")];
-            const QString name = params[QStringLiteral("name")];
-            const QString login = params[QStringLiteral("login")];
-            const QString password = params[QStringLiteral("password")];
+            const QString hostname = params.value(u"hostname"_qs);
+            const QString name = params.value(u"name"_qs);
+            const QString login = params.value(u"login"_qs);
+            const QString password = params.value(u"password"_qs);
 
             createServer(ServerConn::ConnTCP, name, hostname, login, password);
         } else if (params.contains(QStringLiteral("host_ssh_add"))) {
-            const QString hostname = params[QStringLiteral("hostname")];
-            const QString name = params[QStringLiteral("name")];
-            const QString login = params[QStringLiteral("login")];
+            const QString hostname = params.value(u"hostname"_qs);
+            const QString name = params.value(u"name"_qs);
+            const QString login = params.value(u"login"_qs);
 
             createServer(ServerConn::ConnSSH, name, hostname, login, QString());
         } else if (params.contains(QStringLiteral("host_tls_add"))) {
-            const QString hostname = params[QStringLiteral("hostname")];
-            const QString name = params[QStringLiteral("name")];
-            const QString login = params[QStringLiteral("login")];
-            const QString password = params[QStringLiteral("password")];
+            const QString hostname = params.value(u"hostname"_qs);
+            const QString name = params.value(u"name"_qs);
+            const QString login = params.value(u"login"_qs);
+            const QString password = params.value(u"password"_qs);
 
             createServer(ServerConn::ConnTLS, name, hostname, login, password);
         } else if (params.contains(QStringLiteral("host_socket_add"))) {
-            const QString name = params[QStringLiteral("name")];
+            const QString name = params.value(u"name"_qs);
 
             createServer(ServerConn::ConnSocket, name, QStringLiteral("localhost"), QLatin1String(""), QString());
         } else if (params.contains(QStringLiteral("host_edit"))) {
-            const int hostId = params[QStringLiteral("host_id")].toInt();
-            const QString hostname = params[QStringLiteral("hostname")];
-            const QString name = params[QStringLiteral("name")];
-            const QString login = params[QStringLiteral("login")];
-            const QString password = params[QStringLiteral("password")];
+            const int hostId = params.value(u"host_id"_qs).toInt();
+            const QString hostname = params.value(u"hostname"_qs);
+            const QString name = params.value(u"name"_qs);
+            const QString login = params.value(u"login"_qs);
+            const QString password = params.value(u"password"_qs);
 
             updateServer(hostId, name, hostname, login, password);
         } else if (params.contains(QStringLiteral("host_del"))) {
-            const int hostId = params[QStringLiteral("host_id")].toInt();
+            const int hostId = params.value(u"host_id"_qs).toInt();
 
             deleteServer(hostId);
         }

@@ -61,10 +61,10 @@ void Create::index(Context *c, const QString &hostId)
         QStringList errors;
         const ParamsMultiMap params = c->request()->bodyParameters();
         if (params.contains(QStringLiteral("create_flavor"))) {
-            const QString label = params[QStringLiteral("label")];
-            const int memory = params[QStringLiteral("memory")].toInt();
-            const int vcpu = params[QStringLiteral("vcpu")].toInt();
-            const int disk = params[QStringLiteral("disk")].toInt();
+            const QString label = params.value(u"label"_qs);
+            const int memory = params.value(u"memory"_qs).toInt();
+            const int vcpu = params.value(u"vcpu"_qs).toInt();
+            const int disk = params.value(u"disk"_qs).toInt();
             QSqlQuery query = CPreparedSqlQueryThreadForDB(
                         QStringLiteral("INSERT INTO create_flavor "
                                        "(label, memory, vcpu, disk) "
@@ -75,7 +75,7 @@ void Create::index(Context *c, const QString &hostId)
                 qWarning() << "Failed to create flavor" << label << query.lastError().databaseText();
             }
         } else if (params.contains(QStringLiteral("delete_flavor"))) {
-            const QString id = params[QStringLiteral("flavor")];
+            const QString id = params.value(u"flavor"_qs);
             QSqlQuery query = CPreparedSqlQueryThreadForDB(
                         QStringLiteral("DELETE FROM create_flavor WHERE id = :id"),
                         QStringLiteral("virtlyst"));
@@ -84,7 +84,7 @@ void Create::index(Context *c, const QString &hostId)
                 qWarning() << "Failed to delete flavor" << id << query.lastError().databaseText();
             }
         } else if (params.contains(QStringLiteral("create_xml"))) {
-            const QString xml = params[QStringLiteral("from_xml")];
+            const QString xml = params.value(u"from_xml"_qs);
             QDomDocument xmlDoc;
             if (xmlDoc.setContent(xml)) {
                 const QString name = xmlDoc
@@ -113,11 +113,11 @@ void Create::index(Context *c, const QString &hostId)
                 errors.append(QStringLiteral("Invalid XML"));
             }
         } else if (params.contains(QStringLiteral("create"))) {
-            const QString name = params[QStringLiteral("name")];
-            const QString memory = params[QStringLiteral("memory")];
-            const QString vcpu = params[QStringLiteral("vcpu")];
+            const QString name = params.value(u"name"_qs);
+            const QString memory = params.value(u"memory"_qs);
+            const QString vcpu = params.value(u"vcpu"_qs);
             const bool hostModel = params.contains(QStringLiteral("host_model"));
-            const QString cacheMode = params[QStringLiteral("cache_mode")];
+            const QString cacheMode = params.value(u"cache_mode"_qs);
             const bool virtio = params.contains(QStringLiteral("virtio"));
             const QString consoleType = QStringLiteral("spice");
             const QStringList networks = params.values(QStringLiteral("network-control"));
@@ -129,8 +129,8 @@ void Create::index(Context *c, const QString &hostId)
 
             QVector<StorageVol *> volumes;
             if (params.contains(QStringLiteral("hdd_size"))) {
-                const QString storageName = params[QStringLiteral("storage")];
-                const QString hddSize = params[QStringLiteral("hdd_size")];
+                const QString storageName = params.value(u"storage"_qs);
+                const QString hddSize = params.value(u"hdd_size"_qs);
                 StoragePool *storage = conn->getStoragePool(storageName);
                 if (storage) {
                     StorageVol *vol = storage->createStorageVolume(name, QStringLiteral("qcow2"), hddSize.toInt(), flags);
@@ -144,7 +144,7 @@ void Create::index(Context *c, const QString &hostId)
                     errors.append(QStringLiteral("Could not find storage"));
                 }
             } else if (params.contains(QStringLiteral("template"))) {
-                const QString templ = params[QStringLiteral("template")];
+                const QString templ = params.value(u"template"_qs);
                 StorageVol *vol = conn->getStorageVolByPath(templ, c);
                 if (vol) {
                     // This is SLOW and will block clients
@@ -176,7 +176,7 @@ void Create::index(Context *c, const QString &hostId)
             }
         }
 
-        c->response()->redirect(c->uriFor(CActionFor("index"),
+        c->response()->redirect(c->uriFor(CActionFor(u"index"),
                                           QStringList(),
                                           QStringList{ hostId },
                                           StatusMessage::errorQuery(c, errors.join(QLatin1String("\n")))));

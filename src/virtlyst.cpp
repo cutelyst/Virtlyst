@@ -16,13 +16,13 @@
  */
 #include "virtlyst.h"
 
-#include <Cutelyst/Plugins/View/Grantlee/grantleeview.h>
+#include <Cutelyst/Plugins/View/Cutelee/cuteleeview.h>
 #include <Cutelyst/Plugins/Utils/Sql>
 #include <Cutelyst/Plugins/StatusMessage>
 #include <Cutelyst/Plugins/Session/Session>
 #include <Cutelyst/Plugins/Authentication/credentialpassword.h>
 #include <Cutelyst/Plugins/Authentication/authenticationrealm.h>
-#include <grantlee/engine.h>
+#include <cutelee/engine.h>
 
 #include <QFile>
 #include <QMutexLocker>
@@ -106,24 +106,22 @@ bool Virtlyst::init()
     }
 
     auto templatePath = config(QStringLiteral("TemplatePath"), pathTo(QStringLiteral("root/src"))).toString();
-    auto view = new GrantleeView(this);
+    auto view = new CuteleeView(this);
     view->setCache(production);
     view->engine()->addDefaultLibrary(QStringLiteral("grantlee_i18ntags"));
     view->addTranslator(QLocale::system(), new QTranslator(this));
     view->setIncludePaths({ templatePath });
 
-    auto store = new SqlUserStore;
+    auto store = std::make_shared<SqlUserStore>();
 
-    auto password = new CredentialPassword;
+    auto password = std::make_shared<CredentialPassword>();
     password->setPasswordField(QStringLiteral("password"));
     password->setPasswordType(CredentialPassword::Hashed);
-
-    auto realm = new AuthenticationRealm(store, password);
 
     new Session(this);
 
     auto auth = new Authentication(this);
-    auth->addRealm(realm);
+    auth->addRealm(store, password);
 
     new StatusMessage(this);
 

@@ -46,9 +46,9 @@ void Info::hostusage(Context *c, const QString &hostId)
     }
 
     int points = 5;
-    QStringList timerArray = c->request()->cookie(QStringLiteral("timer")).split(QLatin1Char(' '), QString::SkipEmptyParts);
-    QStringList cpuArray = c->request()->cookie(QStringLiteral("cpu")).split(QLatin1Char(' '), QString::SkipEmptyParts);
-    QStringList memArray = c->request()->cookie(QStringLiteral("mem")).split(QLatin1Char(' '), QString::SkipEmptyParts);
+    QStringList timerArray = QString::fromLatin1(c->request()->cookie("timer")).split(u' ', Qt::SkipEmptyParts);
+    QStringList cpuArray = QString::fromLatin1(c->request()->cookie("cpu")).split(u' ', Qt::SkipEmptyParts);
+    QStringList memArray = QString::fromLatin1(c->request()->cookie("mem")).split(u' ', Qt::SkipEmptyParts);
 
     timerArray.append(QTime::currentTime().toString());
     cpuArray.append(QString::number(conn->allCpusUsage()));
@@ -153,7 +153,7 @@ void Info::inst_status(Context *c, const QString &hostId, const QString &name)
 
 QStringList buildArrayFromCookie(const QString &cookie, qint64 value, int points)
 {
-    QStringList values = cookie.split(QLatin1Char(' '), QString::SkipEmptyParts);
+    QStringList values = cookie.split(u' ', Qt::SkipEmptyParts);
     values.append(QString::number(value));
 
     if (values.size() > points) {
@@ -181,8 +181,8 @@ void Info::instusage(Context *c, const QString &hostId, const QString &name)
     }
 
     int points = 5;
-    QStringList timerArray = c->request()->cookie(QStringLiteral("timer")).split(QLatin1Char(' '), QString::SkipEmptyParts);
-    QStringList cpuArray = c->request()->cookie(QStringLiteral("cpu")).split(QLatin1Char(' '), QString::SkipEmptyParts);
+    QStringList timerArray = QString::fromLatin1(c->request()->cookie("timer")).split(u' ', Qt::SkipEmptyParts);
+    QStringList cpuArray = QString::fromLatin1(c->request()->cookie("cpu")).split(u' ', Qt::SkipEmptyParts);
 
     timerArray.append(QTime::currentTime().toString());
     cpuArray.append(QString::number(dom->cpuUsage()));
@@ -213,14 +213,14 @@ void Info::instusage(Context *c, const QString &hostId, const QString &name)
 
     int netDev = 0;
     for (const std::pair<qint64, qint64> &rx_tx : net_usage) {
-        const QString cookieRx = QLatin1String("net-rx-") + QByteArray::number(netDev);
-        const QString cookieTx = QLatin1String("net-tx-") + QByteArray::number(netDev);
+        const auto cookieRx = "net-rx-" + QByteArray::number(netDev);
+        const auto cookieTx = "net-tx-" + QByteArray::number(netDev);
         const QString rx = c->request()->cookie(cookieRx);
         const QString tx = c->request()->cookie(cookieTx);
         const QStringList rxArray = buildArrayFromCookie(rx, rx_tx.first, points);
         const QStringList txArray = buildArrayFromCookie(tx, rx_tx.second, points);
-        c->response()->setCookie(QNetworkCookie(cookieRx.toLatin1(), rxArray.join(QLatin1Char(' ')).toLatin1()));
-        c->response()->setCookie(QNetworkCookie(cookieTx.toLatin1(), txArray.join(QLatin1Char(' ')).toLatin1()));
+        c->response()->setCookie(QNetworkCookie(cookieRx, rxArray.join(QLatin1Char(' ')).toLatin1()));
+        c->response()->setCookie(QNetworkCookie(cookieTx, txArray.join(QLatin1Char(' ')).toLatin1()));
 
         QJsonObject network {
             {QStringLiteral("labels"), QJsonArray::fromStringList(timerArray)},
@@ -255,14 +255,14 @@ void Info::instusage(Context *c, const QString &hostId, const QString &name)
     auto it = hdd_usage.constBegin();
     while (it != hdd_usage.constEnd()) {
         const std::pair<qint64, qint64> &rd_wr = it.value();
-        const QString cookieRd = QLatin1String("hdd-rd-") + it.key();
-        const QString cookieWr = QLatin1String("hdd-wr-") + it.key();
+        const auto cookieRd = "hdd-rd-" + it.key().toLatin1();
+        const auto cookieWr = "hdd-wr-" + it.key().toLatin1();
         const QString rd = c->request()->cookie(cookieRd);
         const QString wr = c->request()->cookie(cookieWr);
         const QStringList rdArray = buildArrayFromCookie(rd, rd_wr.first, points);
         const QStringList wrArray = buildArrayFromCookie(wr, rd_wr.second, points);
-        c->response()->setCookie(QNetworkCookie(cookieRd.toLatin1(), rdArray.join(QLatin1Char(' ')).toLatin1()));
-        c->response()->setCookie(QNetworkCookie(cookieWr.toLatin1(), wrArray.join(QLatin1Char(' ')).toLatin1()));
+        c->response()->setCookie(QNetworkCookie(cookieRd, rdArray.join(u' ').toLatin1()));
+        c->response()->setCookie(QNetworkCookie(cookieWr, wrArray.join(u' ').toLatin1()));
 
         QJsonObject network {
             {QStringLiteral("labels"), QJsonArray::fromStringList(timerArray)},

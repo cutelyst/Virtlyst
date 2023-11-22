@@ -34,7 +34,7 @@ void Ws::index(Context *c, const QString &hostId, const QString &uuid)
         return;
     }
 
-    if (!c->response()->webSocketHandshake(QString(), QString(), QStringLiteral("binary"))) {
+    if (!c->response()->webSocketHandshake({}, {}, "binary"_qba)) {
         qCWarning(V_WS) << "Failed to estabilish websocket handshake";
         return;
     }
@@ -44,7 +44,7 @@ void Ws::index(Context *c, const QString &hostId, const QString &uuid)
 
     // if the remote or local domain is listening on
     // all addresses better use the connection hostname
-    if (host == QLatin1String("0.0.0.0")) {
+    if (host == u"0.0.0.0") {
         host = QUrl(conn->uri()).host();
         if (host.isEmpty()) {
             host = QStringLiteral("0.0.0.0");
@@ -60,7 +60,7 @@ void Ws::index(Context *c, const QString &hostId, const QString &uuid)
 //        qCWarning(V_WS) << "Console Proxy socket data" << data.size();
         c->response()->webSocketBinaryMessage(data);
     });
-    connect(sock, static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),
+    connect(sock, &QTcpSocket::errorOccurred,
             c, [=] (QAbstractSocket::SocketError error) {
         qCWarning(V_WS) << "Console Proxy error:" << error << sock->errorString();
         c->response()->webSocketClose(Response::CloseCodeAbnormalDisconnection, sock->errorString());

@@ -14,16 +14,16 @@ target_include_directories(Virtlyst PRIVATE ${LIBVIRT_LIBRARY_DIRS})
 # Link to Cutelyst
 target_link_libraries(Virtlyst
     Cutelyst::Core
-    Cutelyst::View::Grantlee
+    Cutelyst::View::Cutelee
     Cutelyst::Utils::Sql
     Cutelyst::Authentication
     Cutelyst::StatusMessage
     Cutelyst::Session
-    Grantlee5::Templates
-    Qt5::Core
-    Qt5::Network
-    Qt5::Sql
-    Qt5::Xml
+    Cutelee::Templates
+    Qt::Core
+    Qt::Network
+    Qt::Sql
+    Qt::Xml
     ${LIBVIRT_LIBRARIES}
 )
 

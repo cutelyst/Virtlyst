@@ -30,7 +30,7 @@
 
 using namespace Cutelyst;
 
-SqlUserStore::SqlUserStore(QObject *parent) : AuthenticationStore(parent)
+SqlUserStore::SqlUserStore()
 {
 
 }

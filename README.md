@@ -14,7 +14,7 @@ Don't let your virtualization management use more resources than your main virtu
 
 # Running
 
-    cutelyst-wsgi2 \
+    cutelyst4-qt6 \
     --application path_to_libVirtlyst.so \
     --chdir2 _path_to_Virtlyst_clone \
     --static-map /static=root/static \
