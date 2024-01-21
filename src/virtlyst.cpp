@@ -108,7 +108,7 @@ bool Virtlyst::init()
     auto templatePath = config(QStringLiteral("TemplatePath"), pathTo(QStringLiteral("root/src"))).toString();
     auto view = new CuteleeView(this);
     view->setCache(production);
-    view->engine()->addDefaultLibrary(QStringLiteral("grantlee_i18ntags"));
+    view->engine()->addDefaultLibrary(QStringLiteral("cutelee_i18ntags"));
     view->addTranslator(QLocale::system(), new QTranslator(this));
     view->setIncludePaths({ templatePath });
 
