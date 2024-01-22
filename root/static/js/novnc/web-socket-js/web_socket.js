@@ -4,7 +4,7 @@
 // Reference: http://tools.ietf.org/html/rfc6455
 
 (function() {
-  
+
   if (window.WEB_SOCKET_FORCE_FLASH) {
     // Keeps going.
   } else if (window.WebSocket) {
@@ -14,7 +14,7 @@
     window.WebSocket = MozWebSocket;
     return;
   }
-  
+
   var logger;
   if (window.WEB_SOCKET_LOGGER) {
     logger = WEB_SOCKET_LOGGER;
@@ -24,7 +24,7 @@
   } else {
     logger = {log: function(){ }, error: function(){ }};
   }
-  
+
   // swfobject.hasFlashPlayerVersion("10.0.0") doesn't work with Gnash.
   if (swfobject.getFlashPlayerVersion().major < 10) {
     logger.error("Flash Player >= 10.0.0 is required.");
@@ -165,14 +165,14 @@
    * @param {Object} flashEvent
    */
   WebSocket.prototype.__handleEvent = function(flashEvent) {
-    
+
     if ("readyState" in flashEvent) {
       this.readyState = flashEvent.readyState;
     }
     if ("protocol" in flashEvent) {
       this.protocol = flashEvent.protocol;
     }
-    
+
     var jsEvent;
     if (flashEvent.type == "open" || flashEvent.type == "error") {
       jsEvent = this.__createSimpleEvent(flashEvent.type);
@@ -187,11 +187,11 @@
     } else {
       throw "unknown event type: " + flashEvent.type;
     }
-    
+
     this.dispatchEvent(jsEvent);
-    
+
   };
-  
+
   WebSocket.prototype.__createSimpleEvent = function(type) {
     if (document.createEvent && window.Event) {
       var event = document.createEvent("Event");
@@ -201,7 +201,7 @@
       return {type: type, bubbles: false, cancelable: false};
     }
   };
-  
+
   WebSocket.prototype.__createMessageEvent = function(type, data) {
     if (document.createEvent && window.MessageEvent && !window.opera) {
       var event = document.createEvent("MessageEvent");
@@ -212,7 +212,7 @@
       return {type: type, data: data, bubbles: false, cancelable: false};
     }
   };
-  
+
   /**
    * Define the WebSocket readyState enumeration.
    */
@@ -228,7 +228,7 @@
   WebSocket.__instances = {};
   WebSocket.__tasks = [];
   WebSocket.__nextId = 0;
-  
+
   /**
    * Load a new flash security policy file.
    * @param {string} url
@@ -243,10 +243,10 @@
    * Loads WebSocketMain.swf and creates WebSocketMain object in Flash.
    */
   WebSocket.__initialize = function() {
-    
+
     if (WebSocket.__initialized) return;
     WebSocket.__initialized = true;
-    
+
     if (WebSocket.__swfLocation) {
       // For backword compatibility.
       window.WEB_SOCKET_SWF_LOCATION = WebSocket.__swfLocation;
@@ -305,9 +305,9 @@
         }
       }
     );
-    
+
   };
-  
+
   /**
    * Called by Flash to notify JS that it's fully loaded and ready
    * for communication.
@@ -325,7 +325,7 @@
       WebSocket.__tasks = [];
     }, 0);
   };
-  
+
   /**
    * Called by Flash to notify WebSockets events are fired.
    */
@@ -345,17 +345,17 @@
     }, 0);
     return true;
   };
-  
+
   // Called by Flash.
   WebSocket.__log = function(message) {
     logger.log(decodeURIComponent(message));
   };
-  
+
   // Called by Flash.
   WebSocket.__error = function(message) {
     logger.error(decodeURIComponent(message));
   };
-  
+
   WebSocket.__addTask = function(task) {
     if (WebSocket.__flash) {
       task();
@@ -363,7 +363,7 @@
       WebSocket.__tasks.push(task);
     }
   };
-  
+
   /**
    * Test if the browser is running flash lite.
    * @return {boolean} True if flash lite is running, false otherwise.
@@ -378,7 +378,7 @@
     }
     return mimeType.enabledPlugin.filename.match(/flashlite/i) ? true : false;
   };
-  
+
   if (!window.WEB_SOCKET_DISABLE_AUTO_INITIALIZATION) {
     // NOTE:
     //   This fires immediately if web_socket.js is dynamically loaded after
@@ -387,5 +387,5 @@
       WebSocket.__initialize();
     });
   }
-  
+
 })();

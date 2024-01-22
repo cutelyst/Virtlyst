@@ -28,7 +28,7 @@
  * 3. This notice may not be removed or altered from
  *    any source distribution.
  */
- 
+
 var tinf;
 
 function JSUnzip() {
@@ -36,13 +36,13 @@ function JSUnzip() {
     this.getInt = function(offset, size) {
         switch (size) {
         case 4:
-            return  (this.data.charCodeAt(offset + 3) & 0xff) << 24 | 
-                    (this.data.charCodeAt(offset + 2) & 0xff) << 16 | 
-                    (this.data.charCodeAt(offset + 1) & 0xff) << 8 | 
+            return  (this.data.charCodeAt(offset + 3) & 0xff) << 24 |
+                    (this.data.charCodeAt(offset + 2) & 0xff) << 16 |
+                    (this.data.charCodeAt(offset + 1) & 0xff) << 8 |
                     (this.data.charCodeAt(offset + 0) & 0xff);
             break;
         case 2:
-            return  (this.data.charCodeAt(offset + 1) & 0xff) << 8 | 
+            return  (this.data.charCodeAt(offset + 1) & 0xff) << 8 |
                     (this.data.charCodeAt(offset + 0) & 0xff);
             break;
         default:
@@ -119,7 +119,7 @@ function JSUnzip() {
             var localExtraFieldLength = this.getInt(relativeOffsetOfLocalHeader + 28, 2);
             var localFileContent = relativeOffsetOfLocalHeader + 30 + localFileNameLength + localExtraFieldLength;
 
-            this.files[fileName] = 
+            this.files[fileName] =
             {
                 'fileComment' : fileComment,
                 'compressionMethod' : compressionMethod,
@@ -132,8 +132,8 @@ function JSUnzip() {
             fileOffset += 46 + fileNameLength + extraFieldLength + fileCommentLength;
         }
         return { 'status' : true }
-    };     
-    
+    };
+
 
     this.read = function(fileName) {
         var fileInfo = this.files[fileName];
@@ -154,7 +154,7 @@ function JSUnzip() {
         }
         return { 'status' : false, 'error' : "File '" + fileName + "' doesn't exist in zip" };
     };
-    
+
 };
 
 
@@ -195,7 +195,7 @@ function JSUnzip() {
 /*
  * tinflate javascript port by Erik Moller in May 2011.
  * emoller@opera.com
- * 
+ *
  * read_bits() patched by mike@imidio.com to allow
  * reading more then 8 bits (needed in some zlib streams)
  */
@@ -203,7 +203,7 @@ function JSUnzip() {
 "use strict";
 
 function TINF() {
-    
+
 this.OK = 0;
 this.DATA_ERROR = (-3);
 this.WINDOW_SIZE = 32768;
@@ -224,7 +224,7 @@ this.DATA = function(that) {
    this.bitcount = 0;
 
    this.dest = [];
-   
+
    this.history = [];
 
    this.ltree = new that.TREE(); /* dynamic length/symbol tree */
@@ -383,7 +383,7 @@ this.decode_symbol = function(d, t)
         d.tag = d.tag | (d.source[d.sourceIndex++] & 0xff) << d.bitcount;
         d.bitcount += 8;
     }
-    
+
     var sum = 0, cur = 0, len = 0;
     do {
         cur = 2 * cur + ((d.tag & (1 << len)) >> len);
@@ -517,7 +517,7 @@ this.inflate_block_data = function(d, lt, dt)
 
          if (offs < 0)
              throw ("Invalid zlib offset " + offs);
-         
+
          /* copy match */
          for (i = offs; i < offs + length; ++i) {
             //ddest[ddestlength++] = ddest[i];
@@ -540,7 +540,7 @@ this.inflate_uncompressed_block = function(d)
        d.bitcount = 0;
        d.tag = 0;
    }
-   
+
    /* get length */
    length = d.source[d.sourceIndex+1];
    length = 256*length + d.source[d.sourceIndex];
@@ -601,7 +601,7 @@ this.init = function()
    this.length_bits[28] = 0;
    this.length_base[28] = 258;
 
-   this.reset();   
+   this.reset();
 }
 
 this.reset = function()
@@ -632,7 +632,7 @@ this.uncompress = function(source, offset)
    }
 
    var blocks = 0;
-   
+
    do {
 
       var btype;
@@ -665,11 +665,11 @@ this.uncompress = function(source, offset)
 
       if (res != this.OK) return { 'status' : this.DATA_ERROR };
       blocks++;
-      
+
    } while (!bfinal && d.sourceIndex < d.source.length);
 
    d.history = d.history.slice(-this.WINDOW_SIZE);
-   
+
    return { 'status' : this.OK, 'data' : d.dest };
 }
 

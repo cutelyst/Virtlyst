@@ -1,8 +1,8 @@
 #include "ws.h"
 
-#include "virtlyst.h"
 #include "lib/connection.h"
 #include "lib/domain.h"
+#include "virtlyst.h"
 
 #include <libvirt/libvirt.h>
 
@@ -13,10 +13,10 @@
 
 Q_LOGGING_CATEGORY(V_WS, "virtlyst.ws")
 
-Ws::Ws(Virtlyst *parent) : Controller(parent)
-  , m_virtlyst(parent)
+Ws::Ws(Virtlyst *parent)
+    : Controller(parent)
+    , m_virtlyst(parent)
 {
-
 }
 
 void Ws::index(Context *c, const QString &hostId, const QString &uuid)
@@ -40,8 +40,8 @@ void Ws::index(Context *c, const QString &hostId, const QString &uuid)
     }
 
     const quint16 port = dom->consolePort();
-    QString host = dom->consoleListenAddress();
-    auto sock = new QTcpSocket(c);
+    QString host       = dom->consoleListenAddress();
+    auto sock          = new QTcpSocket(c);
 
     // if the remote or local domain is listening on
     // all addresses better use the connection hostname
@@ -59,17 +59,18 @@ void Ws::index(Context *c, const QString &hostId, const QString &uuid)
 
     connect(sock, &QTcpSocket::readyRead, c, [=] {
         const QByteArray data = sock->readAll();
-//        qCWarning(V_WS) << "Console Proxy socket data" << data.size();
+        //        qCWarning(V_WS) << "Console Proxy socket data" << data.size();
         c->response()->webSocketBinaryMessage(data);
     });
-    connect(sock, &QTcpSocket::errorOccurred,
-            c, [=] (QAbstractSocket::SocketError error) {
+    connect(sock, &QTcpSocket::errorOccurred, c, [=](QAbstractSocket::SocketError error) {
         qCWarning(V_WS) << "Console Proxy error:" << error << sock->errorString();
-        c->response()->webSocketClose(Response::CloseCodeAbnormalDisconnection, sock->errorString());
+        c->response()->webSocketClose(Response::CloseCodeAbnormalDisconnection,
+                                      sock->errorString());
     });
     connect(sock, &QTcpSocket::disconnected, c, [=] {
         qCWarning(V_WS) << "Console Proxy socket disconnected";
-        c->response()->webSocketClose(Response::CloseCodeAbnormalDisconnection, sock->errorString());
+        c->response()->webSocketClose(Response::CloseCodeAbnormalDisconnection,
+                                      sock->errorString());
     });
 
     auto buf = new QBuffer(c);
@@ -82,8 +83,8 @@ void Ws::index(Context *c, const QString &hostId, const QString &uuid)
         }
     });
 
-    connect(c->request(), &Request::webSocketBinaryFrame, c, [=] (const QByteArray &message) {
-//        qCWarning(V_WS) << "Console Proxy ws data" << message.size();
+    connect(c->request(), &Request::webSocketBinaryFrame, c, [=](const QByteArray &message) {
+        //        qCWarning(V_WS) << "Console Proxy ws data" << message.size();
         if (sock->state() != QAbstractSocket::ConnectedState) {
             buf->open(QIODevice::ReadWrite);
             buf->write(message);
@@ -94,8 +95,9 @@ void Ws::index(Context *c, const QString &hostId, const QString &uuid)
     });
 }
 
-void Ws::createSshTunnel(QAbstractSocket *sock, const QUrl &url, quint16 port) {
-    qCDebug(V_WS) << "Create SSH tunnel to"<< url.host() << "as" << url.userName();
+void Ws::createSshTunnel(QAbstractSocket *sock, const QUrl &url, quint16 port)
+{
+    qCDebug(V_WS) << "Create SSH tunnel to" << url.host() << "as" << url.userName();
 
     QStringList args;
     args << u"-TCv"_qs;
@@ -104,7 +106,7 @@ void Ws::createSshTunnel(QAbstractSocket *sock, const QUrl &url, quint16 port) {
     args << url.host();
 
     auto process = new QProcess(sock);
-    connect(sock, &QAbstractSocket::disconnected, process, [process]{
+    connect(sock, &QAbstractSocket::disconnected, process, [process] {
         if (process->state() == QProcess::Running) {
             process->terminate();
             qCDebug(V_WS) << "Shutdown ssh tunnel:" << process->waitForFinished();
@@ -120,12 +122,12 @@ void Ws::createSshTunnel(QAbstractSocket *sock, const QUrl &url, quint16 port) {
         QByteArrayList outputVerbose;
         if (process->state() == QProcess::Running) {
             while (process->waitForReadyRead()) {
-               const auto& output = process->readAllStandardError();
-               if (output.contains("Local forwarding listening on")) {
-                   qCDebug(V_WS) << "SSH tunnel established";
-                   return;
-               }
-               outputVerbose << output;
+                const auto &output = process->readAllStandardError();
+                if (output.contains("Local forwarding listening on")) {
+                    qCDebug(V_WS) << "SSH tunnel established";
+                    return;
+                }
+                outputVerbose << output;
             }
             qCWarning(V_WS) << "Cannot create ssh tunnel:" << outputVerbose.join('\n');
             process->terminate();

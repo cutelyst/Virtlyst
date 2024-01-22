@@ -17,15 +17,17 @@
 #ifndef SQLUSERSTORE_H
 #define SQLUSERSTORE_H
 
-#include <QObject>
 #include <Cutelyst/Plugins/Authentication/authenticationstore.h>
+
+#include <QObject>
 
 class SqlUserStore : public Cutelyst::AuthenticationStore
 {
 public:
     explicit SqlUserStore();
 
-    Cutelyst::AuthenticationUser findUser(Cutelyst::Context *c, const Cutelyst::ParamsMultiMap &userinfo) override;
+    Cutelyst::AuthenticationUser findUser(Cutelyst::Context *c,
+                                          const Cutelyst::ParamsMultiMap &userinfo) override;
 
     QString addUser(const Cutelyst::ParamsMultiMap &user, bool replace);
 };

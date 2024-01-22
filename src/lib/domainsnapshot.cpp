@@ -20,10 +20,10 @@
 #include <QDateTime>
 #include <QLoggingCategory>
 
-DomainSnapshot::DomainSnapshot(virDomainSnapshotPtr snap, QObject *parent) : QObject(parent)
-  , m_snap(snap)
+DomainSnapshot::DomainSnapshot(virDomainSnapshotPtr snap, QObject *parent)
+    : QObject(parent)
+    , m_snap(snap)
 {
-
 }
 
 DomainSnapshot::~DomainSnapshot()
@@ -39,12 +39,12 @@ QString DomainSnapshot::name()
 QString DomainSnapshot::date()
 {
     const QString creationTime = xmlDoc()
-            .documentElement()
-            .firstChildElement(QStringLiteral("creationTime"))
-            .firstChild()
-            .nodeValue();
+                                     .documentElement()
+                                     .firstChildElement(QStringLiteral("creationTime"))
+                                     .firstChild()
+                                     .nodeValue();
     const QDateTime date = QDateTime::fromMSecsSinceEpoch(creationTime.toLongLong() * 1000);
-//    qDebug() << creationTime << date << date.toString();
+    //    qDebug() << creationTime << date << date.toString();
     return date.toString();
 }
 
@@ -61,9 +61,9 @@ bool DomainSnapshot::revert()
 QDomDocument DomainSnapshot::xmlDoc()
 {
     if (m_xml.isNull()) {
-        char *xml = virDomainSnapshotGetXMLDesc(m_snap, VIR_DOMAIN_XML_SECURE);
+        char *xml               = virDomainSnapshotGetXMLDesc(m_snap, VIR_DOMAIN_XML_SECURE);
         const QString xmlString = QString::fromUtf8(xml);
-//        qDebug() << "XML" << xml;
+        //        qDebug() << "XML" << xml;
         QString error;
         if (!m_xml.setContent(xmlString, &error)) {
             qWarning() << "Failed to parse XML from snapshot" << error;

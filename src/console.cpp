@@ -16,9 +16,9 @@
  */
 #include "console.h"
 
-#include "virtlyst.h"
 #include "lib/connection.h"
 #include "lib/domain.h"
+#include "virtlyst.h"
 
 #include <libvirt/libvirt.h>
 
@@ -26,10 +26,10 @@
 
 Q_LOGGING_CATEGORY(V_CONSOLE, "virtlyst.console")
 
-Console::Console(Virtlyst *parent) : Controller(parent)
-  , m_virtlyst(parent)
+Console::Console(Virtlyst *parent)
+    : Controller(parent)
+    , m_virtlyst(parent)
 {
-
 }
 
 void Console::index(Context *c, const QString &hostId, const QString &uuid)
@@ -47,7 +47,8 @@ void Console::index(Context *c, const QString &hostId, const QString &uuid)
 
     Domain *dom = conn->getDomainByUuid(uuid, c);
     if (!dom) {
-        errors.append(QStringLiteral("Domain not found: no domain with matching name '%1'").arg(uuid));
+        errors.append(
+            QStringLiteral("Domain not found: no domain with matching name '%1'").arg(uuid));
         c->setStash(QStringLiteral("errors"), errors);
         return;
     }

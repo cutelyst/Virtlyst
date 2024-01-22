@@ -18,14 +18,14 @@
 #include "network.h"
 
 #include <QHostAddress>
-#include <QVariant>
 #include <QLoggingCategory>
+#include <QVariant>
 
-Network::Network(virNetworkPtr net, Connection *conn, QObject *parent) : QObject(parent)
-  , m_net(net)
-  , m_conn(conn)
+Network::Network(virNetworkPtr net, Connection *conn, QObject *parent)
+    : QObject(parent)
+    , m_net(net)
+    , m_conn(conn)
 {
-
 }
 
 Network::~Network()
@@ -80,20 +80,18 @@ void Network::undefine()
 QString Network::forwardMode()
 {
     return xmlDoc()
-            .documentElement()
-            .firstChildElement(QStringLiteral("forward"))
-            .attribute(QStringLiteral("mode"));
+        .documentElement()
+        .firstChildElement(QStringLiteral("forward"))
+        .attribute(QStringLiteral("mode"));
 }
 
 QString Network::ipAddress()
 {
-    QDomElement ip = xmlDoc()
-            .documentElement()
-            .firstChildElement(QStringLiteral("ip"));
+    QDomElement ip = xmlDoc().documentElement().firstChildElement(QStringLiteral("ip"));
 
     QPair<QHostAddress, int> pair =
-            QHostAddress::parseSubnet(
-                ip.attribute(QStringLiteral("address")) + QLatin1Char('/') + ip.attribute(QStringLiteral("netmask")));
+        QHostAddress::parseSubnet(ip.attribute(QStringLiteral("address")) + QLatin1Char('/') +
+                                  ip.attribute(QStringLiteral("netmask")));
     if (pair.first.isNull()) {
         return QStringLiteral("None");
     }
@@ -103,31 +101,31 @@ QString Network::ipAddress()
 QString Network::ipDhcpRangeStart()
 {
     return xmlDoc()
-            .documentElement()
-            .firstChildElement(QStringLiteral("ip"))
-            .firstChildElement(QStringLiteral("dhcp"))
-            .firstChildElement(QStringLiteral("range"))
-            .attribute(QStringLiteral("start"));
+        .documentElement()
+        .firstChildElement(QStringLiteral("ip"))
+        .firstChildElement(QStringLiteral("dhcp"))
+        .firstChildElement(QStringLiteral("range"))
+        .attribute(QStringLiteral("start"));
 }
 
 QString Network::ipDhcpRangeEnd()
 {
     return xmlDoc()
-            .documentElement()
-            .firstChildElement(QStringLiteral("ip"))
-            .firstChildElement(QStringLiteral("dhcp"))
-            .firstChildElement(QStringLiteral("range"))
-            .attribute(QStringLiteral("end"));
+        .documentElement()
+        .firstChildElement(QStringLiteral("ip"))
+        .firstChildElement(QStringLiteral("dhcp"))
+        .firstChildElement(QStringLiteral("range"))
+        .attribute(QStringLiteral("end"));
 }
 
 QVariantList Network::ipDhcpHosts()
 {
     QVariantList ret;
     QDomElement host = xmlDoc()
-                .documentElement()
-                .firstChildElement(QStringLiteral("ip"))
-                .firstChildElement(QStringLiteral("dhcp"))
-                .firstChildElement(QStringLiteral("host"));
+                           .documentElement()
+                           .firstChildElement(QStringLiteral("ip"))
+                           .firstChildElement(QStringLiteral("dhcp"))
+                           .firstChildElement(QStringLiteral("host"));
     while (!host.isNull()) {
         QMap<QString, QString> map{
             {QStringLiteral("ip"), host.attribute(QStringLiteral("ip"))},
@@ -142,10 +140,10 @@ QVariantList Network::ipDhcpHosts()
 QString Network::ipAddressForMac(const QString &mac)
 {
     QDomElement host = xmlDoc()
-            .documentElement()
-            .firstChildElement(QStringLiteral("ip"))
-            .firstChildElement(QStringLiteral("dhcp"))
-            .firstChildElement(QStringLiteral("host"));
+                           .documentElement()
+                           .firstChildElement(QStringLiteral("ip"))
+                           .firstChildElement(QStringLiteral("dhcp"))
+                           .firstChildElement(QStringLiteral("host"));
     while (!host.isNull()) {
         if (host.attribute(QStringLiteral("host")) == mac) {
             return host.attribute(QStringLiteral("ip"));
@@ -158,9 +156,9 @@ QString Network::ipAddressForMac(const QString &mac)
 QDomDocument Network::xmlDoc()
 {
     if (m_xml.isNull()) {
-        char *xml = virNetworkGetXMLDesc(m_net, 0);
+        char *xml               = virNetworkGetXMLDesc(m_net, 0);
         const QString xmlString = QString::fromUtf8(xml);
-//        qDebug() << "XML" << xml;
+        //        qDebug() << "XML" << xml;
         QString error;
         if (!m_xml.setContent(xmlString, &error)) {
             qWarning() << "Failed to parse XML from interface" << error;

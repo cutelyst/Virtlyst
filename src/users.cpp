@@ -16,14 +16,13 @@
  */
 #include "users.h"
 
-#include <QLoggingCategory>
-
 #include <Cutelyst/Plugins/Authentication/authentication.h>
 #include <Cutelyst/Plugins/Authentication/credentialpassword.h>
 #include <Cutelyst/Plugins/Utils/Sql>
 
-#include <QSqlQuery>
+#include <QLoggingCategory>
 #include <QSqlError>
+#include <QSqlQuery>
 
 using namespace Cutelyst;
 
@@ -34,11 +33,10 @@ Users::Users(QObject *parent)
 
 void Users::index(Context *c)
 {
-    QSqlQuery query = CPreparedSqlQueryThreadForDB(
-                QStringLiteral("SELECT id, username "
-                               "FROM users "
-                               "ORDER BY username"),
-                QStringLiteral("virtlyst"));
+    QSqlQuery query = CPreparedSqlQueryThreadForDB(QStringLiteral("SELECT id, username "
+                                                                  "FROM users "
+                                                                  "ORDER BY username"),
+                                                   QStringLiteral("virtlyst"));
     if (query.exec()) {
         c->setStash(QStringLiteral("users"), Sql::queryToList(query));
     } else {
@@ -60,12 +58,11 @@ void Users::create(Context *c)
         }
         const QString pass = CredentialPassword::createPassword(password);
 
-        QSqlQuery query = CPreparedSqlQueryThreadForDB(
-                    QStringLiteral("INSERT INTO users "
-                                   "(username, password) "
-                                   "VALUES "
-                                   "(:username, :password) "),
-                    QStringLiteral("virtlyst"));
+        QSqlQuery query = CPreparedSqlQueryThreadForDB(QStringLiteral("INSERT INTO users "
+                                                                      "(username, password) "
+                                                                      "VALUES "
+                                                                      "(:username, :password) "),
+                                                       QStringLiteral("virtlyst"));
         query.bindValue(QStringLiteral(":username"), params.value(QStringLiteral("username")));
         query.bindValue(QStringLiteral(":password"), pass);
         if (query.exec()) {
@@ -76,7 +73,8 @@ void Users::create(Context *c)
             c->response()->setStatus(Response::InternalServerError);
         }
     }
-    c->setStash(QStringLiteral("user"), ParamsMultiMap{
+    c->setStash(QStringLiteral("user"),
+                ParamsMultiMap{
                     {QStringLiteral("active"), QStringLiteral("on")},
                 });
 }
@@ -85,12 +83,11 @@ void Users::edit(Context *c, const QString &id)
 {
     if (c->request()->isPost()) {
         const ParamsMultiMap params = c->req()->bodyParameters();
-        QSqlQuery query = CPreparedSqlQueryThreadForDB(
-                    QStringLiteral("UPDATE users "
-                                   "SET "
-                                   "username=:username "
-                                   "WHERE id=:id"),
-                    QStringLiteral("virtlyst"));
+        QSqlQuery query             = CPreparedSqlQueryThreadForDB(QStringLiteral("UPDATE users "
+                                                                                  "SET "
+                                                                                  "username=:username "
+                                                                                  "WHERE id=:id"),
+                                                       QStringLiteral("virtlyst"));
         query.bindValue(QStringLiteral(":username"), params.value(QStringLiteral("username")));
         query.bindValue(QStringLiteral(":id"), id);
         if (query.exec()) {
@@ -101,11 +98,10 @@ void Users::edit(Context *c, const QString &id)
             c->response()->setStatus(Response::InternalServerError);
         }
     } else {
-        QSqlQuery query = CPreparedSqlQueryThreadForDB(
-                    QStringLiteral("SELECT username "
-                                   "FROM users "
-                                   "WHERE id=:id"),
-                    QStringLiteral("virtlyst"));
+        QSqlQuery query = CPreparedSqlQueryThreadForDB(QStringLiteral("SELECT username "
+                                                                      "FROM users "
+                                                                      "WHERE id=:id"),
+                                                       QStringLiteral("virtlyst"));
         query.bindValue(QStringLiteral(":id"), id);
         if (query.exec()) {
             c->setStash(QStringLiteral("user"), Sql::queryToHashObject(query));
@@ -122,18 +118,18 @@ void Users::change_password(Context *c, const QString &id)
 {
     if (c->request()->isPost()) {
         const ParamsMultiMap params = c->req()->bodyParameters();
-        const QString password = params.value(u"password"_qs);
+        const QString password      = params.value(u"password"_qs);
         if (password != params.value(u"password_conf"_qs)) {
-            c->setStash(QStringLiteral("error_msg"), QStringLiteral("Password confirmation does not match"));
+            c->setStash(QStringLiteral("error_msg"),
+                        QStringLiteral("Password confirmation does not match"));
             return;
         }
         const QString pass = CredentialPassword::createPassword(password);
 
-        QSqlQuery query = CPreparedSqlQueryThreadForDB(
-                    QStringLiteral("UPDATE users "
-                                   "SET password=:password "
-                                   "WHERE id=:id"),
-                    QStringLiteral("virtlyst"));
+        QSqlQuery query = CPreparedSqlQueryThreadForDB(QStringLiteral("UPDATE users "
+                                                                      "SET password=:password "
+                                                                      "WHERE id=:id"),
+                                                       QStringLiteral("virtlyst"));
         query.bindValue(QStringLiteral(":password"), pass);
         query.bindValue(QStringLiteral(":id"), id);
         if (query.exec()) {
@@ -145,11 +141,10 @@ void Users::change_password(Context *c, const QString &id)
         }
     }
 
-    QSqlQuery query = CPreparedSqlQueryThreadForDB(
-                QStringLiteral("SELECT name "
-                               "FROM users "
-                               "WHERE id=:id"),
-                QStringLiteral("virtlyst"));
+    QSqlQuery query = CPreparedSqlQueryThreadForDB(QStringLiteral("SELECT name "
+                                                                  "FROM users "
+                                                                  "WHERE id=:id"),
+                                                   QStringLiteral("virtlyst"));
     query.bindValue(QStringLiteral(":id"), id);
     if (query.exec()) {
         c->setStash(QStringLiteral("user"), Sql::queryToHashObject(query));

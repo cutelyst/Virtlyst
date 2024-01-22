@@ -52,5 +52,4 @@ private:
     Virtlyst *m_virtlyst;
 };
 
-#endif //ROOT_H
-
+#endif // ROOT_H

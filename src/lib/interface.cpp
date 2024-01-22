@@ -19,11 +19,11 @@
 
 #include <QLoggingCategory>
 
-Interface::Interface(virInterfacePtr iface, Connection *conn, QObject *parent) : QObject(parent)
-  , m_iface(iface)
-  , m_conn(conn)
+Interface::Interface(virInterfacePtr iface, Connection *conn, QObject *parent)
+    : QObject(parent)
+    , m_iface(iface)
+    , m_conn(conn)
 {
-
 }
 
 Interface::~Interface()
@@ -33,9 +33,7 @@ Interface::~Interface()
 
 QString Interface::name()
 {
-    return xmlDoc()
-            .documentElement()
-            .attribute(QStringLiteral("name"));
+    return xmlDoc().documentElement().attribute(QStringLiteral("name"));
 }
 
 QString Interface::mac() const
@@ -45,9 +43,7 @@ QString Interface::mac() const
 
 QString Interface::type()
 {
-    return xmlDoc()
-            .documentElement()
-            .attribute(QStringLiteral("type"));
+    return xmlDoc().documentElement().attribute(QStringLiteral("type"));
 }
 
 bool Interface::active() const
@@ -86,9 +82,9 @@ QString Interface::ipv6Type()
 QString Interface::startMode()
 {
     const QString ret = xmlDoc()
-            .documentElement()
-            .firstChildElement(QStringLiteral("start"))
-            .attribute(QStringLiteral("mode"));
+                            .documentElement()
+                            .firstChildElement(QStringLiteral("start"))
+                            .attribute(QStringLiteral("mode"));
     if (ret.isEmpty()) {
         return QStringLiteral("None");
     }
@@ -113,9 +109,9 @@ bool Interface::undefine()
 QDomDocument Interface::xmlDoc()
 {
     if (m_xml.isNull()) {
-        char *xml = virInterfaceGetXMLDesc(m_iface, 0);
+        char *xml               = virInterfaceGetXMLDesc(m_iface, 0);
         const QString xmlString = QString::fromUtf8(xml);
-//        qDebug() << "XML" << xml;
+        //        qDebug() << "XML" << xml;
         QString error;
         if (!m_xml.setContent(xmlString, &error)) {
             qWarning() << "Failed to parse XML from interface" << error;

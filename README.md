@@ -7,7 +7,7 @@ Don't let your virtualization management use more resources than your main virtu
  * Low memory footprint, around 5 MiB of RAM used
  * Low CPU usage
  * Look and feel easly customized with templates
- 
+
 # Screenshot
 
 ![Instances](https://dantti.files.wordpress.com/2018/05/instances.png)

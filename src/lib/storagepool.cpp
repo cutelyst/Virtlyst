@@ -17,16 +17,16 @@
  */
 #include "storagepool.h"
 
-#include "virtlyst.h"
 #include "storagevol.h"
+#include "virtlyst.h"
 
-#include <QXmlStreamWriter>
 #include <QLoggingCategory>
+#include <QXmlStreamWriter>
 
-StoragePool::StoragePool(virStoragePoolPtr storage, QObject *parent) : QObject(parent)
-  , m_pool(storage)
+StoragePool::StoragePool(virStoragePoolPtr storage, QObject *parent)
+    : QObject(parent)
+    , m_pool(storage)
 {
-
 }
 
 QString StoragePool::name()
@@ -36,9 +36,7 @@ QString StoragePool::name()
 
 QString StoragePool::type()
 {
-    return xmlDoc()
-            .documentElement()
-            .attribute(QStringLiteral("type"));
+    return xmlDoc().documentElement().attribute(QStringLiteral("type"));
 }
 
 QString StoragePool::size()
@@ -113,10 +111,11 @@ int StoragePool::volumeCount()
 QString StoragePool::path()
 {
     return xmlDoc()
-            .documentElement()
-            .firstChildElement(QStringLiteral("target"))
-            .firstChildElement(QStringLiteral("path"))
-            .firstChild().nodeValue();
+        .documentElement()
+        .firstChildElement(QStringLiteral("target"))
+        .firstChildElement(QStringLiteral("path"))
+        .firstChild()
+        .nodeValue();
 }
 
 bool StoragePool::start()
@@ -174,7 +173,10 @@ bool StoragePool::create(int flags)
     return virStoragePoolCreate(m_pool, flags) == 0;
 }
 
-StorageVol *StoragePool::createStorageVolume(const QString &name, const QString &format, qint64 sizeGiB, int flags)
+StorageVol *StoragePool::createStorageVolume(const QString &name,
+                                             const QString &format,
+                                             qint64 sizeGiB,
+                                             int flags)
 {
     QByteArray output;
     QXmlStreamWriter stream(&output);
@@ -182,8 +184,8 @@ StorageVol *StoragePool::createStorageVolume(const QString &name, const QString 
     QString localName(name);
     QString localFormat(format);
     qint64 sizeByte = sizeGiB * 1073741824;
-    qint64 alloc = sizeByte;
-    
+    qint64 alloc    = sizeByte;
+
     if (format == QLatin1String("unknown")) {
         localFormat = QStringLiteral("raw");
     }
@@ -225,9 +227,9 @@ StorageVol *StoragePool::getVolume(const QString &name)
 QDomDocument StoragePool::xmlDoc()
 {
     if (m_xml.isNull()) {
-        char *xml = virStoragePoolGetXMLDesc(m_pool, 0);
+        char *xml               = virStoragePoolGetXMLDesc(m_pool, 0);
         const QString xmlString = QString::fromUtf8(xml);
-//        qDebug() << "XML" << xml;
+        //        qDebug() << "XML" << xml;
         QString error;
         if (!m_xml.setContent(xmlString, &error)) {
             qWarning() << "Failed to parse XML from interface" << error;

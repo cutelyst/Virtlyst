@@ -18,9 +18,10 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
-#include <QObject>
-#include <QDomDocument>
 #include <libvirt/libvirt.h>
+
+#include <QDomDocument>
+#include <QObject>
 
 class Connection;
 class Network : public QObject

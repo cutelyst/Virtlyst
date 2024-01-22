@@ -18,10 +18,10 @@
 #ifndef STORAGEVOL_H
 #define STORAGEVOL_H
 
-#include <QObject>
-#include <QDomDocument>
-
 #include <libvirt/libvirt.h>
+
+#include <QDomDocument>
+#include <QObject>
 
 class Domain;
 class StoragePool;

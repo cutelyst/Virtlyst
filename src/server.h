@@ -17,9 +17,9 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include <QObject>
-
 #include <Cutelyst/Controller>
+
+#include <QObject>
 
 using namespace Cutelyst;
 
@@ -34,8 +34,16 @@ public:
     void index(Context *c);
 
 private:
-    void createServer(int type, const QString &name, const QString &hostname, const QString &login, const QString &password);
-    void updateServer(int id, const QString &name, const QString &hostname, const QString &login, const QString &password);
+    void createServer(int type,
+                      const QString &name,
+                      const QString &hostname,
+                      const QString &login,
+                      const QString &password);
+    void updateServer(int id,
+                      const QString &name,
+                      const QString &hostname,
+                      const QString &login,
+                      const QString &password);
     void deleteServer(int id);
 
     Virtlyst *m_virtlyst;

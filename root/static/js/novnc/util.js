@@ -57,22 +57,22 @@ if (!Array.prototype.map)
   };
 }
 
-// 
+//
 // requestAnimationFrame shim with setTimeout fallback
 //
 
 window.requestAnimFrame = (function(){
-    return  window.requestAnimationFrame       || 
-            window.webkitRequestAnimationFrame || 
-            window.mozRequestAnimationFrame    || 
-            window.oRequestAnimationFrame      || 
-            window.msRequestAnimationFrame     || 
+    return  window.requestAnimationFrame       ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame    ||
+            window.oRequestAnimationFrame      ||
+            window.msRequestAnimationFrame     ||
             function(callback){
                 window.setTimeout(callback, 1000 / 60);
             };
 })();
 
-/* 
+/*
  * ------------------------------------------------------
  * Namespaced in Util
  * ------------------------------------------------------
@@ -310,7 +310,7 @@ Util.addEvent = function (obj, evType, fn){
         var r = obj.attachEvent("on"+evType, fn);
         return r;
     } else if (obj.addEventListener){
-        obj.addEventListener(evType, fn, false); 
+        obj.addEventListener(evType, fn, false);
         return true;
     } else {
         throw("Handler could not be attached");
@@ -378,4 +378,4 @@ Util.Flash = (function(){
     }
     version = v.match(/\d+/g);
     return {version: parseInt(version[0] || 0 + '.' + version[1], 10) || 0, build: parseInt(version[2], 10) || 0};
-}()); 
+}());

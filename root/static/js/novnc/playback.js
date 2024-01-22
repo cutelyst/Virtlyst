@@ -26,7 +26,7 @@ next_iteration = function () {
     } else {
         rfb.disconnect();
     }
-    
+
     if (test_state !== 'running') { return; }
 
     iteration += 1;
@@ -99,4 +99,3 @@ do_packet = function () {
 
     queue_next_packet();
 };
-

@@ -16,32 +16,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 #include "domain.h"
-#include "connection.h"
 
-#include "virtlyst.h"
+#include "connection.h"
+#include "domainsnapshot.h"
+#include "network.h"
 #include "storagepool.h"
 #include "storagevol.h"
-#include "network.h"
-#include "domainsnapshot.h"
-
-#include <QTextStream>
-#include <QDomElement>
-#include <QFileInfo>
-#include <QEventLoop>
-#include <QDateTime>
-#include <QTimer>
-
-#include <QLoggingCategory>
+#include "virtlyst.h"
 
 #include <sys/time.h>
 
+#include <QDateTime>
+#include <QDomElement>
+#include <QEventLoop>
+#include <QFileInfo>
+#include <QLoggingCategory>
+#include <QTextStream>
+#include <QTimer>
+
 Q_LOGGING_CATEGORY(VIRT_DOM, "virt.domain")
 
-Domain::Domain(virDomainPtr domain, Connection *conn, QObject *parent) : QObject(parent)
-  , m_conn(conn)
-  , m_domain(domain)
+Domain::Domain(virDomainPtr domain, Connection *conn, QObject *parent)
+    : QObject(parent)
+    , m_conn(conn)
+    , m_domain(domain)
 {
-
 }
 
 Domain::~Domain()
@@ -53,7 +52,7 @@ bool Domain::saveXml()
 {
     const QString xmlData = xmlDoc().toString(0);
     m_xml.clear();
-//    qCDebug(VIRT_DOM) << xmlData;
+    //    qCDebug(VIRT_DOM) << xmlData;
     return m_conn->domainDefineXml(xmlData);
 }
 
@@ -112,7 +111,7 @@ int Domain::status()
 int Domain::currentVcpu()
 {
     QDomElement docElem = xmlDoc().documentElement();
-    QDomElement node = docElem.firstChildElement(QStringLiteral("vcpu"));
+    QDomElement node    = docElem.firstChildElement(QStringLiteral("vcpu"));
     if (node.hasAttribute(QStringLiteral("current"))) {
         return node.attribute(QStringLiteral("current")).toInt();
     }
@@ -123,7 +122,7 @@ int Domain::currentVcpu()
 void Domain::setCurrentVcpu(int number)
 {
     QDomElement docElem = xmlDoc().documentElement();
-    QDomElement node = docElem.firstChildElement(QStringLiteral("vcpu"));
+    QDomElement node    = docElem.firstChildElement(QStringLiteral("vcpu"));
     node.setAttribute(QStringLiteral("current"), number);
 }
 
@@ -200,7 +199,8 @@ bool Domain::snapshot(const QString &name)
     e.appendChild(node);
 
     node = newDoc.createElement(QStringLiteral("creationTime"));
-    node.appendChild(newDoc.createTextNode(QString::number(QDateTime::currentMSecsSinceEpoch() / 1000)));
+    node.appendChild(
+        newDoc.createTextNode(QString::number(QDateTime::currentMSecsSinceEpoch() / 1000)));
     e.appendChild(node);
 
     node = newDoc.createElement(QStringLiteral("state"));
@@ -215,8 +215,9 @@ bool Domain::snapshot(const QString &name)
 
     newDoc.appendChild(e);
 
-    virDomainSnapshotPtr snapshot = virDomainSnapshotCreateXML(m_domain, newDoc.toString(0).toUtf8().constData(), 0);
-//    qDebug() << snapshot << newDoc.toString(2).toUtf8().constData();
+    virDomainSnapshotPtr snapshot =
+        virDomainSnapshotCreateXML(m_domain, newDoc.toString(0).toUtf8().constData(), 0);
+    //    qDebug() << snapshot << newDoc.toString(2).toUtf8().constData();
     if (snapshot) {
         virDomainSnapshotFree(snapshot);
         return true;
@@ -251,7 +252,8 @@ QVariantList Domain::snapshots()
 
 DomainSnapshot *Domain::getSnapshot(const QString &name)
 {
-    virDomainSnapshotPtr snap = virDomainSnapshotLookupByName(m_domain, name.toUtf8().constData(), 0);
+    virDomainSnapshotPtr snap =
+        virDomainSnapshotLookupByName(m_domain, name.toUtf8().constData(), 0);
     if (!snap) {
         return nullptr;
     }
@@ -260,56 +262,64 @@ DomainSnapshot *Domain::getSnapshot(const QString &name)
 
 QString Domain::consoleType()
 {
-    return xmlDoc().documentElement()
-            .firstChildElement(QStringLiteral("devices"))
-            .firstChildElement(QStringLiteral("graphics"))
-            .attribute(QStringLiteral("type"));
+    return xmlDoc()
+        .documentElement()
+        .firstChildElement(QStringLiteral("devices"))
+        .firstChildElement(QStringLiteral("graphics"))
+        .attribute(QStringLiteral("type"));
 }
 
 void Domain::setConsoleType(const QString &type)
 {
-    xmlDoc().documentElement()
-            .firstChildElement(QStringLiteral("devices"))
-            .firstChildElement(QStringLiteral("graphics"))
-            .setAttribute(QStringLiteral("type"), type);
+    xmlDoc()
+        .documentElement()
+        .firstChildElement(QStringLiteral("devices"))
+        .firstChildElement(QStringLiteral("graphics"))
+        .setAttribute(QStringLiteral("type"), type);
 }
 
 QString Domain::consolePassword()
 {
-    return xmlDoc().documentElement()
-            .firstChildElement(QStringLiteral("devices"))
-            .firstChildElement(QStringLiteral("graphics"))
-            .attribute(QStringLiteral("passwd"));
+    return xmlDoc()
+        .documentElement()
+        .firstChildElement(QStringLiteral("devices"))
+        .firstChildElement(QStringLiteral("graphics"))
+        .attribute(QStringLiteral("passwd"));
 }
 
 void Domain::setConsolePassword(const QString &password)
 {
-    xmlDoc().documentElement()
-            .firstChildElement(QStringLiteral("devices"))
-            .firstChildElement(QStringLiteral("graphics"))
-            .setAttribute(QStringLiteral("passwd"), password);
+    xmlDoc()
+        .documentElement()
+        .firstChildElement(QStringLiteral("devices"))
+        .firstChildElement(QStringLiteral("graphics"))
+        .setAttribute(QStringLiteral("passwd"), password);
 }
 
 quint16 Domain::consolePort()
 {
-    return static_cast<quint16>(xmlDoc().documentElement()
-                                .firstChildElement(QStringLiteral("devices"))
-                                .firstChildElement(QStringLiteral("graphics"))
-                                .attribute(QStringLiteral("port")).toUInt());
+    return static_cast<quint16>(xmlDoc()
+                                    .documentElement()
+                                    .firstChildElement(QStringLiteral("devices"))
+                                    .firstChildElement(QStringLiteral("graphics"))
+                                    .attribute(QStringLiteral("port"))
+                                    .toUInt());
 }
 
 QString Domain::consoleListenAddress()
 {
-    QString ret = xmlDoc().documentElement()
-                .firstChildElement(QStringLiteral("devices"))
-                .firstChildElement(QStringLiteral("graphics"))
-                .attribute(QStringLiteral("listen"));
+    QString ret = xmlDoc()
+                      .documentElement()
+                      .firstChildElement(QStringLiteral("devices"))
+                      .firstChildElement(QStringLiteral("graphics"))
+                      .attribute(QStringLiteral("listen"));
     if (ret.isEmpty()) {
-        ret = xmlDoc().documentElement()
-                .firstChildElement(QStringLiteral("devices"))
-                .firstChildElement(QStringLiteral("graphics"))
-                .firstChildElement(QStringLiteral("listen"))
-                .attribute(QStringLiteral("address"));
+        ret = xmlDoc()
+                  .documentElement()
+                  .firstChildElement(QStringLiteral("devices"))
+                  .firstChildElement(QStringLiteral("graphics"))
+                  .firstChildElement(QStringLiteral("listen"))
+                  .attribute(QStringLiteral("address"));
         if (ret.isEmpty()) {
             return QStringLiteral("127.0.0.1");
         }
@@ -319,18 +329,20 @@ QString Domain::consoleListenAddress()
 
 QString Domain::consoleKeymap()
 {
-    return xmlDoc().documentElement()
-            .firstChildElement(QStringLiteral("devices"))
-            .firstChildElement(QStringLiteral("graphics"))
-            .attribute(QStringLiteral("keymap"));
+    return xmlDoc()
+        .documentElement()
+        .firstChildElement(QStringLiteral("devices"))
+        .firstChildElement(QStringLiteral("graphics"))
+        .attribute(QStringLiteral("keymap"));
 }
 
 void Domain::setConsoleKeymap(const QString &keymap)
 {
-    xmlDoc().documentElement()
-            .firstChildElement(QStringLiteral("devices"))
-            .firstChildElement(QStringLiteral("graphics"))
-            .setAttribute(QStringLiteral("keymap"), keymap);
+    xmlDoc()
+        .documentElement()
+        .firstChildElement(QStringLiteral("devices"))
+        .firstChildElement(QStringLiteral("graphics"))
+        .setAttribute(QStringLiteral("keymap"), keymap);
 }
 
 bool getCpuTime(virDomainPtr dom, int nparams, quint64 &cpu_time)
@@ -341,8 +353,9 @@ bool getCpuTime(virDomainPtr dom, int nparams, quint64 &cpu_time)
     }
 
     for (int i = 0; i < nparams; ++i) {
-        if ((strcmp(params[i].field, VIR_DOMAIN_CPU_STATS_CPUTIME) == 0 || strcmp(params[i].field, VIR_DOMAIN_CPU_STATS_VCPUTIME) == 0)
-                && params[i].type == VIR_TYPED_PARAM_ULLONG) {
+        if ((strcmp(params[i].field, VIR_DOMAIN_CPU_STATS_CPUTIME) == 0 ||
+             strcmp(params[i].field, VIR_DOMAIN_CPU_STATS_VCPUTIME) == 0) &&
+            params[i].type == VIR_TYPED_PARAM_ULLONG) {
             cpu_time = params[i].value.ul;
             return true;
         }
@@ -352,11 +365,14 @@ bool getCpuTime(virDomainPtr dom, int nparams, quint64 &cpu_time)
 }
 
 struct GetCPUStats {
-    GetCPUStats(virDomainPtr dom) : m_dom(dom) {
+    GetCPUStats(virDomainPtr dom)
+        : m_dom(dom)
+    {
         m_nparams = virDomainGetCPUStats(dom, nullptr, 0, -1, 1, 0);
     }
 
-    void getData(struct timeval &time, quint64 &stats) {
+    void getData(struct timeval &time, quint64 &stats)
+    {
         if (m_nparams == -1) {
             return;
         }
@@ -373,11 +389,10 @@ struct GetCPUStats {
         }
     }
 
-    void begin() {
-        getData(then_t, then_stats);
-    }
+    void begin() { getData(then_t, then_stats); }
 
-    double compute(int currentVcpu) {
+    double compute(int currentVcpu)
+    {
         getData(now_t, now_stats);
 
         if (m_nparams) {
@@ -385,7 +400,7 @@ struct GetCPUStats {
         }
 
         qint64 then = then_t.tv_sec * 1000000 + then_t.tv_usec;
-        qint64 now = now_t.tv_sec * 1000000 + now_t.tv_usec;
+        qint64 now  = now_t.tv_sec * 1000000 + now_t.tv_usec;
 
         double usage = (now_stats - then_stats) / (now - then) / 10 / currentVcpu;
         return usage;
@@ -406,16 +421,23 @@ int Domain::cpuUsage()
     return m_cpuUsage;
 }
 
-struct GetNetUsage
-{
-    GetNetUsage(const QStringList &networks, virDomainPtr dom) : m_networks(networks), m_dom(dom) {}
+struct GetNetUsage {
+    GetNetUsage(const QStringList &networks, virDomainPtr dom)
+        : m_networks(networks)
+        , m_dom(dom)
+    {
+    }
 
-    void begin() {
+    void begin()
+    {
         for (const QString &net : m_networks) {
             virDomainInterfaceStatsStruct stats;
             qint64 rx = 0;
             qint64 tx = 0;
-            if (virDomainInterfaceStats(m_dom, net.toUtf8().constData(), &stats, sizeof(virDomainInterfaceStatsStruct)) == 0) {
+            if (virDomainInterfaceStats(m_dom,
+                                        net.toUtf8().constData(),
+                                        &stats,
+                                        sizeof(virDomainInterfaceStatsStruct)) == 0) {
                 if (stats.rx_bytes != -1) {
                     rx = stats.rx_bytes;
                 }
@@ -423,18 +445,22 @@ struct GetNetUsage
                     tx = stats.tx_bytes;
                 }
             }
-            ret.append({ rx, tx });
+            ret.append({rx, tx});
         }
     }
 
-    QVector<std::pair<qint64, qint64> > compute() {
+    QVector<std::pair<qint64, qint64>> compute()
+    {
         int i = 0;
         for (const QString &net : m_networks) {
             virDomainInterfaceStatsStruct stats;
             std::pair<qint64, qint64> rx_tx = ret[i];
-            qint64 rx = 0;
-            qint64 tx = 0;
-            if (virDomainInterfaceStats(m_dom, net.toUtf8().constData(), &stats, sizeof(virDomainInterfaceStatsStruct)) == 0) {
+            qint64 rx                       = 0;
+            qint64 tx                       = 0;
+            if (virDomainInterfaceStats(m_dom,
+                                        net.toUtf8().constData(),
+                                        &stats,
+                                        sizeof(virDomainInterfaceStatsStruct)) == 0) {
                 if (stats.rx_bytes != -1) {
                     rx = (stats.rx_bytes - rx_tx.first) * 8 / 1024 / 1024;
                 }
@@ -442,33 +468,39 @@ struct GetNetUsage
                     tx = (stats.tx_bytes - rx_tx.second) * 8 / 1024 / 1024;
                 }
             }
-            ret[i++] = { rx, tx };
+            ret[i++] = {rx, tx};
         }
         return ret;
     }
 
     const QStringList m_networks;
     virDomainPtr m_dom;
-    QVector<std::pair<qint64, qint64> > ret;
+    QVector<std::pair<qint64, qint64>> ret;
 };
 
-QVector<std::pair<qint64, qint64> > Domain::netUsageMiBs()
+QVector<std::pair<qint64, qint64>> Domain::netUsageMiBs()
 {
     getStats();
 
     return m_netUsageMiBs;
 }
 
-struct GetHddUsage
-{
-    GetHddUsage(const QStringList &devices, virDomainPtr dom) : m_devices(devices), m_dom(dom) {}
+struct GetHddUsage {
+    GetHddUsage(const QStringList &devices, virDomainPtr dom)
+        : m_devices(devices)
+        , m_dom(dom)
+    {
+    }
 
-    void begin() {
+    void begin()
+    {
         for (const QString &dev : m_devices) {
             virDomainBlockStatsStruct stats;
             qint64 rd = 0;
             qint64 wr = 0;
-            if (virDomainBlockStats(m_dom, dev.toUtf8().constData(), &stats, sizeof(virDomainBlockStatsStruct)) == 0) {
+            if (virDomainBlockStats(
+                    m_dom, dev.toUtf8().constData(), &stats, sizeof(virDomainBlockStatsStruct)) ==
+                0) {
                 if (stats.rd_bytes != -1) {
                     rd = stats.rd_bytes;
                 }
@@ -476,17 +508,20 @@ struct GetHddUsage
                     wr = stats.wr_bytes;
                 }
             }
-            ret.insert(dev, { rd, wr });
+            ret.insert(dev, {rd, wr});
         }
     }
 
-    QMap<QString, std::pair<qint64, qint64> > compute() {
+    QMap<QString, std::pair<qint64, qint64>> compute()
+    {
         for (const QString &dev : m_devices) {
             virDomainBlockStatsStruct stats;
             std::pair<qint64, qint64> rd_wr = ret[dev];
-            qint64 rd = 0;
-            qint64 wr = 0;
-            if (virDomainBlockStats(m_dom, dev.toUtf8().constData(), &stats, sizeof(virDomainBlockStatsStruct)) == 0) {
+            qint64 rd                       = 0;
+            qint64 wr                       = 0;
+            if (virDomainBlockStats(
+                    m_dom, dev.toUtf8().constData(), &stats, sizeof(virDomainBlockStatsStruct)) ==
+                0) {
                 if (stats.rd_bytes != -1) {
                     rd = (stats.rd_bytes - rd_wr.first) / 1024 / 1024;
                 }
@@ -494,7 +529,7 @@ struct GetHddUsage
                     wr = (stats.wr_bytes - rd_wr.second) * 8 / 1024 / 1024;
                 }
             }
-            ret[dev] = { rd, wr };
+            ret[dev] = {rd, wr};
         }
 
         return ret;
@@ -502,10 +537,10 @@ struct GetHddUsage
 
     const QStringList m_devices;
     virDomainPtr m_dom;
-    QMap<QString, std::pair<qint64, qint64> > ret;
+    QMap<QString, std::pair<qint64, qint64>> ret;
 };
 
-QMap<QString, std::pair<qint64, qint64> > Domain::hddUsageMiBs()
+QMap<QString, std::pair<qint64, qint64>> Domain::hddUsageMiBs()
 {
     getStats();
 
@@ -522,9 +557,9 @@ QStringList Domain::blkDevices()
     }
 
     QDomElement disk = xmlDoc()
-            .documentElement()
-            .firstChildElement(QStringLiteral("devices"))
-            .firstChildElement(QStringLiteral("disk"));
+                           .documentElement()
+                           .firstChildElement(QStringLiteral("devices"))
+                           .firstChildElement(QStringLiteral("disk"));
     while (!disk.isNull()) {
         QString dev_file;
         bool network_disk = true;
@@ -532,7 +567,7 @@ QStringList Domain::blkDevices()
         const QDomElement source = disk.firstChildElement(QStringLiteral("source"));
 
         if (source.hasAttribute(QStringLiteral("protocol"))) {
-            dev_file = source.attribute(QStringLiteral("protocol"));
+            dev_file     = source.attribute(QStringLiteral("protocol"));
             network_disk = true;
         }
         if (source.hasAttribute(QStringLiteral("file"))) {
@@ -541,7 +576,8 @@ QStringList Domain::blkDevices()
         if (source.hasAttribute(QStringLiteral("dev"))) {
             dev_file = source.attribute(QStringLiteral("dev"));
         }
-        const QString dev_bus = disk.firstChildElement(QStringLiteral("target")).attribute(QStringLiteral("dev"));
+        const QString dev_bus =
+            disk.firstChildElement(QStringLiteral("target")).attribute(QStringLiteral("dev"));
 
         if (!dev_file.isEmpty() && !dev_bus.isEmpty()) {
             if (network_disk) {
@@ -568,20 +604,23 @@ QVariantList Domain::disks()
     }
 
     QDomElement disk = xmlDoc()
-            .documentElement()
-            .firstChildElement(QStringLiteral("devices"))
-            .firstChildElement(QStringLiteral("disk"));
+                           .documentElement()
+                           .firstChildElement(QStringLiteral("devices"))
+                           .firstChildElement(QStringLiteral("disk"));
     while (!disk.isNull()) {
         if (disk.attribute(QStringLiteral("device")) == QLatin1String("disk")) {
-            const QString dev = disk.firstChildElement(QStringLiteral("target")).attribute(QStringLiteral("dev"));
-            const QString srcFile = disk.firstChildElement(QStringLiteral("source")).attribute(QStringLiteral("file"));
-            const QString diskFormat = disk.firstChildElement(QStringLiteral("driver")).attribute(QStringLiteral("type"));
+            const QString dev =
+                disk.firstChildElement(QStringLiteral("target")).attribute(QStringLiteral("dev"));
+            const QString srcFile =
+                disk.firstChildElement(QStringLiteral("source")).attribute(QStringLiteral("file"));
+            const QString diskFormat =
+                disk.firstChildElement(QStringLiteral("driver")).attribute(QStringLiteral("type"));
             QString volume;
             QString storage;
             if (!srcFile.isEmpty()) {
                 StorageVol *vol = m_conn->getStorageVolByPath(srcFile, this);
                 if (vol) {
-                    volume = vol->name();
+                    volume            = vol->name();
                     StoragePool *pool = vol->pool();
                     if (pool) {
                         storage = pool->name();
@@ -616,8 +655,8 @@ QVariantList Domain::cloneDisks()
 
     const QVariantList _disks = disks();
     for (const QVariant &var : _disks) {
-        QHash<QString, QString> disk = var.value<QHash<QString, QString> >();
-        QString image = disk.value(QStringLiteral("image"));
+        QHash<QString, QString> disk = var.value<QHash<QString, QString>>();
+        QString image                = disk.value(QStringLiteral("image"));
         if (image.isEmpty()) {
             continue;
         }
@@ -625,9 +664,11 @@ QVariantList Domain::cloneDisks()
         if (image.contains(QLatin1Char('.'))) {
             QFileInfo info(image);
             if (info.path() == QLatin1String(".")) {
-                disk.value(u"image"_qs) = info.baseName() + QLatin1String("-clone.") + info.completeSuffix();
+                disk.value(u"image"_qs) =
+                    info.baseName() + QLatin1String("-clone.") + info.completeSuffix();
             } else {
-                disk.value(u"image"_qs) = info.path() + QLatin1Char('/') + info.baseName() + QLatin1String("-clone.") + info.completeSuffix();
+                disk.value(u"image"_qs) = info.path() + QLatin1Char('/') + info.baseName() +
+                                          QLatin1String("-clone.") + info.completeSuffix();
             }
         } else {
             disk.value(u"image"_qs) = image + QLatin1String("-clone");
@@ -649,19 +690,21 @@ QVariantList Domain::media()
     }
 
     QDomElement disk = xmlDoc()
-            .documentElement()
-            .firstChildElement(QStringLiteral("devices"))
-            .firstChildElement(QStringLiteral("disk"));
+                           .documentElement()
+                           .firstChildElement(QStringLiteral("devices"))
+                           .firstChildElement(QStringLiteral("disk"));
     while (!disk.isNull()) {
         if (disk.attribute(QStringLiteral("device")) == QLatin1String("cdrom")) {
-            const QString dev = disk.firstChildElement(QStringLiteral("target")).attribute(QStringLiteral("dev"));
-            const QString srcFile = disk.firstChildElement(QStringLiteral("source")).attribute(QStringLiteral("file"));
+            const QString dev =
+                disk.firstChildElement(QStringLiteral("target")).attribute(QStringLiteral("dev"));
+            const QString srcFile =
+                disk.firstChildElement(QStringLiteral("source")).attribute(QStringLiteral("file"));
             QString volume;
             QString storage;
             if (!srcFile.isEmpty()) {
                 StorageVol *vol = m_conn->getStorageVolByPath(srcFile, this);
                 if (vol) {
-                    volume = vol->name();
+                    volume            = vol->name();
                     StoragePool *pool = vol->pool();
                     if (pool) {
                         storage = pool->name();
@@ -694,11 +737,12 @@ QVariantList Domain::networks()
     }
 
     QDomElement interface = xmlDoc()
-            .documentElement()
-            .firstChildElement(QStringLiteral("devices"))
-            .firstChildElement(QStringLiteral("interface"));
+                                .documentElement()
+                                .firstChildElement(QStringLiteral("devices"))
+                                .firstChildElement(QStringLiteral("interface"));
     while (!interface.isNull()) {
-        const QString macHost = interface.firstChildElement(QStringLiteral("mac")).attribute(QStringLiteral("address"));
+        const QString macHost =
+            interface.firstChildElement(QStringLiteral("mac")).attribute(QStringLiteral("address"));
         const QDomElement source = interface.firstChildElement(QStringLiteral("source"));
         QString nicHost;
         if (source.hasAttribute(QStringLiteral("network"))) {
@@ -738,9 +782,9 @@ QStringList Domain::networkTargetDevs()
     }
 
     QDomElement interface = xmlDoc()
-            .documentElement()
-            .firstChildElement(QStringLiteral("devices"))
-            .firstChildElement(QStringLiteral("interface"));
+                                .documentElement()
+                                .firstChildElement(QStringLiteral("devices"))
+                                .firstChildElement(QStringLiteral("interface"));
     while (!interface.isNull()) {
         const QDomElement target = interface.firstChildElement(QStringLiteral("target"));
         if (target.hasAttribute(QStringLiteral("dev"))) {
@@ -814,13 +858,13 @@ bool Domain::updateDevice(const QString &xml, uint flags)
 void Domain::mountIso(const QString &dev, const QString &image)
 {
     QDomDocument doc = xmlDoc();
-    QDomElement disk = doc
-            .documentElement()
-            .firstChildElement(QStringLiteral("devices"))
-            .firstChildElement(QStringLiteral("disk"));
+    QDomElement disk = doc.documentElement()
+                           .firstChildElement(QStringLiteral("devices"))
+                           .firstChildElement(QStringLiteral("disk"));
     while (!disk.isNull()) {
         if (disk.attribute(QStringLiteral("device")) == QLatin1String("cdrom")) {
-            if (disk.firstChildElement(QStringLiteral("target")).attribute(QStringLiteral("dev")) == dev) {
+            if (disk.firstChildElement(QStringLiteral("target")).attribute(QStringLiteral("dev")) ==
+                dev) {
                 QDomElement source = disk.firstChildElement(QStringLiteral("source"));
                 if (source.isNull()) {
                     source = doc.createElement(QStringLiteral("source"));
@@ -840,21 +884,22 @@ void Domain::mountIso(const QString &dev, const QString &image)
     qDebug() << 2 << image;
 
     qDebug() << 2 << doc.toString(2).toUtf8().constData();
-//    saveXml();
+    //    saveXml();
 }
 
 void Domain::umountIso(const QString &dev, const QString &image)
 {
     qDebug() << 1 << xmlDoc().toString(2);
     QDomElement disk = xmlDoc()
-            .documentElement()
-            .firstChildElement(QStringLiteral("devices"))
-            .firstChildElement(QStringLiteral("disk"));
+                           .documentElement()
+                           .firstChildElement(QStringLiteral("devices"))
+                           .firstChildElement(QStringLiteral("disk"));
     while (!disk.isNull()) {
         if (disk.attribute(QStringLiteral("device")) == QLatin1String("cdrom")) {
             QDomElement source = disk.firstChildElement(QStringLiteral("source"));
-            if (disk.firstChildElement(QStringLiteral("target")).attribute(QStringLiteral("dev")) == dev &&
-                    source.attribute(QStringLiteral("file")) == image) {
+            if (disk.firstChildElement(QStringLiteral("target")).attribute(QStringLiteral("dev")) ==
+                    dev &&
+                source.attribute(QStringLiteral("file")) == image) {
                 disk.removeChild(source);
                 QByteArray xml;
                 QTextStream s(&xml);
@@ -865,16 +910,16 @@ void Domain::umountIso(const QString &dev, const QString &image)
         }
         disk = disk.nextSiblingElement(QStringLiteral("disk"));
     }
-//    saveXml();
+    //    saveXml();
     qDebug() << 2 << xmlDoc().toString(2).toUtf8().constData();
 }
 
 QDomDocument Domain::xmlDoc()
 {
     if (m_xml.isNull()) {
-        char *xml = virDomainGetXMLDesc(m_domain, VIR_DOMAIN_XML_SECURE);
+        char *xml               = virDomainGetXMLDesc(m_domain, VIR_DOMAIN_XML_SECURE);
         const QString xmlString = QString::fromUtf8(xml);
-//        qDebug() << "XML" << xml;
+        //        qDebug() << "XML" << xml;
         QString error;
         if (!m_xml.setContent(xmlString, &error)) {
             qWarning() << "Failed to parse XML from interface" << error;
@@ -886,18 +931,12 @@ QDomDocument Domain::xmlDoc()
 
 QString Domain::dataFromSimpleNode(const QString &element)
 {
-    return xmlDoc().documentElement()
-            .firstChildElement(element)
-            .firstChild()
-            .nodeValue();
+    return xmlDoc().documentElement().firstChildElement(element).firstChild().nodeValue();
 }
 
 void Domain::setDataToSimpleNode(const QString &element, const QString &data)
 {
-    xmlDoc().documentElement()
-            .firstChildElement(element)
-            .firstChild()
-            .setNodeValue(data);
+    xmlDoc().documentElement().firstChildElement(element).firstChild().setNodeValue(data);
 }
 
 bool Domain::getStats()
@@ -919,7 +958,7 @@ bool Domain::getStats()
         QTimer::singleShot(1000, &loop, &QEventLoop::quit);
         loop.exec();
 
-        m_cpuUsage = int(cpuStat.compute(currentVcpu()));
+        m_cpuUsage     = int(cpuStat.compute(currentVcpu()));
         m_netUsageMiBs = netUsage.compute();
         m_hddUsageMiBs = hddUsage.compute();
     }

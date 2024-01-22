@@ -136,7 +136,7 @@ SpiceDisplayConn.prototype.process_channel_message = function(msg)
                     { base: draw_copy.base,
                       src_area: draw_copy.data.src_area,
                       image_data: this.cache[draw_copy.data.src_bitmap.descriptor.id],
-                      tag: "copycache." + draw_copy.data.src_bitmap.descriptor.id, 
+                      tag: "copycache." + draw_copy.data.src_bitmap.descriptor.id,
                       has_alpha: true, /* FIXME - may want this to be false... */
                       descriptor : draw_copy.data.src_bitmap.descriptor
                     });
@@ -196,7 +196,7 @@ SpiceDisplayConn.prototype.process_channel_message = function(msg)
                     tmpstr += qdv[i].toString(16);
                 }
 
-                img.o = 
+                img.o =
                     { base: draw_copy.base,
                       tag: "jpeg." + draw_copy.data.src_bitmap.surface_id,
                       descriptor : draw_copy.data.src_bitmap.descriptor,
@@ -229,7 +229,7 @@ SpiceDisplayConn.prototype.process_channel_message = function(msg)
                     tmpstr += qdv[i].toString(16);
                 }
 
-                img.o = 
+                img.o =
                     { base: draw_copy.base,
                       tag: "jpeg." + draw_copy.data.src_bitmap.surface_id,
                       descriptor : draw_copy.data.src_bitmap.descriptor,
@@ -261,7 +261,7 @@ SpiceDisplayConn.prototype.process_channel_message = function(msg)
                                         draw_copy.data.src_bitmap.bitmap);
                 if (! source_img)
                 {
-                    this.log_warn("FIXME: Unable to interpret bitmap of format: " + 
+                    this.log_warn("FIXME: Unable to interpret bitmap of format: " +
                         draw_copy.data.src_bitmap.bitmap.format);
                     return false;
                 }
@@ -291,7 +291,7 @@ SpiceDisplayConn.prototype.process_channel_message = function(msg)
                                             draw_copy.data.src_bitmap.lz_rgb);
                 if (! source_img)
                 {
-                    this.log_warn("FIXME: Unable to interpret bitmap of type: " + 
+                    this.log_warn("FIXME: Unable to interpret bitmap of type: " +
                         draw_copy.data.src_bitmap.lz_rgb.type);
                     return false;
                 }
@@ -355,7 +355,7 @@ SpiceDisplayConn.prototype.process_channel_message = function(msg)
                     draw_fill.base.box.bottom - draw_fill.base.box.top);
                 document.getElementById(this.parent.dump_id).appendChild(debug_canvas);
             }
-                
+
             this.surfaces[draw_fill.base.surface_id].draw_count++;
 
         }
@@ -414,9 +414,9 @@ SpiceDisplayConn.prototype.process_channel_message = function(msg)
             this.surfaces = [];
 
         var m = new SpiceMsgSurfaceCreate(msg.data);
-        DEBUG > 1 && console.log(this.type + ": MsgSurfaceCreate id " + m.surface.surface_id 
+        DEBUG > 1 && console.log(this.type + ": MsgSurfaceCreate id " + m.surface.surface_id
                                     + "; " + m.surface.width + "x" + m.surface.height
-                                    + "; format " + m.surface.format 
+                                    + "; format " + m.surface.format
                                     + "; flags " + m.surface.flags);
         if (m.surface.format != SPICE_SURFACE_FMT_32_xRGB &&
             m.surface.format != SPICE_SURFACE_FMT_32_ARGB)
@@ -611,7 +611,7 @@ SpiceDisplayConn.prototype.draw_copy_helper = function(o)
 SpiceDisplayConn.prototype.log_draw = function(prefix, draw)
 {
     var str = prefix + "." + draw.base.surface_id + "." + this.surfaces[draw.base.surface_id].draw_count + ": ";
-    str += "base.box " + draw.base.box.left + ", " + draw.base.box.top + " to " + 
+    str += "base.box " + draw.base.box.left + ", " + draw.base.box.top + " to " +
                            draw.base.box.right + ", " + draw.base.box.bottom;
     str += "; clip.type " + draw.base.clip.type;
 
@@ -629,12 +629,12 @@ SpiceDisplayConn.prototype.log_draw = function(prefix, draw)
             if (draw.data.src_bitmap.surface_id !== undefined)
                 str += "; src_bitmap surface_id " + draw.data.src_bitmap.surface_id;
             if (draw.data.src_bitmap.quic)
-                str += "; QUIC type " + draw.data.src_bitmap.quic.type + 
-                        "; width " + draw.data.src_bitmap.quic.width + 
+                str += "; QUIC type " + draw.data.src_bitmap.quic.type +
+                        "; width " + draw.data.src_bitmap.quic.width +
                         "; height " + draw.data.src_bitmap.quic.height ;
             if (draw.data.src_bitmap.lz_rgb)
                 str += "; LZ_RGB length " + draw.data.src_bitmap.lz_rgb.length +
-                       "; magic " + draw.data.src_bitmap.lz_rgb.magic + 
+                       "; magic " + draw.data.src_bitmap.lz_rgb.magic +
                        "; version 0x" + draw.data.src_bitmap.lz_rgb.version.toString(16) +
                        "; type " + draw.data.src_bitmap.lz_rgb.type +
                        "; width " + draw.data.src_bitmap.lz_rgb.width +
@@ -751,7 +751,7 @@ function handle_draw_jpeg_onload()
     {
         // This can happen; if the jpeg image loads after our surface
         //  has been destroyed (e.g. open a menu, close it quickly),
-        //  we'll find we have no surface.  
+        //  we'll find we have no surface.
         DEBUG > 2 && this.o.sc.log_info("Discarding jpeg; presumed lost surface " + this.o.base.surface_id);
         temp_canvas = document.createElement("canvas");
         temp_canvas.setAttribute('width', this.o.base.box.right);
@@ -770,16 +770,16 @@ function handle_draw_jpeg_onload()
         t.putImageData(this.alpha_img, 0, 0);
         t.globalCompositeOperation = 'source-in';
         t.drawImage(this, 0, 0);
-     
+
         context.drawImage(c, this.o.base.box.left, this.o.base.box.top);
 
-        if (this.o.descriptor && 
+        if (this.o.descriptor &&
             (this.o.descriptor.flags & SPICE_IMAGE_FLAGS_CACHE_ME))
         {
             if (! ("cache" in this.o.sc))
                 this.o.sc.cache = {};
 
-            this.o.sc.cache[this.o.descriptor.id] = 
+            this.o.sc.cache[this.o.descriptor.id] =
                 t.getImageData(0, 0,
                     this.alpha_img.width,
                     this.alpha_img.height);
@@ -793,13 +793,13 @@ function handle_draw_jpeg_onload()
         //  fairly massive memory leaks during video playback
         this.src = null;
 
-        if (this.o.descriptor && 
+        if (this.o.descriptor &&
             (this.o.descriptor.flags & SPICE_IMAGE_FLAGS_CACHE_ME))
         {
             if (! ("cache" in this.o.sc))
                 this.o.sc.cache = {};
 
-            this.o.sc.cache[this.o.descriptor.id] = 
+            this.o.sc.cache[this.o.descriptor.id] =
                 context.getImageData(this.o.base.box.left, this.o.base.box.top,
                     this.o.base.box.right - this.o.base.box.left,
                     this.o.base.box.bottom - this.o.base.box.top);

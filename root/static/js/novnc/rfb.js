@@ -67,7 +67,7 @@ var that           = {},  // Public API methods
         ],
 
     encHandlers    = {},
-    encNames       = {}, 
+    encNames       = {},
     encStats       = {},     // [rectCnt, rectCntTot]
 
     ws             = null,   // Websock object
@@ -88,7 +88,7 @@ var that           = {},  // Public API methods
         bytes          : 0,
         x              : 0,
         y              : 0,
-        width          : 0, 
+        width          : 0,
         height         : 0,
         encoding       : 0,
         subencoding    : -1,
@@ -289,7 +289,7 @@ function constructor() {
 function connect() {
     Util.Debug(">> RFB.connect");
     var uri;
-    
+
     if (typeof UsingSocketIO !== "undefined") {
         uri = "http://" + rfb_host + ":" + rfb_port + "/" + rfb_path;
     } else {
@@ -326,7 +326,7 @@ init_vars = function() {
     for (i=0; i < encodings.length; i+=1) {
         encStats[encodings[i][1]][0] = 0;
     }
-    
+
     for (i=0; i < 4; i++) {
         //FBU.zlibs[i] = new InflateStream();
         FBU.zlibs[i] = new TINF();
@@ -371,7 +371,7 @@ print_stats = function() {
  *   fatal        - failed to load page, or fatal error
  *
  * RFB protocol initialization states:
- *   ProtocolVersion 
+ *   ProtocolVersion
  *   Security
  *   Authentication
  *   password     - waiting for password, not part of RFB
@@ -388,7 +388,7 @@ updateState = function(state, statusMsg) {
         return;
     }
 
-    /* 
+    /*
      * These are disconnected states. A previous connect may
      * asynchronously cause a connection so make sure we are closed.
      */
@@ -461,7 +461,7 @@ updateState = function(state, statusMsg) {
 
 
     case 'connect':
-        
+
         connTimer = setTimeout(function () {
                 fail("Connect timeout");
             }, conf.connectTimeout * 1000);
@@ -692,7 +692,7 @@ init_msg = function() {
             default:
                 return fail("Invalid server version " + sversion);
         }
-        if (is_repeater) { 
+        if (is_repeater) {
             repeaterID = conf.repeaterID;
             while (repeaterID.length < 250) {
                 repeaterID += "\0";
@@ -700,7 +700,7 @@ init_msg = function() {
             ws.send_string(repeaterID);
             break;
         }
-        if (rfb_version > rfb_max_version) { 
+        if (rfb_version > rfb_max_version) {
             rfb_version = rfb_max_version;
         }
 
@@ -721,7 +721,7 @@ init_msg = function() {
 
     case 'Security' :
         if (rfb_version >= 3.7) {
-            // Server sends supported list, client decides 
+            // Server sends supported list, client decides
             num_types = ws.rQshift8();
             if (ws.rQwait("security type", num_types, 1)) { return false; }
             if (num_types === 0) {
@@ -740,7 +740,7 @@ init_msg = function() {
             if (rfb_auth_scheme === 0) {
                 return fail("Unsupported security types: " + types);
             }
-            
+
             ws.send([rfb_auth_scheme]);
         } else {
             // Server decides
@@ -784,7 +784,7 @@ init_msg = function() {
                 response = genDES(rfb_password, challenge);
                 //Util.Debug("Response: " + response +
                 //           " (" + response.length + ")");
-                
+
                 //Util.Debug("Sending DES encrypted auth response");
                 ws.send(response);
                 updateState('SecurityResult');
@@ -849,7 +849,7 @@ init_msg = function() {
         blue_shift     = ws.rQshift8();
         ws.rQshiftStr(3); // padding
 
-        Util.Info("Screen: " + fb_width + "x" + fb_height + 
+        Util.Info("Screen: " + fb_width + "x" + fb_height +
                   ", bpp: " + bpp + ", depth: " + depth +
                   ", big_endian: " + big_endian +
                   ", true_color: " + true_color +
@@ -873,7 +873,7 @@ init_msg = function() {
         /* Connection name/title */
         name_length   = ws.rQshift32();
         fb_name = ws.rQshiftStr(name_length);
-        
+
         if (conf.true_color && fb_name === "Intel(r) AMT KVM")
         {
             Util.Warn("Intel AMT KVM only support 8/16 bit depths. Disabling true color");
@@ -900,7 +900,7 @@ init_msg = function() {
         timing.fbu_rt_start = (new Date()).getTime();
         timing.pixels = 0;
         ws.send(response);
-        
+
         /* Start pushing/polling */
         setTimeout(checkEvents, conf.check_rate);
 
@@ -937,8 +937,8 @@ normal_msg = function() {
         first_colour = ws.rQshift16(); // First colour
         num_colours = ws.rQshift16();
         if (ws.rQwait("SetColourMapEntries", num_colours*6, 6)) { return false; }
-        
-        for (c=0; c < num_colours; c+=1) { 
+
+        for (c=0; c < num_colours; c+=1) {
             red = ws.rQshift16();
             //Util.Debug("red before: " + red);
             red = parseInt(red / 256, 10);
@@ -1177,7 +1177,7 @@ encHandlers.HEXTILE = function display_hextile() {
     //Util.Debug(">> display_hextile");
     var subencoding, subrects, color, cur_tile,
         tile_x, x, w, tile_y, y, h, xy, s, sx, sy, wh, sw, sh,
-        rQ = ws.get_rQ(), rQi = ws.get_rQi(); 
+        rQ = ws.get_rQ(), rQi = ws.get_rQi();
 
     if (FBU.tiles === 0) {
         FBU.tiles_x = Math.ceil(FBU.width/16);
@@ -1329,7 +1329,7 @@ function display_tight(isTightPNG) {
 
     var ctl, cmode, clength, color, img, data;
     var filterId = -1, resetStreams = 0, streamId = -1;
-    var rQ = ws.get_rQ(), rQi = ws.get_rQi(); 
+    var rQ = ws.get_rQ(), rQi = ws.get_rQi();
 
     FBU.bytes = 1; // compression-control byte
     if (ws.rQwait("TIGHT compression-control", FBU.bytes)) { return false; }
@@ -1402,7 +1402,7 @@ function display_tight(isTightPNG) {
     };
     var handlePalette = function() {
         var numColors = rQ[rQi + 2] + 1;
-        var paletteSize = numColors * fb_depth; 
+        var paletteSize = numColors * fb_depth;
         FBU.bytes += paletteSize;
         if (ws.rQwait("TIGHT palette " + cmode, FBU.bytes)) { return false; }
 
@@ -1420,7 +1420,7 @@ function display_tight(isTightPNG) {
         if (ws.rQwait("TIGHT " + cmode, FBU.bytes)) { return false; }
 
         // Shift ctl, filter id, num colors, palette entries, and clength off
-        ws.rQshiftBytes(3); 
+        ws.rQshiftBytes(3);
         var palette = ws.rQshiftBytes(paletteSize);
         ws.rQshiftBytes(clength[0]);
 
@@ -1481,7 +1481,7 @@ function display_tight(isTightPNG) {
     resetStreams = ctl & 0xF;
 
     // Figure out filter
-    ctl = ctl >> 4; 
+    ctl = ctl >> 4;
     streamId = ctl & 0x3;
 
     if (ctl === 0x08)      cmode = "fill";
@@ -1676,7 +1676,7 @@ clientEncodings = function() {
             Util.Debug("Skipping Cursor pseudo-encoding");
 
         // TODO: remove this when we have tight+non-true-color
-        } else if ((encodings[i][0] === "TIGHT") && 
+        } else if ((encodings[i][0] === "TIGHT") &&
                    (! conf.true_color)) {
             Util.Warn("Skipping tight, only support with true color");
         } else {

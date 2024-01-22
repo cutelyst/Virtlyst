@@ -18,10 +18,11 @@
 #ifndef STORAGEPOOL_H
 #define STORAGEPOOL_H
 
-#include <QObject>
-#include <QDomDocument>
-#include <QVector>
 #include <libvirt/libvirt.h>
+
+#include <QDomDocument>
+#include <QObject>
+#include <QVector>
 
 class StorageVol;
 class Connection;
@@ -66,8 +67,10 @@ public:
 
     bool build(int flags);
     bool create(int flags);
-    StorageVol *createStorageVolume(const QString &name, const QString &format, qint64 sizeGiB, int flags);
-//    bool cloneStorageVolume(StorageVol *volume, const QString &name, const QString &format, int flags);
+    StorageVol *
+        createStorageVolume(const QString &name, const QString &format, qint64 sizeGiB, int flags);
+    //    bool cloneStorageVolume(StorageVol *volume, const QString &name, const QString &format,
+    //    int flags);
     StorageVol *getVolume(const QString &name);
 
 private:
