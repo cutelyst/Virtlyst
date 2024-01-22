@@ -1,44 +1,39 @@
-FROM debian:stretch as builder
+ARG ALPINE_VERSION=3.19
 
-ARG CUTELYST_VERSION=v2.6.0
-ARG VIRTLYST_VERSION=v1.2.0
+FROM alpine:$ALPINE_VERSION as build
+WORKDIR /root
+RUN apk upgrade -a -U && apk add g++ patch cmake samurai libvirt-dev qt6-qtbase-dev qt6-qtdeclarative-dev qt6-qttools-dev
 
-RUN apt-get update \
-    # Install build dependencies
-    && apt-get install -y git cmake g++ qtbase5-dev libgrantlee5-dev pkg-config libvirt-dev \
-    && cd /usr/local/src \
-    # Build cutelyst
-    && git clone https://github.com/cutelyst/cutelyst.git \
-    && cd cutelyst \
-    && git checkout tags/$CUTELYST_VERSION \
-    && mkdir build && cd build \
-    && export QT_SELECT=qt5 \
-    && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -DPLUGIN_VIEW_GRANTLEE=on \
-    && make && make install \ 
-    # Build virtlyst
-    && cd /usr/local/src \
-    && git clone https://github.com/cutelyst/Virtlyst.git \
-    && cd Virtlyst \
-    && git checkout tags/$VIRTLYST_VERSION \
-    && cmake . \
-    && make
+ARG CUTELEE_VERSION=6.1.0
+RUN mkdir src && cd src && \
+    wget -O cutelee.tar.gz https://github.com/cutelyst/cutelee/archive/refs/tags/v$CUTELEE_VERSION.tar.gz && \
+    tar xf cutelee.tar.gz --strip-components 1 && \
+    cmake -GNinja -B build -DCMAKE_INSTALL_PREFIX=/usr/local . && \
+    cmake --build build && cmake --install build && \
+    rm -rf /root/src /root/build
 
-FROM debian:stretch
-# Start with a clean image but keep compiled stuff
-COPY --from=builder /usr/local /usr/local
-WORKDIR /usr/local/src/Virtlyst
+ARG CUTELYST_VERSION=4.0.0
+RUN mkdir src && cd src && \
+    wget -O cutelyst.tar.gz https://github.com/cutelyst/cutelyst/archive/refs/tags/v$CUTELYST_VERSION.tar.gz && \
+    tar xf cutelyst.tar.gz --strip-components 1 && \
+    cmake -GNinja -B build -DCMAKE_INSTALL_PREFIX=/usr/local -DPLUGIN_VIEW_CUTELEE=ON . && \
+    cmake --build build && cmake --install build && \
+    rm -rf /root/src /root/build
 
-RUN apt-get update \
-    # Install dependencies
-    && apt-get install -y libqt5core5a libqt5network5 libqt5sql5 libqt5xml5 libvirt0 libgrantlee-templates5 ssh \
-    && apt-get clean \
-    # Fix ld library path
-    && echo "/usr/local/lib/x86_64-linux-gnu" > /etc/ld.so.conf.d/usr-local.conf \
-    && ldconfig \
-    # Prepare config file
-    && cp example-config.ini config.ini \
-    && sed -i -e 's/virtlyst\.sqlite/\/data\/virtlyst\.sqlite/g' config.ini \
-    && sed -i -e 's/TemplatePath = \./TemplatePath = root\/src/g' config.ini
+COPY . /root/src
+RUN cd src && \
+    cmake -GNinja -B build -DCMAKE_INSTALL_PREFIX=/usr/local . && \
+    cmake --build build
 
-VOLUME /data
-CMD ["/usr/local/bin/cutelyst-wsgi2","--ini","config.ini"]
+FROM alpine:$ALPINE_VERSION
+
+RUN set -ex && \
+    apk upgrade -a -U && \
+    apk add openssh libvirt qt6-qtbase qt6-qtdeclarative qt6-qtbase-sqlite && \
+    rm -rf /var/cache/apk
+
+COPY --from=build /usr/local /usr/local
+COPY --from=build /root/src/root /var/www/root
+COPY --from=build /root/src/build/src/libVirtlyst.so /usr/local/lib
+
+CMD ["cutelystd4-qt6", "--application", "/usr/local/lib/libVirtlyst.so", "--chdir2", "/var/www", "--static-map", "/static=root/static", "--http-socket", "80", "--master", "--using-frontend-proxy"]
