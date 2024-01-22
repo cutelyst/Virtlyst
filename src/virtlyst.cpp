@@ -16,45 +16,41 @@
  */
 #include "virtlyst.h"
 
-#include <Cutelyst/Plugins/View/Cutelee/cuteleeview.h>
-#include <Cutelyst/Plugins/Utils/Sql>
-#include <Cutelyst/Plugins/StatusMessage>
-#include <Cutelyst/Plugins/Session/Session>
-#include <Cutelyst/Plugins/Authentication/credentialpassword.h>
-#include <Cutelyst/Plugins/Authentication/authenticationrealm.h>
-#include <cutelee/engine.h>
-
-#include <QFile>
-#include <QMutexLocker>
-
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSqlError>
-
-#include <QUuid>
-#include <QTranslator>
-#include <QStandardPaths>
-#include <QLoggingCategory>
-#include <QCoreApplication>
-
-#include "lib/connection.h"
-
-#include "infrastructure.h"
-#include "instances.h"
-#include "info.h"
-#include "overview.h"
-#include "storages.h"
-#include "networks.h"
-#include "interfaces.h"
-#include "secrets.h"
-#include "server.h"
 #include "console.h"
 #include "create.h"
-#include "users.h"
+#include "info.h"
+#include "infrastructure.h"
+#include "instances.h"
+#include "interfaces.h"
+#include "lib/connection.h"
+#include "networks.h"
+#include "overview.h"
 #include "root.h"
+#include "secrets.h"
+#include "server.h"
+#include "sqluserstore.h"
+#include "storages.h"
+#include "users.h"
 #include "ws.h"
 
-#include "sqluserstore.h"
+#include <Cutelyst/Plugins/Authentication/authenticationrealm.h>
+#include <Cutelyst/Plugins/Authentication/credentialpassword.h>
+#include <Cutelyst/Plugins/Session/Session>
+#include <Cutelyst/Plugins/StatusMessage>
+#include <Cutelyst/Plugins/Utils/Sql>
+#include <Cutelyst/Plugins/View/Cutelee/cuteleeview.h>
+#include <cutelee/engine.h>
+
+#include <QCoreApplication>
+#include <QFile>
+#include <QLoggingCategory>
+#include <QMutexLocker>
+#include <QSqlDatabase>
+#include <QSqlError>
+#include <QSqlQuery>
+#include <QStandardPaths>
+#include <QTranslator>
+#include <QUuid>
 
 using namespace Cutelyst;
 
@@ -62,7 +58,8 @@ static QMutex mutex;
 
 Q_LOGGING_CATEGORY(VIRTLYST, "virtlyst")
 
-Virtlyst::Virtlyst(QObject *parent) : Application(parent)
+Virtlyst::Virtlyst(QObject *parent)
+    : Application(parent)
 {
     QCoreApplication::setApplicationName(QStringLiteral("Virtlyst"));
     QCoreApplication::setOrganizationName(QStringLiteral("Cutelyst"));
@@ -95,7 +92,9 @@ bool Virtlyst::init()
     qCDebug(VIRTLYST) << "Production" << production;
 
     m_dbPath = config(QStringLiteral("DatabasePath"),
-                      QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + QLatin1String("/virtlyst.sqlite")).toString();
+                      QStandardPaths::writableLocation(QStandardPaths::HomeLocation) +
+                          QLatin1String("/virtlyst.sqlite"))
+                   .toString();
     qCDebug(VIRTLYST) << "Database" << m_dbPath;
     if (!QFile::exists(m_dbPath)) {
         if (!createDB()) {
@@ -105,12 +104,13 @@ bool Virtlyst::init()
         QSqlDatabase::removeDatabase(QStringLiteral("db"));
     }
 
-    auto templatePath = config(QStringLiteral("TemplatePath"), pathTo(QStringLiteral("root/src"))).toString();
+    auto templatePath =
+        config(QStringLiteral("TemplatePath"), pathTo(QStringLiteral("root/src"))).toString();
     auto view = new CuteleeView(this);
     view->setCache(production);
     view->engine()->addDefaultLibrary(QStringLiteral("cutelee_i18ntags"));
     view->addTranslator(QLocale::system(), new QTranslator(this));
-    view->setIncludePaths({ templatePath });
+    view->setIncludePaths({templatePath});
 
     auto store = std::make_shared<SqlUserStore>();
 
@@ -132,17 +132,18 @@ bool Virtlyst::postFork()
 {
     QMutexLocker locker(&mutex);
 
-    auto db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), Cutelyst::Sql::databaseNameThread(QStringLiteral("virtlyst")));
+    auto db = QSqlDatabase::addDatabase(
+        QStringLiteral("QSQLITE"), Cutelyst::Sql::databaseNameThread(QStringLiteral("virtlyst")));
     db.setDatabaseName(m_dbPath);
     if (!db.open()) {
         qCWarning(VIRTLYST) << "Failed to open database" << db.lastError().databaseText();
         return false;
     }
 
-//    auto server = new ServerConn;
-//    server->conn = new Connection(QStringLiteral("qemu:///system"), this);
+    //    auto server = new ServerConn;
+    //    server->conn = new Connection(QStringLiteral("qemu:///system"), this);
 
-//    m_connections.insert(QStringLiteral("1"), server);
+    //    m_connections.insert(QStringLiteral("1"), server);
 
     qCDebug(VIRTLYST) << "Database ready" << db.connectionName();
 
@@ -185,14 +186,14 @@ Connection *Virtlyst::connection(const QString &id, QObject *parent)
 QString Virtlyst::prettyKibiBytes(quint64 kibiBytes)
 {
     QString ret;
-    const char* suffixes[6];
-    suffixes[0] = " KiB";
-    suffixes[1] = " MiB";
-    suffixes[2] = " GiB";
-    suffixes[3] = " TiB";
-    suffixes[4] = " PiB";
-    suffixes[5] = " EiB";
-    uint s = 0; // which suffix to use
+    const char *suffixes[6];
+    suffixes[0]  = " KiB";
+    suffixes[1]  = " MiB";
+    suffixes[2]  = " GiB";
+    suffixes[3]  = " TiB";
+    suffixes[4]  = " PiB";
+    suffixes[5]  = " EiB";
+    uint s       = 0; // which suffix to use
     double count = kibiBytes;
     while (count >= 1024 && s < 6) {
         count /= 1024;
@@ -206,22 +207,25 @@ QStringList Virtlyst::keymaps()
 {
     // list taken from http://qemu.weilnetz.de/qemu-doc.html#sec_005finvocation
     static QStringList ret = {
-        QStringLiteral("ar"), QStringLiteral("da"), QStringLiteral("de"),
+        QStringLiteral("ar"),    QStringLiteral("da"),    QStringLiteral("de"),
         QStringLiteral("de-ch"), QStringLiteral("en-gb"), QStringLiteral("en-us"),
-        QStringLiteral("es"), QStringLiteral("et"), QStringLiteral("fi"),
-        QStringLiteral("fo"), QStringLiteral("fr"), QStringLiteral("fr-be"),
+        QStringLiteral("es"),    QStringLiteral("et"),    QStringLiteral("fi"),
+        QStringLiteral("fo"),    QStringLiteral("fr"),    QStringLiteral("fr-be"),
         QStringLiteral("fr-ca"), QStringLiteral("fr-ch"), QStringLiteral("hr"),
-        QStringLiteral("hu"), QStringLiteral("is"), QStringLiteral("it"),
-        QStringLiteral("ja"), QStringLiteral("lt"), QStringLiteral("lv"),
-        QStringLiteral("mk"), QStringLiteral("nl"), QStringLiteral("nl-be"),
-        QStringLiteral("no"), QStringLiteral("pl"), QStringLiteral("pt"),
-        QStringLiteral("pt-br"), QStringLiteral("ru"), QStringLiteral("sl"),
-        QStringLiteral("sv"), QStringLiteral("th"), QStringLiteral("tr")
-    };
+        QStringLiteral("hu"),    QStringLiteral("is"),    QStringLiteral("it"),
+        QStringLiteral("ja"),    QStringLiteral("lt"),    QStringLiteral("lv"),
+        QStringLiteral("mk"),    QStringLiteral("nl"),    QStringLiteral("nl-be"),
+        QStringLiteral("no"),    QStringLiteral("pl"),    QStringLiteral("pt"),
+        QStringLiteral("pt-br"), QStringLiteral("ru"),    QStringLiteral("sl"),
+        QStringLiteral("sv"),    QStringLiteral("th"),    QStringLiteral("tr")};
     return ret;
 }
 
-bool Virtlyst::createDbFlavor(QSqlQuery &query, const QString &label, int memory, int vcpu, int disk)
+bool Virtlyst::createDbFlavor(QSqlQuery &query,
+                              const QString &label,
+                              int memory,
+                              int vcpu,
+                              int disk)
 {
     query.bindValue(QStringLiteral(":label"), label);
     query.bindValue(QStringLiteral(":memory"), memory);
@@ -233,43 +237,40 @@ bool Virtlyst::createDbFlavor(QSqlQuery &query, const QString &label, int memory
 void Virtlyst::updateConnections()
 {
     QSqlQuery query = CPreparedSqlQueryThreadForDB(
-                QStringLiteral("SELECT id, name, hostname, login, password, type FROM servers_compute"),
-                QStringLiteral("virtlyst"));
+        QStringLiteral("SELECT id, name, hostname, login, password, type FROM servers_compute"),
+        QStringLiteral("virtlyst"));
     if (!query.exec()) {
         qCWarning(VIRTLYST) << "Failed to get connections list";
     }
 
     QStringList ids;
     while (query.next()) {
-        const QString id = query.value(0).toString();
-        const QString name = query.value(1).toString();
+        const QString id       = query.value(0).toString();
+        const QString name     = query.value(1).toString();
         const QString hostname = query.value(2).toString();
-        const QString login = query.value(3).toString();
+        const QString login    = query.value(3).toString();
         const QString password = query.value(4).toString();
-        int type = query.value(5).toInt();
+        int type               = query.value(5).toInt();
         ids << id;
 
         ServerConn *server = m_connections.value(id);
         if (server) {
-            if (server->name == name &&
-                    server->hostname == hostname &&
-                    server->login == login &&
-                    server->password == password &&
-                    server->type == type) {
+            if (server->name == name && server->hostname == hostname && server->login == login &&
+                server->password == password && server->type == type) {
                 continue;
             } else {
                 delete server->conn;
             }
         } else {
-            server = new ServerConn(this);
+            server     = new ServerConn(this);
             server->id = id.toInt();
         }
 
-        server->name = name;
+        server->name     = name;
         server->hostname = hostname;
-        server->login = login;
+        server->login    = login;
         server->password = password;
-        server->type = type;
+        server->type     = type;
         QUrl url;
         switch (type) {
         case ServerConn::ConnSocket:
@@ -342,8 +343,9 @@ bool Virtlyst::createDB()
         return false;
     }
     const QString password = QStringLiteral("admin");
-    query.bindValue(QStringLiteral(":password"), QString::fromLatin1(
-                        CredentialPassword::createPassword(password.toUtf8(), QCryptographicHash::Sha256, 10000, 16, 16)));
+    query.bindValue(QStringLiteral(":password"),
+                    QString::fromLatin1(CredentialPassword::createPassword(
+                        password.toUtf8(), QCryptographicHash::Sha256, 10000, 16, 16)));
     if (!query.exec()) {
         qCritical() << "Error creating database" << query.lastError().text();
         return false;
@@ -399,14 +401,14 @@ bool ServerConn::alive()
 
 ServerConn *ServerConn::clone(QObject *parent)
 {
-    auto ret = new ServerConn(parent);
-    ret->id = id;
-    ret->name = name;
+    auto ret      = new ServerConn(parent);
+    ret->id       = id;
+    ret->name     = name;
     ret->hostname = hostname;
-    ret->login = login;
+    ret->login    = login;
     ret->password = password;
-    ret->type = type;
-    ret->url = url;
+    ret->type     = type;
+    ret->url      = url;
 
     if (!conn->isAlive()) {
         delete conn;

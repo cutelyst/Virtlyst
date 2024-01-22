@@ -706,7 +706,3 @@ setBarPosition: function() {
 }
 
 };
-
-
-
-

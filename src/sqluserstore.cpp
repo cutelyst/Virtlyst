@@ -21,26 +21,24 @@
 
 #include <QJsonDocument>
 #include <QJsonObject>
-
+#include <QLoggingCategory>
+#include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlRecord>
-#include <QSqlError>
-
-#include <QLoggingCategory>
 
 using namespace Cutelyst;
 
 SqlUserStore::SqlUserStore()
 {
-
 }
 
-Cutelyst::AuthenticationUser SqlUserStore::findUser(Cutelyst::Context *c, const Cutelyst::ParamsMultiMap &userinfo)
+Cutelyst::AuthenticationUser SqlUserStore::findUser(Cutelyst::Context *c,
+                                                    const Cutelyst::ParamsMultiMap &userinfo)
 {
     Q_UNUSED(c)
     QSqlQuery query = CPreparedSqlQueryThreadForDB(
-                QStringLiteral("SELECT * FROM users WHERE username = :username"),
-                QStringLiteral("virtlyst"));
+        QStringLiteral("SELECT * FROM users WHERE username = :username"),
+        QStringLiteral("virtlyst"));
     query.bindValue(QStringLiteral(":username"), userinfo.value(QStringLiteral("username")));
     if (query.exec() && query.next()) {
         QVariant userId = query.value(QStringLiteral("id"));
@@ -69,19 +67,17 @@ QString SqlUserStore::addUser(const ParamsMultiMap &user, bool replace)
 {
     QSqlQuery query;
     if (replace) {
-        query = CPreparedSqlQueryThreadForDB(
-                    QStringLiteral("INSERT OR REPLACE INTO users "
-                                   "(username, password) "
-                                   "VALUES "
-                                   "(:username, :password)"),
-                    QStringLiteral("cmlyst"));
+        query = CPreparedSqlQueryThreadForDB(QStringLiteral("INSERT OR REPLACE INTO users "
+                                                            "(username, password) "
+                                                            "VALUES "
+                                                            "(:username, :password)"),
+                                             QStringLiteral("cmlyst"));
     } else {
-        query = CPreparedSqlQueryThreadForDB(
-                    QStringLiteral("INSERT INTO users "
-                                   "(username, password) "
-                                   "VALUES "
-                                   "(:username, :password)"),
-                    QStringLiteral("cmlyst"));
+        query = CPreparedSqlQueryThreadForDB(QStringLiteral("INSERT INTO users "
+                                                            "(username, password) "
+                                                            "VALUES "
+                                                            "(:username, :password)"),
+                                             QStringLiteral("cmlyst"));
     }
 
     query.bindValue(QStringLiteral(":email"), user.value(QStringLiteral("username")));

@@ -18,9 +18,10 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
-#include <QObject>
-#include <QDomDocument>
 #include <libvirt/libvirt.h>
+
+#include <QDomDocument>
+#include <QObject>
 
 class Connection;
 class Interface : public QObject

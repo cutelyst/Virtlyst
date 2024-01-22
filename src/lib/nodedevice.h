@@ -18,9 +18,10 @@
 #ifndef NODEDEVICE_H
 #define NODEDEVICE_H
 
-#include <QObject>
-#include <QDomDocument>
 #include <libvirt/libvirt.h>
+
+#include <QDomDocument>
+#include <QObject>
 
 class Connection;
 class NodeDevice : public QObject

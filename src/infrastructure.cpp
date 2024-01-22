@@ -15,10 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "infrastructure.h"
-#include "virtlyst.h"
 
 #include "lib/connection.h"
 #include "lib/domain.h"
+#include "virtlyst.h"
 
 #include <libvirt/libvirt.h>
 
@@ -26,10 +26,10 @@
 
 using namespace Cutelyst;
 
-Infrastructure::Infrastructure(Virtlyst *parent) : Controller(parent)
-  , m_virtlyst(parent)
+Infrastructure::Infrastructure(Virtlyst *parent)
+    : Controller(parent)
+    , m_virtlyst(parent)
 {
-
 }
 
 void Infrastructure::index(Context *c)
@@ -37,34 +37,34 @@ void Infrastructure::index(Context *c)
     QVariantList hosts;
 
     const QVector<ServerConn *> conns = m_virtlyst->servers(c);
-    auto it = conns.constBegin();
+    auto it                           = conns.constBegin();
     while (it != conns.constEnd()) {
         ServerConn *server = *it;
-        Connection *conn = server->conn;
+        Connection *conn   = server->conn;
         if (!conn) {
             ++it;
             continue;
         }
 
-        double freeMemory = conn->freeMemoryBytes() / 1024;// To KibiBytes
+        double freeMemory = conn->freeMemoryBytes() / 1024; // To KibiBytes
         double difference = freeMemory / conn->memory();
 
-        const QVector<Domain *> domains = conn->domains(
-                    VIR_CONNECT_LIST_DOMAINS_ACTIVE | VIR_CONNECT_LIST_DOMAINS_INACTIVE, c);
+        const QVector<Domain *> domains =
+            conn->domains(VIR_CONNECT_LIST_DOMAINS_ACTIVE | VIR_CONNECT_LIST_DOMAINS_INACTIVE, c);
         for (Domain *domain : domains) {
             double difference = double(domain->memory()) / conn->memory();
             domain->setProperty("mem_usage", QString::number(difference * 100, 'g', 3));
         }
 
         hosts.append(QVariantHash{
-                         {QStringLiteral("id"), server->id},
-                         {QStringLiteral("name"), server->name},
-                         {QStringLiteral("status"), conn->isAlive()},
-                         {QStringLiteral("cpus"), conn->cpus()},
-                         {QStringLiteral("memory"), conn->memoryPretty()},
-                         {QStringLiteral("mem_usage"), QString::number(difference * 100, 'g', 3)},
-                         {QStringLiteral("vms"), QVariant::fromValue(domains)},
-                     });
+            {QStringLiteral("id"), server->id},
+            {QStringLiteral("name"), server->name},
+            {QStringLiteral("status"), conn->isAlive()},
+            {QStringLiteral("cpus"), conn->cpus()},
+            {QStringLiteral("memory"), conn->memoryPretty()},
+            {QStringLiteral("mem_usage"), QString::number(difference * 100, 'g', 3)},
+            {QStringLiteral("vms"), QVariant::fromValue(domains)},
+        });
 
         ++it;
     }

@@ -18,8 +18,9 @@
 #ifndef SECRET_H
 #define SECRET_H
 
-#include <QObject>
 #include <libvirt/libvirt.h>
+
+#include <QObject>
 
 class Connection;
 class Secret : public QObject

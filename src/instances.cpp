@@ -15,17 +15,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "instances.h"
-#include "virtlyst.h"
 
 #include "lib/connection.h"
-#include "lib/storagevol.h"
 #include "lib/domain.h"
 #include "lib/domainsnapshot.h"
+#include "lib/storagevol.h"
+#include "virtlyst.h"
 
 #include <libvirt/libvirt.h>
 
-#include <QUuid>
 #include <QDebug>
+#include <QUuid>
 
 using namespace Cutelyst;
 
@@ -48,8 +48,8 @@ void Instances::index(Context *c, const QString &hostId)
 
     if (c->request()->isPost()) {
         const ParamsMultiMap params = c->request()->bodyParameters();
-        const QString name = params.value(QStringLiteral("name"));
-        Domain *domain = conn->getDomainByName(name, c);
+        const QString name          = params.value(QStringLiteral("name"));
+        Domain *domain              = conn->getDomainByName(name, c);
         if (domain) {
             if (params.contains(QStringLiteral("start"))) {
                 domain->start();
@@ -67,12 +67,12 @@ void Instances::index(Context *c, const QString &hostId)
                 domain->resume();
             }
 
-            c->response()->redirect(c->uriFor(CActionFor(u"index"), QStringList{ hostId }));
+            c->response()->redirect(c->uriFor(CActionFor(u"index"), QStringList{hostId}));
         }
     }
 
-    const QVector<Domain *> domains = conn->domains(
-                VIR_CONNECT_LIST_DOMAINS_ACTIVE | VIR_CONNECT_LIST_DOMAINS_INACTIVE, c);
+    const QVector<Domain *> domains =
+        conn->domains(VIR_CONNECT_LIST_DOMAINS_ACTIVE | VIR_CONNECT_LIST_DOMAINS_INACTIVE, c);
     c->setStash(QStringLiteral("instances"), QVariant::fromValue(domains));
     c->setStash(QStringLiteral("template"), QStringLiteral("instances.html"));
 }
@@ -93,16 +93,18 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
 
     Domain *dom = conn->getDomainByName(name, c);
     if (!dom) {
-        errors.append(QStringLiteral("Domain not found: no domain with matching name '%1'").arg(name));
+        errors.append(
+            QStringLiteral("Domain not found: no domain with matching name '%1'").arg(name));
         c->setStash(QStringLiteral("errors"), errors);
         return;
     }
 
-    c->setStash(QStringLiteral("console_types"), QStringList{QStringLiteral("vnc"), QStringLiteral("spice")});
+    c->setStash(QStringLiteral("console_types"),
+                QStringList{QStringLiteral("vnc"), QStringLiteral("spice")});
 
     if (c->request()->isPost()) {
         const ParamsMultiMap params = c->request()->bodyParameters();
-        bool redir = false;
+        bool redir                  = false;
         if (params.contains(QStringLiteral("start"))) {
             dom->start();
             redir = true;
@@ -140,7 +142,8 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
                 const QVariantList disks = dom->disks();
                 for (const QVariant &disk : disks) {
                     const QHash<QString, QString> diskHash = disk.value<QHash<QString, QString>>();
-                    StorageVol *vol = conn->getStorageVolByPath(diskHash.value(QStringLiteral("path")), c);
+                    StorageVol *vol =
+                        conn->getStorageVolByPath(diskHash.value(QStringLiteral("path")), c);
                     if (vol) {
                         vol->undefine();
                     }
@@ -148,7 +151,7 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
             }
             dom->undefine();
 
-            c->response()->redirect(c->uriFor(CActionFor(u"index"), QStringList{ hostId }));
+            c->response()->redirect(c->uriFor(CActionFor(u"index"), QStringList{hostId}));
             return;
         } else if (params.contains(QStringLiteral("change_xml"))) {
             const QString xml = params.value(QStringLiteral("inst_xml"));
@@ -159,14 +162,14 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
             dom->snapshot(name);
             redir = true;
         } else if (params.contains(QStringLiteral("revert_snapshot"))) {
-            const QString name = params.value(QStringLiteral("name"));
+            const QString name   = params.value(QStringLiteral("name"));
             DomainSnapshot *snap = dom->getSnapshot(name);
             if (snap) {
                 snap->revert();
             }
             redir = true;
         } else if (params.contains(QStringLiteral("delete_snapshot"))) {
-            const QString name = params.value(QStringLiteral("name"));
+            const QString name   = params.value(QStringLiteral("name"));
             DomainSnapshot *snap = dom->getSnapshot(name);
             if (snap) {
                 snap->undefine();
@@ -177,7 +180,7 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
             if (params.contains(QStringLiteral("auto_pass"))) {
                 password = QString::fromLatin1(QUuid::createUuid().toRfc4122().toHex());
             } else {
-                password = params.value(QStringLiteral("console_passwd"));
+                password   = params.value(QStringLiteral("console_passwd"));
                 bool clear = params.contains(QStringLiteral("clear_pass"));
                 if (clear) {
                     password.clear();
@@ -194,7 +197,7 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
             redir = true;
         } else if (params.contains(QStringLiteral("set_console_keymap"))) {
             const QString keymap = params.value(QStringLiteral("console_keymap"));
-            const bool clear = params.contains(QStringLiteral("clear_keymap"));
+            const bool clear     = params.contains(QStringLiteral("clear_keymap"));
             if (clear) {
                 dom->setConsoleKeymap(QString());
             } else {
@@ -208,12 +211,12 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
             dom->saveXml();
             redir = true;
         } else if (params.contains(QStringLiteral("mount_iso"))) {
-            const QString dev = params.value(QStringLiteral("mount_iso"));
+            const QString dev   = params.value(QStringLiteral("mount_iso"));
             const QString image = params.value(QStringLiteral("media"));
             dom->mountIso(dev, image);
             redir = true;
         } else if (params.contains(QStringLiteral("umount_iso"))) {
-            const QString dev = params.value(QStringLiteral("umount_iso"));
+            const QString dev   = params.value(QStringLiteral("umount_iso"));
             const QString image = params.value(QStringLiteral("path"));
             dom->umountIso(dev, image);
             redir = true;
@@ -236,7 +239,7 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
                 cur_memory = cur_memory_custom.toULong();
             }
 
-            uint vcpu = params.value(QStringLiteral("vcpu")).toUInt();
+            uint vcpu     = params.value(QStringLiteral("vcpu")).toUInt();
             uint cur_vcpu = params.value(QStringLiteral("cur_vcpu")).toUInt();
 
             dom->setDescription(description);
@@ -249,7 +252,7 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
         }
 
         if (redir) {
-            c->response()->redirect(c->uriFor(CActionFor(u"index"), QStringList{ hostId, name }));
+            c->response()->redirect(c->uriFor(CActionFor(u"index"), QStringList{hostId, name}));
             return;
         }
     }
@@ -273,12 +276,14 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
     quint64 cur_memory = dom->currentMemory() / 1024;
     if (!memory_range.contains(cur_memory)) {
         memory_range.append(cur_memory);
-        std::sort(memory_range.begin(), memory_range.end(),[] (int a, int b) -> int { return a < b; });
+        std::sort(
+            memory_range.begin(), memory_range.end(), [](int a, int b) -> int { return a < b; });
     }
     quint64 memory = dom->memory() / 1024;
     if (!memory_range.contains(memory)) {
         memory_range.append(memory);
-        std::sort(memory_range.begin(), memory_range.end(),[] (int a, int b) -> int { return a < b; });
+        std::sort(
+            memory_range.begin(), memory_range.end(), [](int a, int b) -> int { return a < b; });
     }
     c->setStash(QStringLiteral("memory_range"), QVariant::fromValue(memory_range));
 
@@ -290,4 +295,3 @@ void Instances::instance(Context *c, const QString &hostId, const QString &name)
 
     c->setStash(QStringLiteral("errors"), errors);
 }
-

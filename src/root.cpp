@@ -20,15 +20,15 @@
 
 #include <Cutelyst/Plugins/Authentication/authentication.h>
 #include <Cutelyst/Plugins/StatusMessage>
-
 #include <libvirt/libvirt.h>
 
 #include <QLoggingCategory>
 
 using namespace Cutelyst;
 
-Root::Root(Virtlyst *parent) : Controller(parent)
-  , m_virtlyst(parent)
+Root::Root(Virtlyst *parent)
+    : Controller(parent)
+    , m_virtlyst(parent)
 {
 }
 
@@ -46,8 +46,8 @@ void Root::login(Context *c)
     Request *req = c->request();
     if (req->isPost()) {
         const ParamsMultiMap params = req->bodyParams();
-        const QString username = params.value(QStringLiteral("username"));
-        const QString password = params.value(QStringLiteral("password"));
+        const QString username      = params.value(QStringLiteral("username"));
+        const QString password      = params.value(QStringLiteral("password"));
         if (!username.isEmpty() && !password.isEmpty()) {
             // Authenticate
             if (Authentication::authenticate(c, params)) {
@@ -99,4 +99,3 @@ bool Root::Auto(Context *c)
 
     return true;
 }
-

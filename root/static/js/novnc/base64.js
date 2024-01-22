@@ -86,7 +86,7 @@ decode: function (data, offset) {
             console.error("Illegal character code " + data.charCodeAt(i) + " at position " + i);
             continue;
         }
-        
+
         // Collect data into leftdata, update bitcount
         leftdata = (leftdata << 6) | c;
         leftbits += 6;
@@ -105,7 +105,7 @@ decode: function (data, offset) {
 
     // If there are any bits left, the base64 string was corrupted
     if (leftbits) {
-        throw {name: 'Base64-Error', 
+        throw {name: 'Base64-Error',
                message: 'Corrupted base64 string'};
     }
 

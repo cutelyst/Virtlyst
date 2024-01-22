@@ -110,7 +110,7 @@ SpicePlaybackConn.prototype.process_channel_message = function(msg)
         if (this.last_data_time && data.time >= (this.last_data_time + GAP_DETECTION_THRESHOLD))
         {
             this.skip_until = data.time;
-            this.gap_time = (data.time - this.start_time) - 
+            this.gap_time = (data.time - this.start_time) -
               (this.source_buffer.buffered.end(this.source_buffer.buffered.end.length - 1) * 1000.0).toFixed(0);
         }
 

@@ -21,10 +21,10 @@
 
 #include <QLoggingCategory>
 
-Overview::Overview(Virtlyst *parent) : Controller(parent)
-  , m_virtlyst(parent)
+Overview::Overview(Virtlyst *parent)
+    : Controller(parent)
+    , m_virtlyst(parent)
 {
-
 }
 
 void Overview::index(Context *c, const QString &hostId)

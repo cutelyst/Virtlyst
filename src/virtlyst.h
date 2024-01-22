@@ -43,7 +43,10 @@ public:
         ConnTLS,
         ConnSocket,
     };
-    ServerConn(QObject *parent) : QObject(parent) {}
+    ServerConn(QObject *parent)
+        : QObject(parent)
+    {
+    }
     ~ServerConn() {}
 
     bool alive();
@@ -80,7 +83,8 @@ public:
 
     static QStringList keymaps();
 
-    static bool createDbFlavor(QSqlQuery &query, const QString &label, int memory, int vcpu, int disk);
+    static bool
+        createDbFlavor(QSqlQuery &query, const QString &label, int memory, int vcpu, int disk);
 
     void updateConnections();
 
@@ -91,5 +95,4 @@ private:
     QString m_dbPath;
 };
 
-#endif //VIRTLYST_H
-
+#endif // VIRTLYST_H

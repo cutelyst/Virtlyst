@@ -88,7 +88,7 @@
 				cssHeaderRow     : '',
 				cssProcessing    : '', // processing icon applied to header during sort/filter
 
-				cssChildRow      : 'tablesorter-childRow', // class name indiciating that a row is to be attached to the its parent 
+				cssChildRow      : 'tablesorter-childRow', // class name indiciating that a row is to be attached to the its parent
 				cssIcon          : 'tablesorter-icon',     //  if this class exists, a <i> will be added to the header automatically
 				cssInfoBlock     : 'tablesorter-infoOnly', // don't sort tbody with this class name (only one class name allowed here!)
 

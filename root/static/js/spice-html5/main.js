@@ -22,7 +22,7 @@
 **  SpiceMainConn
 **      This is the master Javascript class for establishing and
 **  managing a connection to a Spice Server.
-**  
+**
 **      Invocation:  You must pass an object with properties as follows:
 **          uri         (required)  Uri of a WebSocket listener that is
 **                                  connected to a spice server.
@@ -414,4 +414,3 @@ SpiceMainConn.prototype.handle_mouse_mode = function(current, supported)
     if (this.inputs)
         this.inputs.mouse_mode = current;
 }
-

@@ -18,9 +18,10 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
-#include <QObject>
-#include <QDomDocument>
 #include <libvirt/libvirt.h>
+
+#include <QDomDocument>
+#include <QObject>
 
 class Domain;
 class Interface;
@@ -59,7 +60,6 @@ public:
 
     quint64 usedMemoryKiB();
 
-
     quint64 memory();
     QString memoryPretty();
     uint cpus();
@@ -82,9 +82,16 @@ public:
 
     QString lastError();
     bool domainDefineXml(const QString &xml);
-    bool createDomain(const QString &name, const QString &memory, const QString &vcpu, bool hostModel,
-                      const QString &uuid, const QVector<StorageVol *> &images, const QString &cacheMode,
-                      const QStringList &networks, bool virtIO, const QString &consoleType);
+    bool createDomain(const QString &name,
+                      const QString &memory,
+                      const QString &vcpu,
+                      bool hostModel,
+                      const QString &uuid,
+                      const QVector<StorageVol *> &images,
+                      const QString &cacheMode,
+                      const QStringList &networks,
+                      bool virtIO,
+                      const QString &consoleType);
 
     QVector<Domain *> domains(int flags, QObject *parent = nullptr);
     Domain *getDomainByUuid(const QString &uuid, QObject *parent = nullptr);
@@ -92,26 +99,54 @@ public:
 
     QVector<Interface *> interfaces(uint flags, QObject *parent = nullptr);
     Interface *getInterface(const QString &name, QObject *parent = nullptr);
-    bool createInterface(const QString &name, const QString &netdev, const QString &type,
-                         const QString &startMode, int delay, bool stp,
-                         const QString &ipv4Addr, const QString &ipv4Gw, const QString &ipv4Type,
-                         const QString &ipv6Addr, const QString &ipv6Gw, const QString &ipv6Type);
+    bool createInterface(const QString &name,
+                         const QString &netdev,
+                         const QString &type,
+                         const QString &startMode,
+                         int delay,
+                         bool stp,
+                         const QString &ipv4Addr,
+                         const QString &ipv4Gw,
+                         const QString &ipv4Type,
+                         const QString &ipv6Addr,
+                         const QString &ipv6Gw,
+                         const QString &ipv6Type);
 
     QVector<Network *> networks(uint flags, QObject *parent = nullptr);
     Network *getNetwork(const QString &name, QObject *parent = nullptr);
-    bool createNetwork(const QString &name, const QString &forward, const QString &gateway, const QString &mask,
-                       const QString &bridge, bool dhcp, bool openvswitch, bool fixed = false);
+    bool createNetwork(const QString &name,
+                       const QString &forward,
+                       const QString &gateway,
+                       const QString &mask,
+                       const QString &bridge,
+                       bool dhcp,
+                       bool openvswitch,
+                       bool fixed = false);
 
     QVector<Secret *> secrets(uint flags, QObject *parent = nullptr);
 
-    bool createSecret(const QString &ephemeral, const QString &usageType, const QString &priv, const QString &data);
+    bool createSecret(const QString &ephemeral,
+                      const QString &usageType,
+                      const QString &priv,
+                      const QString &data);
     Secret *getSecretByUuid(const QString &uuid, QObject *parent = nullptr);
     bool deleteSecretByUuid(const QString &uuid);
 
     QVector<StoragePool *> storagePools(int flags, QObject *parent = nullptr);
-    bool createStoragePool(const QString &name, const QString &type, const QString &source, const QString &target);
-    bool createStoragePoolCeph(const QString &name, const QString &ceph_pool, const QString &ceph_host, const QString &ceph_user, const QString &secret_uuid);
-    bool createStoragePoolNetFs(const QString &name, const QString &netfs_host, const QString &source, const QString &source_format, const QString &target);
+    bool createStoragePool(const QString &name,
+                           const QString &type,
+                           const QString &source,
+                           const QString &target);
+    bool createStoragePoolCeph(const QString &name,
+                               const QString &ceph_pool,
+                               const QString &ceph_host,
+                               const QString &ceph_user,
+                               const QString &secret_uuid);
+    bool createStoragePoolNetFs(const QString &name,
+                                const QString &netfs_host,
+                                const QString &source,
+                                const QString &source_format,
+                                const QString &target);
     StoragePool *getStoragePool(const QString &name, QObject *parent = nullptr);
     QVector<StorageVol *> getStorageImages(QObject *parent = nullptr);
 
@@ -128,7 +163,7 @@ private:
     virConnectPtr m_conn;
     virNodeInfo m_nodeInfo;
     QDomDocument m_xmlCapsDoc;
-    bool m_nodeInfoLoaded = false;
+    bool m_nodeInfoLoaded           = false;
     bool m_domainCapabilitiesLoaded = false;
 };
 

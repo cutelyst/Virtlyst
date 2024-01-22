@@ -139,7 +139,7 @@ function constructor() {
             Util.Warn("Data URI scheme cursor not supported");
         }
         c.style.cursor = curSave;
-    } catch (exc2) { 
+    } catch (exc2) {
         Util.Error("Data URI scheme cursor test exception: " + exc2);
         conf.cursor_uri = false;
     }
@@ -149,7 +149,7 @@ function constructor() {
 }
 
 rescale = function(factor) {
-    var c, tp, x, y, 
+    var c, tp, x, y,
         properties = ['transform', 'WebkitTransform', 'MozTransform', null];
     c = conf.target;
     tp = properties.shift();
@@ -487,8 +487,8 @@ that.subTile = function(x, y, w, h, color) {
                 data[p + 1] = green;
                 data[p + 2] = blue;
                 data[p + 3] = 255;
-            }   
-        } 
+            }
+        }
     } else {
         that.fillRect(tile_x + x, tile_y + y, w, h, color);
     }
@@ -614,7 +614,7 @@ scan_renderQ = function() {
             case 'blitRgb':
                 that.blitRgbImage(a.x, a.y, a.width, a.height, a.data, 0);
                 break;
-            case 'img':    
+            case 'img':
                 if (a.img.complete) {
                     that.drawImage(a.img, a.x, a.y);
                 } else {

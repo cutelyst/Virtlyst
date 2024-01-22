@@ -16,16 +16,16 @@
  */
 #include "secrets.h"
 
-#include "virtlyst.h"
 #include "lib/connection.h"
 #include "lib/secret.h"
+#include "virtlyst.h"
 
 #include <QLoggingCategory>
 
-Secrets::Secrets(Virtlyst *parent) : Controller(parent)
-  , m_virtlyst(parent)
+Secrets::Secrets(Virtlyst *parent)
+    : Controller(parent)
+    , m_virtlyst(parent)
 {
-
 }
 
 void Secrets::index(Context *c, const QString &hostId)
@@ -44,15 +44,15 @@ void Secrets::index(Context *c, const QString &hostId)
     if (c->request()->isPost()) {
         const ParamsMultiMap params = c->request()->bodyParameters();
         if (params.contains(QStringLiteral("create"))) {
-            const QString data = params.value(QStringLiteral("data"));
-            const QString ephemeral = params.value(QStringLiteral("ephemeral"));
-            const QString priv = params.value(QStringLiteral("private"));
+            const QString data       = params.value(QStringLiteral("data"));
+            const QString ephemeral  = params.value(QStringLiteral("ephemeral"));
+            const QString priv       = params.value(QStringLiteral("private"));
             const QString usage_type = params.value(QStringLiteral("usage_type"));
 
             conn->createSecret(ephemeral, usage_type, priv, data);
         } else if (params.contains(QStringLiteral("set_value"))) {
             const QString uuid = params.value(QStringLiteral("uuid"));
-            Secret *secret = conn->getSecretByUuid(uuid, c);
+            Secret *secret     = conn->getSecretByUuid(uuid, c);
             if (secret) {
                 const QString value = params.value(QStringLiteral("value"));
                 secret->setValue(value);
@@ -60,7 +60,8 @@ void Secrets::index(Context *c, const QString &hostId)
         } else if (params.contains(QStringLiteral("delete"))) {
             conn->deleteSecretByUuid(params.value(QStringLiteral("uuid")));
         }
-        c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("index")), QStringList{ hostId }));
+        c->response()->redirect(
+            c->uriFor(CActionFor(QStringLiteral("index")), QStringList{hostId}));
         return;
     }
 

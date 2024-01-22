@@ -20,15 +20,14 @@
 #include "lib/secret.h"
 #include "lib/storagepool.h"
 #include "lib/storagevol.h"
-
 #include "virtlyst.h"
 
 #include <QLoggingCategory>
 
-Storages::Storages(Virtlyst *parent) : Controller(parent)
-  , m_virtlyst(parent)
+Storages::Storages(Virtlyst *parent)
+    : Controller(parent)
+    , m_virtlyst(parent)
 {
-
 }
 
 void Storages::index(Context *c, const QString &hostId)
@@ -54,28 +53,20 @@ void Storages::index(Context *c, const QString &hostId)
                 const QString ceph_pool = params.value(u"ceph_pool"_qs);
                 const QString ceph_host = params.value(u"ceph_host"_qs);
                 const QString ceph_user = params.value(u"ceph_user"_qs);
-                const QString secret = params.value(u"secret"_qs);
+                const QString secret    = params.value(u"secret"_qs);
                 if (secret.isEmpty()) {
                     errors << QStringLiteral("You need create secret for pool");
                 }
 
                 if (errors.isEmpty()) {
-                    conn->createStoragePoolCeph(name,
-                                                ceph_pool,
-                                                ceph_host,
-                                                ceph_user,
-                                                secret);
+                    conn->createStoragePoolCeph(name, ceph_pool, ceph_host, ceph_user, secret);
                 }
-            } else if (type ==  QLatin1String("netfs")) {
-                const QString netfs_host = params.value(u"netfs_host"_qs);
-                const QString source = params.value(u"source"_qs);
+            } else if (type == QLatin1String("netfs")) {
+                const QString netfs_host    = params.value(u"netfs_host"_qs);
+                const QString source        = params.value(u"source"_qs);
                 const QString source_format = params.value(u"source_format"_qs);
-                const QString target = params.value(u"target"_qs);
-                conn->createStoragePoolNetFs(name,
-                                             netfs_host,
-                                             source,
-                                             source_format,
-                                             target);
+                const QString target        = params.value(u"target"_qs);
+                conn->createStoragePoolNetFs(name, netfs_host, source, source_format, target);
             } else {
                 const QString source = params.value(u"source"_qs);
                 const QString target = params.value(u"target"_qs);
@@ -83,7 +74,8 @@ void Storages::index(Context *c, const QString &hostId)
             }
         }
 
-        c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("index")), QStringList{ hostId }));
+        c->response()->redirect(
+            c->uriFor(CActionFor(QStringLiteral("index")), QStringList{hostId}));
         return;
     }
 
@@ -120,18 +112,20 @@ void Storages::storage(Context *c, const QString &hostId, const QString &pool)
             storage->stop();
         } else if (params.contains(QStringLiteral("delete"))) {
             storage->undefine();
-            c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("index")), QStringList{ hostId }));
+            c->response()->redirect(
+                c->uriFor(CActionFor(QStringLiteral("index")), QStringList{hostId}));
             return;
         } else if (params.contains(QStringLiteral("set_autostart"))) {
             storage->setAutostart(true);
         } else if (params.contains(QStringLiteral("unset_autostart"))) {
             storage->setAutostart(false);
         } else if (params.contains(QStringLiteral("add_volume"))) {
-            const QString name = params.value(u"name"_qs);
-            const QString size = params.value(u"size"_qs);
+            const QString name   = params.value(u"name"_qs);
+            const QString size   = params.value(u"size"_qs);
             const QString format = params.value(u"format"_qs);
-            int flags = 0;
-            if (params.contains(QStringLiteral("meta_prealloc")) && format == QLatin1String("qcow2")) {
+            int flags            = 0;
+            if (params.contains(QStringLiteral("meta_prealloc")) &&
+                format == QLatin1String("qcow2")) {
                 flags = VIR_STORAGE_VOL_CREATE_PREALLOC_METADATA;
             }
             StorageVol *vol = storage->createStorageVolume(name, format, size.toLongLong(), flags);
@@ -140,18 +134,19 @@ void Storages::storage(Context *c, const QString &hostId, const QString &pool)
             }
         } else if (params.contains(QStringLiteral("del_volume"))) {
             const QString name = params.value(u"volname"_qs);
-            StorageVol *vol = storage->getVolume(name);
+            StorageVol *vol    = storage->getVolume(name);
             if (vol) {
                 vol->undefine();
             }
         } else if (params.contains(QStringLiteral("cln_volume"))) {
-            QString imageName = params.value(u"name"_qs) + QLatin1String(".img");
+            QString imageName     = params.value(u"name"_qs) + QLatin1String(".img");
             const QString volName = params.value(u"image"_qs);
             QString format;
             int flags = 0;
             if (params.contains(QStringLiteral("convert"))) {
                 format = params.value(u"format"_qs);
-                if (params.contains(QStringLiteral("meta_prealloc")) && format == QLatin1String("qcow2")) {
+                if (params.contains(QStringLiteral("meta_prealloc")) &&
+                    format == QLatin1String("qcow2")) {
                     flags = VIR_STORAGE_VOL_CREATE_PREALLOC_METADATA;
                 }
             }
@@ -160,7 +155,8 @@ void Storages::storage(Context *c, const QString &hostId, const QString &pool)
                 vol->clone(imageName, format, flags);
             }
         }
-        c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("storage")), QStringList{ hostId, pool }));
+        c->response()->redirect(
+            c->uriFor(CActionFor(QStringLiteral("storage")), QStringList{hostId, pool}));
     }
     c->setStash(QStringLiteral("storage"), QVariant::fromValue(storage));
 }

@@ -26,4 +26,3 @@ target_link_libraries(Virtlyst
     Qt::Xml
     ${LIBVIRT_LIBRARIES}
 )
-

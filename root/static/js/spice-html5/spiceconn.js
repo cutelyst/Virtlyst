@@ -23,7 +23,7 @@
 **      This is the base Javascript class for establishing and
 **  managing a connection to a Spice Server.
 **  It is used to provide core functionality to the Spice main,
-**  display, inputs, and cursor channels.  See main.js for 
+**  display, inputs, and cursor channels.  See main.js for
 **  usage.
 **--------------------------------------------------------------------------*/
 function SpiceConn(o)

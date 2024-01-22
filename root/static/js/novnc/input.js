@@ -18,7 +18,7 @@ function Keyboard(defaults) {
 var that           = {},  // Public API methods
     conf           = {},  // Configuration attributes
 
-    keyDownList    = [];         // List of depressed keys 
+    keyDownList    = [];         // List of depressed keys
                                  // (even if they are happy)
 
 // Configuration attributes
@@ -30,7 +30,7 @@ Util.conf_defaults(conf, that, defaults, [
     ]);
 
 
-// 
+//
 // Private functions
 //
 
@@ -123,7 +123,7 @@ function getKeysymSpecial(evt) {
             case 221       : keysym = 93; break; // ]  (Mozilla, IE)
             case 222       : keysym = 39; break; // '  (Mozilla, IE)
         }
-        
+
         /* Remap shifted and unshifted keys */
         if (!!evt.shiftKey) {
             switch (keysym) {
@@ -194,7 +194,7 @@ function getKeysym(evt) {
         // Map Unicode outside Latin 1 to X11 keysyms
         keysym = unicodeTable[keysym];
         if (typeof(keysym) === 'undefined') {
-           keysym = 0; 
+           keysym = 0;
         }
         Util.Debug(msg + " to " + keysym);
     }
@@ -350,7 +350,7 @@ function onKeyPress(e) {
     var evt = (e ? e : window.event),
         kdlen = keyDownList.length, keysym = null;
     //Util.Debug("onKeyPress kC:" + evt.keyCode + " cC:" + evt.charCode + " w:" + evt.which);
-    
+
     if (((evt.which !== "undefined") && (evt.which === 0)) ||
         (getKeysymSpecial(evt))) {
         // Firefox and Opera generate a keyPress event even if keyDown
@@ -375,7 +375,7 @@ function onKeyPress(e) {
     }
 
     //show_keyDownList('press');
-    
+
     // Send the translated keysym
     if (conf.onKeyPress && (keysym > 0)) {
         Util.Debug("onKeyPress down, keysym: " + keysym +
@@ -397,7 +397,7 @@ function onKeyUp(e) {
     //Util.Debug("onKeyUp   kC:" + evt.keyCode + " cC:" + evt.charCode + " w:" + evt.which);
 
     fevt = getKeyEvent(evt.keyCode, true);
-    
+
     if (fevt) {
         keysym = fevt.keysym;
     } else {
@@ -517,7 +517,7 @@ function releaseMouse() {
     }
     mouseCaptured = false;
 }
-// 
+//
 // Private functions
 //
 
@@ -1914,7 +1914,7 @@ unicodeTable = {
     0x28e0 : 0x10028e0,
     0x28e1 : 0x10028e1,
     0x28e2 : 0x10028e2,
-    0x28e3 : 0x10028e3, 
+    0x28e3 : 0x10028e3,
     0x28e4 : 0x10028e4,
     0x28e5 : 0x10028e5,
     0x28e6 : 0x10028e6,

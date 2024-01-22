@@ -20,12 +20,13 @@
 #include "storagepool.h"
 #include "virtlyst.h"
 
-#include <QXmlStreamWriter>
 #include <QLoggingCategory>
+#include <QXmlStreamWriter>
 
-StorageVol::StorageVol(virStorageVolPtr vol, virStoragePoolPtr pool, QObject *parent) : QObject(parent)
-  , m_vol(vol)
-  , m_pool(pool)
+StorageVol::StorageVol(virStorageVolPtr vol, virStoragePoolPtr pool, QObject *parent)
+    : QObject(parent)
+    , m_vol(vol)
+    , m_pool(pool)
 {
 }
 
@@ -37,10 +38,10 @@ QString StorageVol::name()
 QString StorageVol::type()
 {
     const QString ret = xmlDoc()
-            .documentElement()
-            .firstChildElement(QStringLiteral("target"))
-            .firstChildElement(QStringLiteral("format"))
-            .attribute(QStringLiteral("type"));
+                            .documentElement()
+                            .firstChildElement(QStringLiteral("target"))
+                            .firstChildElement(QStringLiteral("format"))
+                            .attribute(QStringLiteral("type"));
     if (ret == QLatin1String("unknown") || ret.isEmpty()) {
         return QStringLiteral("raw");
     }
@@ -62,27 +63,28 @@ QString StorageVol::usedby()
     QString tryname;
     QString trysrc;
     QVector<Domain *> ret;
-    
+
     m_conn = virStorageVolGetConnect(m_vol);
     virDomainPtr *domains;
-    int count = virConnectListAllDomains(m_conn, &domains, VIR_CONNECT_LIST_DOMAINS_ACTIVE | VIR_CONNECT_LIST_DOMAINS_INACTIVE);
+    int count = virConnectListAllDomains(
+        m_conn, &domains, VIR_CONNECT_LIST_DOMAINS_ACTIVE | VIR_CONNECT_LIST_DOMAINS_INACTIVE);
     if (count > 0) {
         for (int i = 0; i < count; i++) {
-            tryname = QString::fromUtf8(virDomainGetName(domains[i]));
-            char *xml = virDomainGetXMLDesc(domains[i], VIR_DOMAIN_XML_SECURE);
+            tryname           = QString::fromUtf8(virDomainGetName(domains[i]));
+            char *xml         = virDomainGetXMLDesc(domains[i], VIR_DOMAIN_XML_SECURE);
             QString xmlString = QString::fromUtf8(xml);
             QString error;
             QDomDocument domxml;
             if (!domxml.setContent(xmlString, &error)) {
                 qWarning() << "Failed to parse XML from interface" << error;
             }
-            QDomElement disk = domxml
-                    .documentElement()
-                    .firstChildElement(QStringLiteral("devices"))
-                    .firstChildElement(QStringLiteral("disk"));
+            QDomElement disk = domxml.documentElement()
+                                   .firstChildElement(QStringLiteral("devices"))
+                                   .firstChildElement(QStringLiteral("disk"));
             while (!disk.isNull()) {
-                trysrc = disk.firstChildElement(QStringLiteral("source")).attribute(QStringLiteral("file"));
-                if (trysrc == pathdisk){
+                trysrc = disk.firstChildElement(QStringLiteral("source"))
+                             .attribute(QStringLiteral("file"));
+                if (trysrc == pathdisk) {
                     usedbyvm = usedbyvm + tryname + QStringLiteral(" ");
                 }
                 disk = disk.nextSiblingElement(QStringLiteral("disk"));
@@ -115,7 +117,8 @@ StorageVol *StorageVol::clone(const QString &name, const QString &format, int fl
     }
 
     stream.writeStartElement(QStringLiteral("volume"));
-    stream.writeTextElement(QStringLiteral("name"), format != QLatin1String("dir") ? name : name + QLatin1String(".img"));
+    stream.writeTextElement(QStringLiteral("name"),
+                            format != QLatin1String("dir") ? name : name + QLatin1String(".img"));
     stream.writeTextElement(QStringLiteral("capacity"), QStringLiteral("0"));
     stream.writeTextElement(QStringLiteral("allocation"), QStringLiteral("0"));
 
@@ -151,7 +154,7 @@ bool StorageVol::getInfo()
 QDomDocument StorageVol::xmlDoc()
 {
     if (m_xml.isNull()) {
-        char *xml = virStorageVolGetXMLDesc(m_vol, 0);
+        char *xml               = virStorageVolGetXMLDesc(m_vol, 0);
         const QString xmlString = QString::fromUtf8(xml);
         qDebug() << "XML" << xml;
         QString error;

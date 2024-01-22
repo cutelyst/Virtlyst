@@ -19,11 +19,11 @@
 
 #include <QLoggingCategory>
 
-Secret::Secret(virSecretPtr secret, Connection *conn, QObject *parent) : QObject(parent)
-  , m_secret(secret)
-  , m_conn(conn)
+Secret::Secret(virSecretPtr secret, Connection *conn, QObject *parent)
+    : QObject(parent)
+    , m_secret(secret)
+    , m_conn(conn)
 {
-
 }
 
 QString Secret::uuid() const
@@ -50,5 +50,6 @@ bool Secret::setValue(const QString &value)
     const QByteArray data = value.toUtf8();
     return virSecretSetValue(m_secret,
                              reinterpret_cast<const unsigned char *>(data.constData()),
-                             data.size(), 0) == 0;
+                             data.size(),
+                             0) == 0;
 }

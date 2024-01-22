@@ -16,16 +16,16 @@
  */
 #include "networks.h"
 
-#include <QNetworkAddressEntry>
-
-#include "virtlyst.h"
 #include "lib/connection.h"
 #include "lib/network.h"
+#include "virtlyst.h"
 
-Networks::Networks(Virtlyst *parent) : Controller(parent)
-  , m_virtlyst(parent)
+#include <QNetworkAddressEntry>
+
+Networks::Networks(Virtlyst *parent)
+    : Controller(parent)
+    , m_virtlyst(parent)
 {
-
 }
 
 void Networks::index(Context *c, const QString &hostId)
@@ -42,17 +42,18 @@ void Networks::index(Context *c, const QString &hostId)
     c->setStash(QStringLiteral("host"), QVariant::fromValue(conn));
 
     if (c->request()->isPost()) {
-        c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("index")), QStringList{ hostId }));
+        c->response()->redirect(
+            c->uriFor(CActionFor(QStringLiteral("index")), QStringList{hostId}));
 
         const ParamsMultiMap params = c->request()->bodyParameters();
         if (params.contains(QStringLiteral("create"))) {
-            const QString name = params.value(u"name"_qs);
-            const QString forward = params.value(u"forward"_qs);
-            const QString subnet = params.value(u"subnet"_qs);
-            const QString bridge = params.value(u"bridge_name"_qs);
+            const QString name     = params.value(u"name"_qs);
+            const QString forward  = params.value(u"forward"_qs);
+            const QString subnet   = params.value(u"subnet"_qs);
+            const QString bridge   = params.value(u"bridge_name"_qs);
             const bool openvswitch = params.contains(QStringLiteral("openvswitch"));
-            const bool dhcp = params.contains(QStringLiteral("openvswitch"));
-            const bool fixed = params.contains(QStringLiteral("openvswitch"));
+            const bool dhcp        = params.contains(QStringLiteral("openvswitch"));
+            const bool fixed       = params.contains(QStringLiteral("openvswitch"));
             QNetworkAddressEntry entry;
             entry.setIp(QHostAddress(subnet.section(QLatin1Char('/'), 0, 0)));
             entry.setPrefixLength(subnet.section(QLatin1Char('/'), -1).toInt());
@@ -86,7 +87,8 @@ void Networks::network(Context *c, const QString &hostId, const QString &netName
 
     Network *network = conn->getNetwork(netName, c);
     if (!network) {
-        c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("index")), QStringList{ hostId }));
+        c->response()->redirect(
+            c->uriFor(CActionFor(QStringLiteral("index")), QStringList{hostId}));
         return;
     }
     c->setStash(QStringLiteral("network"), QVariant::fromValue(network));
@@ -99,13 +101,15 @@ void Networks::network(Context *c, const QString &hostId, const QString &netName
             network->stop();
         } else if (params.contains(QStringLiteral("delete"))) {
             network->undefine();
-            c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("index")), QStringList{ hostId }));
+            c->response()->redirect(
+                c->uriFor(CActionFor(QStringLiteral("index")), QStringList{hostId}));
             return;
         } else if (params.contains(QStringLiteral("set_autostart"))) {
             network->setAutostart(true);
         } else if (params.contains(QStringLiteral("unset_autostart"))) {
             network->setAutostart(false);
         }
-        c->response()->redirect(c->uriFor(CActionFor(QStringLiteral("network")), QStringList{ hostId, netName }));
+        c->response()->redirect(
+            c->uriFor(CActionFor(QStringLiteral("network")), QStringList{hostId, netName}));
     }
 }

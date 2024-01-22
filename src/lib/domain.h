@@ -18,13 +18,13 @@
 #ifndef DOMAIN_H
 #define DOMAIN_H
 
-#include <QMap>
+#include <libvirt/libvirt.h>
+
+#include <QDomDocument>
 #include <QHash>
+#include <QMap>
 #include <QObject>
 #include <QVector>
-#include <QDomDocument>
-
-#include <libvirt/libvirt.h>
 
 class Connection;
 class DomainSnapshot;
@@ -149,7 +149,7 @@ private:
     QVector<std::pair<qint64, qint64>> m_netUsageMiBs;
     QMap<QString, std::pair<qint64, qint64>> m_hddUsageMiBs;
     bool m_gotStats = false;
-    bool m_gotInfo = false;
+    bool m_gotInfo  = false;
 };
 
 #endif // DOMAIN_H
