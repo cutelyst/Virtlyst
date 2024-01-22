@@ -6,10 +6,10 @@
 
 #include <libvirt/libvirt.h>
 
-#include <QTcpSocket>
-
-#include <QLoggingCategory>
 #include <QBuffer>
+#include <QLoggingCategory>
+#include <QProcess>
+#include <QTcpSocket>
 
 Q_LOGGING_CATEGORY(V_WS, "virtlyst.ws")
 
@@ -41,6 +41,7 @@ void Ws::index(Context *c, const QString &hostId, const QString &uuid)
 
     const quint16 port = dom->consolePort();
     QString host = dom->consoleListenAddress();
+    auto sock = new QTcpSocket(c);
 
     // if the remote or local domain is listening on
     // all addresses better use the connection hostname
@@ -49,9 +50,10 @@ void Ws::index(Context *c, const QString &hostId, const QString &uuid)
         if (host.isEmpty()) {
             host = QStringLiteral("0.0.0.0");
         }
+    } else if (host == u"127.0.0.1" && conn->uri().contains(u"ssh://")) {
+        createSshTunnel(sock, QUrl(conn->uri()), port);
     }
 
-    auto sock = new QTcpSocket(c);
     sock->connectToHost(host, port);
     qCDebug(V_WS) << "Connecting TCP socket to" << host << port;
 
@@ -90,4 +92,46 @@ void Ws::index(Context *c, const QString &hostId, const QString &uuid)
         sock->write(message);
         sock->flush();
     });
+}
+
+void Ws::createSshTunnel(QAbstractSocket *sock, const QUrl &url, quint16 port) {
+    qCDebug(V_WS) << "Create SSH tunnel to"<< url.host() << "as" << url.userName();
+
+    QStringList args;
+    args << u"-TCv"_qs;
+    args << u"-L"_qs << QStringLiteral("127.0.0.1:%1:127.0.0.1:%1").arg(port);
+    args << u"-l"_qs << url.userName();
+    args << url.host();
+
+    auto process = new QProcess(sock);
+    connect(sock, &QAbstractSocket::disconnected, process, [process]{
+        if (process->state() == QProcess::Running) {
+            process->terminate();
+            qCDebug(V_WS) << "Shutdown ssh tunnel:" << process->waitForFinished();
+        }
+    });
+
+    process->setProgram(u"ssh"_qs);
+    process->setArguments(args);
+    process->setReadChannel(QProcess::StandardError);
+    process->start();
+
+    if (process->waitForStarted()) {
+        QByteArrayList outputVerbose;
+        if (process->state() == QProcess::Running) {
+            while (process->waitForReadyRead()) {
+               const auto& output = process->readAllStandardError();
+               if (output.contains("Local forwarding listening on")) {
+                   qCDebug(V_WS) << "SSH tunnel established";
+                   return;
+               }
+               outputVerbose << output;
+            }
+            qCWarning(V_WS) << "Cannot create ssh tunnel:" << outputVerbose.join('\n');
+            process->terminate();
+            return;
+        }
+    }
+
+    qCWarning(V_WS) << "Cannot start ssh:" << process->readAllStandardError();
 }

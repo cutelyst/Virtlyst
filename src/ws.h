@@ -3,6 +3,8 @@
 
 #include <Cutelyst/Controller>
 
+#include <QAbstractSocket>
+
 using namespace Cutelyst;
 
 class Virtlyst;
@@ -20,6 +22,8 @@ private Q_SLOTS:
 
 private:
     Virtlyst *m_virtlyst;
+
+    void createSshTunnel(QAbstractSocket *sock, const QUrl &url, quint16 port);
 };
 
 #endif // WS_H
