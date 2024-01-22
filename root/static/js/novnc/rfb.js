@@ -120,7 +120,7 @@ var that           = {},  // Public API methods
 
     test_mode        = false,
 
-    def_con_timeout  = Websock_native ? 2 : 5,
+    def_con_timeout  = 5,
 
     /* Mouse state */
     mouse_buttonMask = 0,
