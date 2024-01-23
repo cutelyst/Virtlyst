@@ -5,6 +5,8 @@ on:
     branches: [ master ]
     tags:
       - 'v*'
+  pull_request:
+    branches: [ master ]
 
 jobs:
   docker:
@@ -19,7 +21,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            cutelyst/virtlyst
+            dantti/virtlyst
           flavor: |
             latest=false
           tags: |
@@ -34,6 +36,7 @@ jobs:
       -
         name: Login to DockerHub
         uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -46,7 +49,7 @@ jobs:
           context: .
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
       -
