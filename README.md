@@ -1,3 +1,5 @@
+[![Docker Pulls](https://img.shields.io/docker/pulls/dantti/virtlyst.svg)](https://hub.docker.com/r/dantti/virtlyst)
+
 # Virtlyst
 Web interface to manage virtual machines with libvirt
 
@@ -23,3 +25,34 @@ Don't let your virtualization management use more resources than your main virtu
 
 Default Username: admin
 Password: admin
+
+# Docker
+**docker-compose.yml**
+
+```
+services:
+  virtlyst:
+    image: dantti/virtlyst
+    container_name: virtlyst
+    volumes:
+      - virtlyst:/root
+    restart: always
+    ports:
+      - "80:80"
+
+volumes:
+  virtlyst:
+```
+
+Start up: ``docker compose up -d``
+
+## SSH
+
+Virtlyst will prompt on container console for authentication.
+So it is easier to add an ssh key.
+
+Call these commands inside the container.
+```
+$ ssh-keygen
+$ ssh-copy-id user@host
+```
