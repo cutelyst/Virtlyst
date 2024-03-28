@@ -12,7 +12,7 @@ RUN mkdir src && cd src && \
     cmake --build build && cmake --install build && \
     rm -rf /root/src /root/build
 
-ARG CUTELYST_VERSION=4.0.0
+ARG CUTELYST_VERSION=4.2.1
 RUN mkdir src && cd src && \
     wget -O cutelyst.tar.gz https://github.com/cutelyst/cutelyst/archive/refs/tags/v$CUTELYST_VERSION.tar.gz && \
     tar xf cutelyst.tar.gz --strip-components 1 && \
