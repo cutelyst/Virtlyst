@@ -272,7 +272,7 @@ void Virtlyst::updateConnections()
         server->password = password;
         server->type     = type;
 
-        QStringList parts = hostname.split(":");
+        QStringList parts = hostname.split(u':');
         QString host      = parts[0]; // The IP/FQDN part
         int port          = -1;       // Default port value if no port is specified
 
