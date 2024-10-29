@@ -272,10 +272,9 @@ void Virtlyst::updateConnections()
         server->password = password;
         server->type     = type;
 
-        
         QStringList parts = hostname.split(":");
-        QString host = parts[0];  // The IP/FQDN part
-        int port = -1;            // Default port value if no port is specified
+        QString host      = parts[0]; // The IP/FQDN part
+        int port          = -1;       // Default port value if no port is specified
 
         // Check if a port was provided
         if (parts.size() > 1) {
@@ -286,7 +285,7 @@ void Virtlyst::updateConnections()
                 port = -1;
             }
         }
-        
+
         QUrl url;
         switch (type) {
         case ServerConn::ConnSocket:
@@ -314,7 +313,6 @@ void Virtlyst::updateConnections()
             break;
         }
         server->url = url;
-
 
         server->conn = new Connection(url, name, server);
         m_connections.insert(id, server);
