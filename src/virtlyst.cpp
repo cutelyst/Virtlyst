@@ -271,6 +271,21 @@ void Virtlyst::updateConnections()
         server->login    = login;
         server->password = password;
         server->type     = type;
+
+        QStringList parts = hostname.split(u':');
+        QString host      = parts[0]; // The IP/FQDN part
+        int port          = -1;       // Default port value if no port is specified
+
+        // Check if a port was provided
+        if (parts.size() > 1) {
+            bool ok;
+            port = parts[1].toInt(&ok);
+            if (!ok) {
+                qCWarning(VIRTLYST) << "Invalid port number in hostname:" << parts[1];
+                port = -1;
+            }
+        }
+
         QUrl url;
         switch (type) {
         case ServerConn::ConnSocket:
@@ -278,18 +293,21 @@ void Virtlyst::updateConnections()
             break;
         case ServerConn::ConnSSH:
             url = QStringLiteral("qemu+ssh:///system");
-            url.setHost(hostname);
+            url.setHost(host);
+            url.setPort(port);
             url.setUserName(login);
             break;
         case ServerConn::ConnTCP:
             url = QStringLiteral("qemu+tcp:///system");
-            url.setHost(hostname);
+            url.setHost(host);
+            url.setPort(port);
             url.setUserName(login);
             url.setPassword(password);
             break;
         case ServerConn::ConnTLS:
             url = QStringLiteral("qemu+tls:///system");
-            url.setHost(hostname);
+            url.setHost(host);
+            url.setPort(port);
             url.setUserName(login);
             url.setPassword(password);
             break;
