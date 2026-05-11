@@ -43,7 +43,7 @@ QString DomainSnapshot::date()
                                      .firstChildElement(QStringLiteral("creationTime"))
                                      .firstChild()
                                      .nodeValue();
-    const QDateTime date = QDateTime::fromMSecsSinceEpoch(creationTime.toLongLong() * 1000);
+    const QDateTime date       = QDateTime::fromMSecsSinceEpoch(creationTime.toLongLong() * 1000);
     //    qDebug() << creationTime << date << date.toString();
     return date.toString();
 }
