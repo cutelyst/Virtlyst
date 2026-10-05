@@ -83,10 +83,10 @@ void Users::edit(Context *c, const QString &id)
 {
     if (c->request()->isPost()) {
         const ParamsMultiMap params = c->req()->bodyParameters();
-        QSqlQuery query             = CPreparedSqlQueryThreadForDB(QStringLiteral("UPDATE users "
-                                                                                  "SET "
-                                                                                  "username=:username "
-                                                                                  "WHERE id=:id"),
+        QSqlQuery query = CPreparedSqlQueryThreadForDB(QStringLiteral("UPDATE users "
+                                                                      "SET "
+                                                                      "username=:username "
+                                                                      "WHERE id=:id"),
                                                        QStringLiteral("virtlyst"));
         query.bindValue(QStringLiteral(":username"), params.value(QStringLiteral("username")));
         query.bindValue(QStringLiteral(":id"), id);
