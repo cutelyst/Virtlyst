@@ -91,7 +91,7 @@ void Create::index(Context *c, const QString &hostId)
                                          .firstChildElement(QStringLiteral("name"))
                                          .firstChild()
                                          .nodeValue();
-                bool found = false;
+                bool found         = false;
                 for (Domain *dom : domains) {
                     if (dom->name() == name) {
                         found = true;
